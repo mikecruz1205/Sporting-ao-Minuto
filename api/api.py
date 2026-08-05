@@ -1,50 +1,53 @@
 import urllib.request
-import urllib.parse
 import json
 import os
+from http.server import BaseHTTPRequestHandler
+from urllib.parse import urlparse, parse_qs
 
 FICHEIRO_CHAVE = "chave-api.txt"
 
-def handler(request):
-    caminho = request.args.get("p")
 
-    if not caminho:
-        return {
-            "statusCode": 400,
-            "body": "pedido invalido"
-        }
+class handler(BaseHTTPRequestHandler):
 
-    if not os.path.exists(FICHEIRO_CHAVE):
-        return {
-            "statusCode": 500,
-            "body": "falta o ficheiro chave-api.txt"
-        }
+    def do_GET(self):
+        params = parse_qs(urlparse(self.path).query)
+        caminho = params.get("p", [None])[0]
 
-    with open(FICHEIRO_CHAVE, encoding="utf-8") as f:
-        chave = f.read().strip()
+        if not caminho:
+            self.responder(400, "pedido invalido")
+            return
 
-    url = "https://v3.football.api-sports.io/" + caminho
+        if not os.path.exists(FICHEIRO_CHAVE):
+            self.responder(500, "falta o ficheiro chave-api.txt")
+            return
 
-    try:
-        pedido = urllib.request.Request(
-            url,
-            headers={"x-apisports-key": chave}
-        )
+        with open(FICHEIRO_CHAVE, encoding="utf-8") as f:
+            chave = f.read().strip()
 
-        with urllib.request.urlopen(pedido, timeout=20) as resposta:
-            corpo = resposta.read()
+        url = "https://v3.football.api-sports.io/" + caminho
 
-        return {
-            "statusCode": 200,
-            "headers": {
-                "Content-Type": "application/json; charset=utf-8",
-                "Access-Control-Allow-Origin": "*"
-            },
-            "body": corpo.decode("utf-8")
-        }
+        try:
+            pedido = urllib.request.Request(
+                url,
+                headers={"x-apisports-key": chave}
+            )
 
-    except Exception as e:
-        return {
-            "statusCode": 502,
-            "body": "erro: " + str(e)
-        }
+            with urllib.request.urlopen(pedido, timeout=20) as resposta:
+                corpo = resposta.read().decode("utf-8")
+
+            self.responder(
+                200,
+                corpo,
+                "application/json; charset=utf-8"
+            )
+
+        except Exception as e:
+            self.responder(502, "erro: " + str(e))
+
+
+    def responder(self, codigo, corpo, tipo="text/plain; charset=utf-8"):
+        self.send_response(codigo)
+        self.send_header("Content-Type", tipo)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+        self.wfile.write(corpo.encode("utf-8"))
