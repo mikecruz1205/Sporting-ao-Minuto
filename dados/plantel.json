@@ -1,0 +1,332 @@
+{
+ "atualizado": "2026-08-05 20:26",
+ "jogadores": [
+  {
+   "id": 330296,
+   "nome": "Diego Callai",
+   "n": 41,
+   "posicao": "Goalkeeper",
+   "idade": 21,
+   "foto": "img/players/330296.png"
+  },
+  {
+   "id": 361417,
+   "nome": "Francisco Silva",
+   "n": 99,
+   "posicao": "Goalkeeper",
+   "idade": 20,
+   "foto": "img/players/361417.png"
+  },
+  {
+   "id": 46672,
+   "nome": "Rui Silva",
+   "n": 1,
+   "posicao": "Goalkeeper",
+   "idade": 31,
+   "foto": "img/players/46672.png"
+  },
+  {
+   "id": 18755,
+   "nome": "João Virgínia",
+   "n": 12,
+   "posicao": "Goalkeeper",
+   "idade": 26,
+   "foto": "img/players/18755.png"
+  },
+  {
+   "id": 446827,
+   "nome": "Ibrahima Ba",
+   "n": 55,
+   "posicao": "Defender",
+   "idade": 20,
+   "foto": "img/players/446827.png"
+  },
+  {
+   "id": 490740,
+   "nome": "Salvador Blopa",
+   "n": 70,
+   "posicao": "Defender",
+   "idade": 18,
+   "foto": "img/players/490740.png"
+  },
+  {
+   "id": 304228,
+   "nome": "Z. Debast",
+   "n": 6,
+   "posicao": "Defender",
+   "idade": 22,
+   "foto": "img/players/304228.png"
+  },
+  {
+   "id": 505249,
+   "nome": "Rodrigo Dias",
+   "n": 50,
+   "posicao": "Defender",
+   "idade": 20,
+   "foto": "img/players/505249.png"
+  },
+  {
+   "id": 354753,
+   "nome": "O. Diomande",
+   "n": 26,
+   "posicao": "Defender",
+   "idade": 22,
+   "foto": "img/players/354753.png"
+  },
+  {
+   "id": 341700,
+   "nome": "Iván Fresneda",
+   "n": 22,
+   "posicao": "Defender",
+   "idade": 21,
+   "foto": "img/players/341700.png"
+  },
+  {
+   "id": 265595,
+   "nome": "Gonçalo Inácio",
+   "n": 25,
+   "posicao": "Defender",
+   "idade": 24,
+   "foto": "img/players/265595.png"
+  },
+  {
+   "id": 262845,
+   "nome": "Eduardo Quaresma",
+   "n": 72,
+   "posicao": "Defender",
+   "idade": 23,
+   "foto": "img/players/262845.png"
+  },
+  {
+   "id": 135839,
+   "nome": "G. Vagiannidis",
+   "n": 13,
+   "posicao": "Defender",
+   "idade": 24,
+   "foto": "img/players/135839.png"
+  },
+  {
+   "id": 286084,
+   "nome": "Sergi Altimira",
+   "n": 6,
+   "posicao": "Midfielder",
+   "idade": 24,
+   "foto": "img/players/286084.png"
+  },
+  {
+   "id": 341822,
+   "nome": "S. Andersen",
+   "n": 8,
+   "posicao": "Midfielder",
+   "idade": 21,
+   "foto": "img/players/341822.png"
+  },
+  {
+   "id": 41892,
+   "nome": "Daniel Bragança",
+   "n": 23,
+   "posicao": "Midfielder",
+   "idade": 26,
+   "foto": "img/players/41892.png"
+  },
+  {
+   "id": 417653,
+   "nome": "J. Derry",
+   "n": 55,
+   "posicao": "Midfielder",
+   "idade": 18,
+   "foto": "img/players/417653.png"
+  },
+  {
+   "id": 331046,
+   "nome": "I. Doumbia",
+   "n": 8,
+   "posicao": "Midfielder",
+   "idade": 22,
+   "foto": "img/players/331046.png"
+  },
+  {
+   "id": 449626,
+   "nome": "Eduardo Felicíssimo",
+   "n": 73,
+   "posicao": "Midfielder",
+   "idade": 18,
+   "foto": "img/players/449626.png"
+  },
+  {
+   "id": 119795,
+   "nome": "G. Kochorashvili",
+   "n": 14,
+   "posicao": "Midfielder",
+   "idade": 26,
+   "foto": "img/players/119795.png"
+  },
+  {
+   "id": 279802,
+   "nome": "Pedro Lima",
+   "n": 8,
+   "posicao": "Midfielder",
+   "idade": 22,
+   "foto": "img/players/279802.png"
+  },
+  {
+   "id": 18748,
+   "nome": "Pote",
+   "n": 8,
+   "posicao": "Midfielder",
+   "idade": 27,
+   "foto": "img/players/18748.png"
+  },
+  {
+   "id": 400509,
+   "nome": "João Simões",
+   "n": 52,
+   "posicao": "Midfielder",
+   "idade": 18,
+   "foto": "img/players/400509.png"
+  },
+  {
+   "id": 108563,
+   "nome": "R. Zalazar",
+   "n": 10,
+   "posicao": "Midfielder",
+   "idade": 26,
+   "foto": "img/players/108563.png"
+  },
+  {
+   "id": 51776,
+   "nome": "M. Araújo",
+   "n": 20,
+   "posicao": "Attacker",
+   "idade": 25,
+   "foto": "img/players/51776.png"
+  },
+  {
+   "id": 154839,
+   "nome": "Geny Catamo",
+   "n": 10,
+   "posicao": "Attacker",
+   "idade": 24,
+   "foto": "img/players/154839.png"
+  },
+  {
+   "id": 385674,
+   "nome": "Mauro Couto",
+   "n": 78,
+   "posicao": "Attacker",
+   "idade": 20,
+   "foto": "img/players/385674.png"
+  },
+  {
+   "id": 353771,
+   "nome": "S. Faye",
+   "n": 15,
+   "posicao": "Attacker",
+   "idade": 22,
+   "foto": "img/players/353771.png"
+  },
+  {
+   "id": 490759,
+   "nome": "Flávio Gonçalves",
+   "n": 58,
+   "posicao": "Attacker",
+   "idade": 18,
+   "foto": "img/players/490759.png"
+  },
+  {
+   "id": 567965,
+   "nome": "C. Grombahi",
+   "n": 57,
+   "posicao": "Attacker",
+   "idade": 17,
+   "foto": "img/players/567965.png"
+  },
+  {
+   "id": 26965,
+   "nome": "F. Ioannidis",
+   "n": 89,
+   "posicao": "Attacker",
+   "idade": 25,
+   "foto": "img/players/26965.png"
+  },
+  {
+   "id": 404574,
+   "nome": "Luis Guilherme",
+   "n": 31,
+   "posicao": "Attacker",
+   "idade": 19,
+   "foto": "img/players/404574.png"
+  },
+  {
+   "id": 386820,
+   "nome": "Rafael Ferreira Nel",
+   "n": 90,
+   "posicao": "Attacker",
+   "idade": 20,
+   "foto": "img/players/386820.png"
+  },
+  {
+   "id": 41194,
+   "nome": "Nuno Santos",
+   "n": 11,
+   "posicao": "Attacker",
+   "idade": 30,
+   "foto": "img/players/41194.png"
+  },
+  {
+   "id": 449624,
+   "nome": "Gabriel Silva",
+   "n": 82,
+   "posicao": "Attacker",
+   "idade": 18,
+   "foto": "img/players/449624.png"
+  },
+  {
+   "id": 47237,
+   "nome": "L. Suárez",
+   "n": 97,
+   "posicao": "Attacker",
+   "idade": 28,
+   "foto": "img/players/47237.png"
+  }
+ ],
+ "equipas": {
+  "Benfica": "img/teams/211.png",
+  "FC Porto": "img/teams/212.png",
+  "Moreirense": "img/teams/215.png",
+  "Portimonense": "img/teams/216.png",
+  "SC Braga": "img/teams/217.png",
+  "Boavista": "img/teams/222.png",
+  "Chaves": "img/teams/223.png",
+  "Guimaraes": "img/teams/224.png",
+  "Rio Ave": "img/teams/226.png",
+  "Sporting CP": "img/teams/228.png",
+  "Estoril": "img/teams/230.png",
+  "Farense": "img/teams/231.png",
+  "Arouca": "img/teams/240.png",
+  "Famalicao": "img/teams/242.png",
+  "GIL Vicente": "img/teams/762.png",
+  "Vizela": "img/teams/810.png",
+  "Casa Pia": "img/teams/4716.png",
+  "Estrela": "img/teams/15130.png",
+  "AVS": "img/teams/21595.png",
+  "Feirense": "img/teams/213.png",
+  "Maritimo": "img/teams/214.png",
+  "Tondela": "img/teams/218.png",
+  "Nacional": "img/teams/225.png",
+  "Santa Clara": "img/teams/227.png",
+  "Benfica B": "img/teams/229.png",
+  "Oliveirense": "img/teams/233.png",
+  "Pacos Ferreira": "img/teams/234.png",
+  "Penafiel": "img/teams/235.png",
+  "Academico Viseu": "img/teams/238.png",
+  "FC Porto B": "img/teams/243.png",
+  "Leixoes": "img/teams/244.png",
+  "Mafra": "img/teams/245.png",
+  "União de Leiria": "img/teams/4662.png",
+  "Torreense": "img/teams/4799.png",
+  "Vilaverdense": "img/teams/4814.png",
+  "Lusitânia Lourosa": "img/teams/6358.png",
+  "CF Os Belenenses": "img/teams/17692.png"
+ }
+}

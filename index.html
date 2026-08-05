@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sporting CP</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23057a45'/%3E%3Ctext x='16' y='23' text-anchor='middle' font-family='Arial' font-size='17' font-weight='bold' fill='%23fff'%3ES%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css?v=6">
+</head>
+<body class="trancado">
+
+<!-- ============================ ACESSO ============================ -->
+<div class="acesso" id="acesso">
+  <!-- foto de fundo: põe o teu ficheiro em img/entrada.jpg.
+       Se não existir, fica só o degradê verde. -->
+  <div class="acesso__foto" id="acesso-foto"></div>
+  <div class="acesso__fundo"></div>
+  <form class="acesso__caixa" id="acesso-form" autocomplete="off">
+    <div class="acesso__emblema" id="acesso-emblema"></div>
+    <h1>SPORTING CP</h1>
+    <p class="acesso__lema">ESFORÇO, DEDICAÇÃO, DEVOÇÃO E GLÓRIA</p>
+
+    <label for="utilizador">UTILIZADOR</label>
+    <input type="text" id="utilizador" name="utilizador" autocomplete="off" spellcheck="false">
+
+    <label for="palavra">PALAVRA-PASSE</label>
+    <input type="password" id="palavra" name="palavra" autocomplete="off">
+
+    <button type="submit" class="acesso__botao">ENTRAR</button>
+    <div class="acesso__erro" id="acesso-erro"></div>
+    <label class="acesso__lembrar">
+      <input type="checkbox" id="lembrar" checked> manter a sessão iniciada
+    </label>
+  </form>
+</div>
+
+<!-- ============================ CABEÇALHO ============================ -->
+<header class="topo">
+  <div class="topo__marca">
+    <div class="emblema" id="emblema"></div>
+    <div class="marca-txt">
+      <h1>SPORTING CP</h1>
+      <span id="lema">—</span>
+    </div>
+  </div>
+
+  <div class="topo__acoes">
+    <div class="procura" id="procura-caixa">
+      <input type="search" id="procura" placeholder="Procurar notícias, jogadores…" autocomplete="off">
+      <button class="ico" id="btn-procura" title="Procurar">⌕</button>
+    </div>
+    <button class="ico" id="btn-alertas" title="Últimas">
+      <span class="sino">◔</span><i class="badge" id="badge-alertas">0</i>
+    </button>
+    <button class="ico" id="btn-conta" title="Conta">☺</button>
+    <button class="botao-login" id="btn-sair">SAIR</button>
+  </div>
+</header>
+
+<!-- ============================ NAVEGAÇÃO ============================ -->
+<nav class="menu" id="menu">
+  <button class="menu__item is-on" data-vista="inicio">INÍCIO</button>
+  <button class="menu__item" data-vista="noticias">NOTÍCIAS</button>
+  <button class="menu__item" data-vista="aominuto">AO MINUTO</button>
+  <button class="menu__item" data-vista="rumores">RUMORES</button>
+  <button class="menu__item" data-vista="equipa">EQUIPA</button>
+  <button class="menu__item" data-vista="jogos">JOGOS</button>
+  <button class="menu__item" data-vista="estatisticas">ESTATÍSTICAS</button>
+  <button class="menu__item" data-vista="classificacao">CLASSIFICAÇÃO</button>
+  <button class="menu__item" data-vista="formacao">FORMAÇÃO</button>
+  <button class="menu__item" data-vista="clube">CLUBE</button>
+  <a class="menu__item" id="menu-loja" href="#" target="_blank" rel="noopener">LOJA</a>
+  <span class="menu__estado" id="estado-dados">a ligar…</span>
+</nav>
+
+<!-- ============================ INÍCIO ============================ -->
+<main class="vista is-on" id="vista-inicio">
+
+  <div class="linha linha--topo">
+
+    <!-- AO MINUTO -->
+    <section class="cartao cartao--minuto">
+      <div class="cartao__topo">
+        <h2>AO MINUTO</h2><span class="ponto-vivo"></span>
+      </div>
+      <div class="cartao__corpo">
+        <select class="seletor" id="minuto-filtro">
+          <option value="todos">Todos os eventos</option>
+          <option value="quente">Só destaques</option>
+          <option value="mercado">Só mercado</option>
+        </select>
+        <ol class="linha-tempo" id="linha-tempo"></ol>
+        <button class="botao-largo" data-ir="aominuto">VER AO MINUTO COMPLETO</button>
+      </div>
+    </section>
+
+    <!-- DESTAQUE -->
+    <section class="cartao cartao--destaque">
+      <div class="destaque" id="destaque">
+        <div class="destaque__vazio">a carregar…</div>
+      </div>
+      <div class="pontos" id="destaque-pontos"></div>
+    </section>
+
+    <!-- PRÓXIMO JOGO + RUMORES -->
+    <div class="coluna">
+      <section class="cartao">
+        <div class="cartao__topo">
+          <h2>PRÓXIMO JOGO</h2>
+          <div class="setas">
+            <button class="seta" id="jogo-ant">‹</button>
+            <button class="seta" id="jogo-seg">›</button>
+          </div>
+        </div>
+        <div class="cartao__corpo jogo" id="proximo-jogo"></div>
+      </section>
+
+      <section class="cartao">
+        <div class="cartao__topo">
+          <h2>RUMORES</h2>
+          <button class="ver-todos" data-ir="rumores">VER TODOS</button>
+        </div>
+        <div class="cartao__corpo">
+          <ul class="lista-rumores" id="rumores-curtos"></ul>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="linha linha--meio">
+
+    <section class="cartao">
+      <div class="cartao__topo">
+        <h2>NOTÍCIAS</h2>
+        <button class="ver-todos" data-ir="noticias">VER TODAS</button>
+      </div>
+      <div class="cartao__corpo">
+        <ul class="lista-noticias" id="noticias-curtas"></ul>
+      </div>
+    </section>
+
+    <section class="cartao">
+      <div class="cartao__topo"><h2>CLASSIFICAÇÃO</h2></div>
+      <div class="cartao__corpo">
+        <table class="tabela" id="tabela-curta">
+          <thead><tr><th>#</th><th>EQUIPA</th><th>J</th><th>DG</th><th>PTS</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <button class="botao-largo" data-ir="classificacao">VER CLASSIFICAÇÃO COMPLETA</button>
+      </div>
+    </section>
+
+    <section class="cartao">
+      <div class="cartao__topo"><h2>ESTATÍSTICAS DO JOGADOR</h2></div>
+      <div class="cartao__corpo">
+        <div class="sub">MELHORES MARCADORES</div>
+        <ol class="marcadores" id="marcadores"></ol>
+        <button class="botao-largo" data-ir="estatisticas">VER TODAS AS ESTATÍSTICAS</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="linha linha--fundo">
+
+    <section class="cartao">
+      <div class="cartao__topo"><h2>ESTATÍSTICAS DA EQUIPA</h2></div>
+      <div class="cartao__corpo">
+        <div class="caixas" id="caixas-equipa"></div>
+        <button class="botao-largo" data-ir="estatisticas">VER ESTATÍSTICAS COMPLETAS</button>
+      </div>
+    </section>
+
+    <section class="cartao">
+      <div class="cartao__topo">
+        <h2>CALENDÁRIO</h2>
+        <button class="ver-todos" data-ir="jogos">VER TODOS</button>
+      </div>
+      <div class="cartao__corpo"><ul class="calendario" id="calendario"></ul></div>
+    </section>
+
+    <section class="cartao">
+      <div class="cartao__topo">
+        <h2>ÚLTIMOS RESULTADOS</h2>
+        <button class="ver-todos" data-ir="jogos">VER TODOS</button>
+      </div>
+      <div class="cartao__corpo"><ul class="resultados" id="resultados"></ul></div>
+    </section>
+  </div>
+</main>
+
+<!-- ==================== VISTAS SECUNDÁRIAS ==================== -->
+<main class="vista" id="vista-noticias">
+  <section class="cartao">
+    <div class="cartao__topo">
+      <h2>NOTÍCIAS</h2>
+      <div class="fontes" id="fontes-filtro"></div>
+    </div>
+    <div class="cartao__corpo">
+      <div class="noticias-barra">
+        <span id="noticias-conta"></span>
+        <span class="feed-estado" id="feed-estado">a ler…</span>
+      </div>
+      <ul class="lista-noticias lista-noticias--grande" id="noticias-todas"></ul>
+      <button class="botao-largo" id="mais-antigas" hidden>VER MAIS ANTIGAS</button>
+    </div>
+  </section>
+</main>
+
+<main class="vista" id="vista-aominuto">
+  <section class="cartao">
+    <div class="cartao__topo"><h2>AO MINUTO</h2><span class="ponto-vivo"></span></div>
+    <div class="cartao__corpo"><ol class="linha-tempo linha-tempo--grande" id="linha-tempo-total"></ol></div>
+  </section>
+</main>
+
+<main class="vista" id="vista-rumores">
+  <section class="cartao">
+    <div class="cartao__topo"><h2>RUMORES E MERCADO</h2></div>
+    <div class="cartao__corpo">
+      <div class="mercado" id="mercado"></div>
+      <div class="sub">NA IMPRENSA</div>
+      <ul class="lista-noticias lista-noticias--grande" id="rumores-todos"></ul>
+    </div>
+  </section>
+</main>
+
+<main class="vista" id="vista-equipa">
+  <section class="cartao">
+    <div class="cartao__topo">
+      <h2>PLANTEL</h2>
+      <div class="fontes" id="pos-filtro">
+        <button class="pilula is-on" data-pos="todos">TODOS</button>
+        <button class="pilula" data-pos="GR">GUARDA-REDES</button>
+        <button class="pilula" data-pos="DEF">DEFESAS</button>
+        <button class="pilula" data-pos="MED">MÉDIOS</button>
+        <button class="pilula" data-pos="AVA">AVANÇADOS</button>
+      </div>
+    </div>
+    <div class="cartao__corpo">
+      <div class="ficha" id="ficha"></div>
+      <div class="plantel" id="plantel"></div>
+    </div>
+  </section>
+</main>
+
+<main class="vista" id="vista-jogos">
+  <section class="cartao">
+    <div class="cartao__topo"><h2>JOGOS</h2><span class="sub-inline" id="jogos-resumo"></span></div>
+    <div class="cartao__corpo"><ul class="jogos-lista" id="jogos-lista"></ul></div>
+  </section>
+</main>
+
+<main class="vista" id="vista-estatisticas">
+  <section class="cartao">
+    <div class="cartao__topo"><h2>ESTATÍSTICAS</h2></div>
+    <div class="cartao__corpo">
+      <div class="caixas caixas--largo" id="caixas-equipa-total"></div>
+      <div class="sub">JOGADORES · presenças e golos</div>
+      <table class="tabela tabela--jogadores" id="tabela-jogadores">
+        <thead><tr><th></th><th>JOGADOR</th><th>POS</th><th>Nº</th><th>JOGOS</th><th>GOLOS</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<main class="vista" id="vista-classificacao">
+  <section class="cartao">
+    <div class="cartao__topo"><h2>CLASSIFICAÇÃO</h2><span class="sub-inline" id="tabela-nota"></span></div>
+    <div class="cartao__corpo">
+      <table class="tabela tabela--completa" id="tabela-total">
+        <thead><tr><th>#</th><th>EQUIPA</th><th>J</th><th>V</th><th>E</th><th>D</th><th>GM</th><th>GS</th><th>DG</th><th>PTS</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<main class="vista" id="vista-formacao">
+  <section class="cartao">
+    <div class="cartao__topo"><h2>FORMAÇÃO</h2></div>
+    <div class="cartao__corpo"><ul class="lista-noticias lista-noticias--grande" id="formacao-lista"></ul></div>
+  </section>
+</main>
+
+<main class="vista" id="vista-clube">
+  <section class="cartao">
+    <div class="cartao__topo"><h2>O CLUBE</h2></div>
+    <div class="cartao__corpo"><div class="clube" id="clube"></div></div>
+  </section>
+</main>
+
+<!-- ==================== LEITOR DE NOTÍCIAS ==================== -->
+<div class="leitor" id="leitor" hidden>
+  <div class="leitor__topo">
+    <div class="leitor__quem">
+      <b id="leitor-fonte">—</b>
+      <span id="leitor-titulo">—</span>
+    </div>
+    <div class="leitor__botoes">
+      <button class="leitor__btn" id="leitor-recuar" title="Recarregar">⟳</button>
+      <a class="leitor__btn" id="leitor-externo" target="_blank" rel="noopener">abrir no jornal ↗</a>
+      <button class="leitor__btn leitor__btn--x" id="leitor-fechar" title="Fechar (Esc)">✕</button>
+    </div>
+  </div>
+  <div class="leitor__carga" id="leitor-carga">a abrir o artigo…</div>
+  <iframe id="leitor-quadro" title="Artigo"
+          sandbox="allow-popups allow-popups-to-escape-sandbox"
+          referrerpolicy="no-referrer"></iframe>
+</div>
+
+<!-- o ?v= obriga o browser a ir buscar a versão nova quando estes
+     ficheiros mudam; sobe o número se alterares algum e não vires a diferença -->
+<script src="js/arte.js?v=6"></script>
+<script src="js/data.js?v=6"></script>
+<script src="js/wiki.js?v=6"></script>
+<script src="js/app.js?v=6"></script>
+</body>
+</html>

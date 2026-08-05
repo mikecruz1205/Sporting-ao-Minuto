@@ -1,0 +1,13 @@
+As fotografias que estao aqui foram descarregadas da API-Football pelo
+script atualizar_fotos.py. O nome do ficheiro e o id do jogador na API.
+
+Nao mexas nestes ficheiros a mao. Para atualizar (por exemplo depois de
+uma contratacao), corre na pasta do projeto:
+
+    python atualizar_fotos.py
+
+O script so descarrega o que falta, por isso e rapido e gasta poucos
+pedidos do limite diario da API.
+
+Os emblemas das equipas estao em ../teams/.
+O emblema do clube vai em ../crest.png (poe la o teu ficheiro).
