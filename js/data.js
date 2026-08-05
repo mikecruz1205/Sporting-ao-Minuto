@@ -22,7 +22,7 @@ const CONFIG = {
   refreshDadosMinutos: 15,    // plantel / classificação / jogos
 
   /* Onde ir buscar os feeds. O primeiro é o servidor.py local. */
-  proxies: ["/rss?url=", "https://api.allorigins.win/raw?url=", "https://corsproxy.io/?url="],
+ proxies: ["/api/rss?url=", "https://api.allorigins.win/raw?url=", "https://corsproxy.io/?url="],
   timeoutFeed: 15000,
 
   /* ---------------------------------------------------------------------
