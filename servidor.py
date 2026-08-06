@@ -75,7 +75,9 @@ class Manipulador(SimpleHTTPRequestHandler):
             self.servir_rss()
         elif self.path.startswith("/ler") or self.path.startswith("/api/ler"):
             self.servir_artigo()
-        elif self.path.startswith("/api"):
+        elif self.path.startswith("/api/api") or self.path.startswith("/api?"):
+            # /api/api e o caminho que o Vercel cria a partir de api/api.py;
+            # aceita-se tambem /api? para nao partir versoes antigas
             self.servir_api()
         elif self.path.startswith("/fundo"):
             self.servir_imagem("entrada")

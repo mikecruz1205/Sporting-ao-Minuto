@@ -4,11 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sporting CP</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23057a45'/%3E%3Ctext x='16' y='23' text-anchor='middle' font-family='Arial' font-size='17' font-weight='bold' fill='%23fff'%3ES%3C/text%3E%3C/svg%3E">
+<!-- o ícone do separador é o mesmo emblema do site (img/crest.*) -->
+<link rel="icon" href="img/crest.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=14">
+<link rel="stylesheet" href="css/style.css?v=19">
 </head>
 <body class="trancado">
 
@@ -18,23 +19,75 @@
        Se não existir, fica só o degradê verde. -->
   <div class="acesso__foto" id="acesso-foto"></div>
   <div class="acesso__fundo"></div>
-  <form class="acesso__caixa" id="acesso-form" autocomplete="off">
+  <div class="acesso__caixa">
     <div class="acesso__emblema" id="acesso-emblema"></div>
     <h1>SPORTING CP</h1>
     <p class="acesso__lema">ESFORÇO, DEDICAÇÃO, DEVOÇÃO E GLÓRIA</p>
 
-    <label for="utilizador">UTILIZADOR</label>
-    <input type="text" id="utilizador" name="utilizador" autocomplete="off" spellcheck="false">
+    <div class="acesso__abas" role="tablist">
+      <button type="button" class="acesso__aba is-on" id="aba-entrar"
+              role="tab" aria-selected="true" aria-controls="form-entrar">ENTRAR</button>
+      <button type="button" class="acesso__aba" id="aba-criar"
+              role="tab" aria-selected="false" aria-controls="form-criar">CRIAR CONTA</button>
+    </div>
 
-    <label for="palavra">PALAVRA-PASSE</label>
-    <input type="password" id="palavra" name="palavra" autocomplete="off">
+    <!-- ---------- entrar ---------- -->
+    <form class="acesso__form" id="form-entrar" role="tabpanel" aria-labelledby="aba-entrar">
+      <label for="entrar-utilizador">UTILIZADOR</label>
+      <input type="text" id="entrar-utilizador" name="username"
+             autocomplete="username" spellcheck="false" required
+             enterkeyhint="next" autocapitalize="none">
 
-    <button type="submit" class="acesso__botao">ENTRAR</button>
-    <div class="acesso__erro" id="acesso-erro"></div>
-    <label class="acesso__lembrar">
-      <input type="checkbox" id="lembrar" checked> manter a sessão iniciada
-    </label>
-  </form>
+      <label for="entrar-palavra">PALAVRA-PASSE</label>
+      <div class="campo-palavra">
+        <input type="password" id="entrar-palavra" name="current-password"
+               autocomplete="current-password" required enterkeyhint="done">
+        <button type="button" class="ver-palavra" data-alvo="entrar-palavra"
+                aria-label="Mostrar palavra-passe">👁</button>
+      </div>
+
+      <button type="submit" class="acesso__botao">ENTRAR</button>
+      <div class="acesso__erro" id="erro-entrar" role="alert"></div>
+      <label class="acesso__lembrar">
+        <input type="checkbox" id="lembrar" checked> manter a sessão iniciada
+      </label>
+      <p class="acesso__troca">Ainda não tens conta?
+        <button type="button" class="acesso__ligacao" data-aba="criar">Cria uma</button>
+      </p>
+    </form>
+
+    <!-- ---------- criar conta ---------- -->
+    <form class="acesso__form" id="form-criar" role="tabpanel" aria-labelledby="aba-criar" hidden>
+      <label for="criar-utilizador">NOME DE UTILIZADOR</label>
+      <span class="acesso__dica" id="dica-utilizador">3 a 20 caracteres · letras, números, . _ -</span>
+      <input type="text" id="criar-utilizador" name="new-username"
+             autocomplete="username" spellcheck="false" required
+             minlength="3" maxlength="20" pattern="[A-Za-z0-9._\-]{3,20}"
+             aria-describedby="dica-utilizador" enterkeyhint="next" autocapitalize="none">
+      <div class="acesso__estado" id="estado-utilizador"></div>
+
+      <label for="criar-palavra">PALAVRA-PASSE</label>
+      <span class="acesso__dica" id="dica-palavra">pelo menos 6 caracteres</span>
+      <div class="campo-palavra">
+        <input type="password" id="criar-palavra" name="new-password"
+               autocomplete="new-password" required minlength="6"
+               aria-describedby="dica-palavra" enterkeyhint="done">
+        <button type="button" class="ver-palavra" data-alvo="criar-palavra"
+                aria-label="Mostrar palavra-passe">👁</button>
+      </div>
+
+      <button type="submit" class="acesso__botao">CRIAR CONTA</button>
+      <div class="acesso__erro" id="erro-criar" role="alert"></div>
+      <p class="acesso__troca">Já tens conta?
+        <button type="button" class="acesso__ligacao" data-aba="entrar">Entra aqui</button>
+      </p>
+    </form>
+
+    <p class="acesso__nota">
+      As contas ficam guardadas só neste browser, sem servidor nenhum.
+      Não uses uma palavra-passe que tenhas noutro sítio.
+    </p>
+  </div>
 </div>
 
 <!-- ============================ CABEÇALHO ============================ -->
@@ -56,6 +109,7 @@
       <span class="sino">◔</span><i class="badge" id="badge-alertas">0</i>
     </button>
     <button class="ico" id="btn-conta" title="Conta">☺</button>
+    <span class="quem" id="quem"></span>
     <button class="botao-login" id="btn-sair">SAIR</button>
   </div>
 </header>
@@ -72,7 +126,6 @@
   <button class="menu__item" data-vista="classificacao">CLASSIFICAÇÃO</button>
   <button class="menu__item" data-vista="formacao">FORMAÇÃO</button>
   <button class="menu__item" data-vista="clube">CLUBE</button>
-  <a class="menu__item" id="menu-loja" href="#" target="_blank" rel="noopener">LOJA</a>
   <span class="menu__estado" id="estado-dados">a ligar…</span>
 </nav>
 
@@ -255,10 +308,13 @@
 
 <main class="vista" id="vista-estatisticas">
   <section class="cartao">
-    <div class="cartao__topo"><h2>ESTATÍSTICAS</h2></div>
+    <div class="cartao__topo">
+      <h2>ESTATÍSTICAS</h2>
+      <div class="fontes" id="provas-filtro"></div>
+    </div>
     <div class="cartao__corpo">
       <div class="caixas caixas--largo" id="caixas-equipa-total"></div>
-      <div class="sub">JOGADORES · presenças e golos</div>
+      <div class="sub">JOGADORES <em id="prova-nota">todas as provas</em></div>
       <table class="tabela tabela--jogadores" id="tabela-jogadores">
         <thead><tr><th></th><th>JOGADOR</th><th>POS</th><th>Nº</th><th>JOGOS</th><th>GOLOS</th></tr></thead>
         <tbody></tbody>
@@ -282,22 +338,60 @@
 <main class="vista" id="vista-formacao">
   <section class="cartao">
     <div class="cartao__topo">
-      <h2>FORMAÇÃO</h2>
-      <span class="sub-inline" id="formacao-nota">—</span>
+      <h2>A TUA FORMAÇÃO</h2>
+      <div class="head-tools">
+        <label class="escolher-desenho">
+          <span>DESENHO</span>
+          <select id="escolher-formacao"></select>
+        </label>
+        <button class="pilula" id="formacao-auto">PREENCHER</button>
+        <button class="pilula" id="formacao-limpar">LIMPAR</button>
+      </div>
     </div>
     <div class="cartao__corpo">
       <div class="formacao">
         <div class="campo" id="campo"></div>
         <div class="convocados">
-          <div class="sub">ONZE INICIAL</div>
+          <div class="sub">O TEU ONZE <em id="onze-conta">0/11</em></div>
           <ol class="onze" id="lista-titulares"></ol>
-          <div class="sub sub--banco">SUPLENTES</div>
+          <div class="sub sub--banco">RESTO DO PLANTEL</div>
           <ol class="onze onze--banco" id="lista-suplentes"></ol>
         </div>
       </div>
+      <div class="formacao__aviso" id="formacao-aviso">
+        Escolhe o desenho e carrega numa posição para pôr lá o jogador que quiseres.
+        Fica guardada na tua conta, neste browser.
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- FANTASY ---------- -->
+  <section class="cartao" style="margin-top:16px">
+    <div class="cartao__topo">
+      <h2>FANTASY</h2>
+      <span class="sub-inline" id="fantasy-nota">—</span>
+    </div>
+    <div class="cartao__corpo">
+      <div class="fantasy">
+        <div class="fantasy__total">
+          <label>OS TEUS PONTOS</label>
+          <b id="fantasy-pontos">0</b>
+          <span id="fantasy-detalhe">escolhe o teu onze</span>
+        </div>
+        <ol class="fantasy__jogadores" id="fantasy-jogadores"></ol>
+      </div>
+
+      <div class="sub sub--banco">COMO SE CONTAM OS PONTOS</div>
+      <div class="pontuacao" id="pontuacao"></div>
+
+      <div class="sub sub--banco">TOP 10 · TODAS AS CONTAS</div>
+      <ol class="ranking" id="ranking"></ol>
+
       <div class="formacao__aviso">
-        Palpite, não é a equipa oficial — o onze só é conhecido cerca de uma
-        hora antes do jogo. Editável em <b>js/data.js</b>, na secção FORMAÇÃO.
+        Só conta a época <b id="fantasy-epoca">2026/27</b> — nada de carreira nem
+        de épocas passadas. Quem não jogar, não pontua. Os números saem das
+        estatísticas oficiais e podem ser mudados em <b>js/data.js</b>, em
+        <b>FANTASY</b>. O ranking junta as contas criadas neste browser.
       </div>
     </div>
   </section>
@@ -342,30 +436,26 @@
   </section>
 </main>
 
-<!-- ==================== LEITOR DE NOTÍCIAS ==================== -->
-<div class="leitor" id="leitor" hidden>
-  <div class="leitor__topo">
-    <div class="leitor__quem">
-      <b id="leitor-fonte">—</b>
-      <span id="leitor-titulo">—</span>
+<!-- ============ ESCOLHER JOGADOR PARA UMA POSIÇÃO ============ -->
+<dialog class="escolha" id="escolha">
+  <div class="escolha__topo">
+    <div>
+      <b id="escolha-papel">POSIÇÃO</b>
+      <span id="escolha-nota">escolhe quem joga aqui</span>
     </div>
-    <div class="leitor__botoes">
-      <button class="leitor__btn" id="leitor-recuar" title="Recarregar">⟳</button>
-      <a class="leitor__btn" id="leitor-externo" target="_blank" rel="noopener">abrir no jornal ↗</a>
-      <button class="leitor__btn leitor__btn--x" id="leitor-fechar" title="Fechar (Esc)">✕</button>
-    </div>
+    <button class="leitor__btn leitor__btn--x" id="escolha-fechar" aria-label="Fechar">✕</button>
   </div>
-  <div class="leitor__carga" id="leitor-carga">a abrir o artigo…</div>
-  <iframe id="leitor-quadro" title="Artigo"
-          sandbox="allow-popups allow-popups-to-escape-sandbox"
-          referrerpolicy="no-referrer"></iframe>
-</div>
+  <input type="search" id="escolha-procura" placeholder="Procurar jogador…" autocomplete="off">
+  <div class="escolha__lista" id="escolha-lista"></div>
+  <button class="botao-largo" id="escolha-tirar">TIRAR DESTA POSIÇÃO</button>
+</dialog>
 
 <!-- o ?v= obriga o browser a ir buscar a versão nova quando estes
      ficheiros mudam; sobe o número se alterares algum e não vires a diferença -->
-<script src="js/arte.js?v=14"></script>
-<script src="js/data.js?v=14"></script>
-<script src="js/wiki.js?v=14"></script>
-<script src="js/app.js?v=14"></script>
+<script src="js/contas.js?v=19"></script>
+<script src="js/arte.js?v=19"></script>
+<script src="js/data.js?v=19"></script>
+<script src="js/wiki.js?v=19"></script>
+<script src="js/app.js?v=19"></script>
 </body>
 </html>

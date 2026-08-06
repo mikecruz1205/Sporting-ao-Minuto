@@ -131,23 +131,56 @@ const Wiki = (() => {
      Tabela "Appearances and goals":
      No. | Pos | Nat | Player | Apps(total) | Goals(total) | ...por prova
      ===================================================================== */
+  /* Nomes das provas como aparecem no Wikipédia → como queremos mostrar */
+  const PROVAS = {
+    'Primeira Liga':'Liga', 'Taça de Portugal':'Taça de Portugal',
+    'Taça da Liga':'Taça da Liga', 'Supertaça Cândido de Oliveira':'Supertaça',
+    'UEFAChampions League':'Champions', 'UEFA Champions League':'Champions',
+    'UEFAEuropa League':'Liga Europa', 'UEFA Europa League':'Liga Europa',
+    'UEFAEuropa Conference League':'Conference', 'Total':'Total'
+  };
+  const arrumaProva = p => PROVAS[p] || p.replace(/^UEFA/,'').trim();
+
   function lerEstatisticas(doc){
     const t = [...doc.querySelectorAll('table')].find(x => {
       const cab = texto(x.querySelector('tr'));
       return /Player/.test(cab) && /Total/.test(cab) && /Apps|Goals/.test(x.textContent);
     });
-    if(!t) return {};
+    if(!t) return { jogadores:{}, provas:['Total'] };
 
-    const stats = {};
-    for(const tr of t.querySelectorAll('tr')){
+    const linhas = [...t.querySelectorAll('tr')];
+
+    /* cabeçalho: as 4 primeiras colunas são nº/pos/país/jogador; as
+       restantes são provas, cada uma a ocupar duas colunas (Apps e Goals) */
+    const provas = [];
+    for(const celula of [...(linhas[0]?.children || [])]){
+      const nome = texto(celula);
+      if(/^(No\.?|Pos\.?|Nat\.?|Nation|Player)$/i.test(nome)) continue;
+      const largura = parseInt(celula.getAttribute('colspan') || '1', 10);
+      provas.push({ nome: arrumaProva(nome), colunas: largura });
+    }
+
+    const jogadores = {};
+    for(const tr of linhas){
       const c = [...tr.children].map(texto);
       if(c.length < 6) continue;
-      if(!/^\d+$|^—$|^–$/.test(c[0])) continue;      // salta cabeçalhos e "Goalkeepers"
+      if(!/^\d+$|^—$|^–$/.test(c[0])) continue;     // salta cabeçalhos e "Goalkeepers"
       const nome = c[3];
       if(!nome) continue;
-      stats[nome] = { jogos: numero(c[4]), golos: numero(c[5]) };
+
+      const porProva = {};
+      let col = 4;
+      for(const prova of provas){
+        porProva[prova.nome] = { jogos: numero(c[col]), golos: numero(c[col+1]) };
+        col += prova.colunas;
+      }
+      jogadores[nome] = {
+        jogos: porProva.Total?.jogos ?? 0,
+        golos: porProva.Total?.golos ?? 0,
+        provas: porProva
+      };
     }
-    return stats;
+    return { jogadores, provas: provas.map(p => p.nome) };
   }
 
   /* =====================================================================
@@ -252,9 +285,11 @@ const Wiki = (() => {
      ===================================================================== */
   async function sincronizarSporting(){
     const doc = await pagina(CONFIG.wiki.epocaSCP);
+    const e = lerEstatisticas(doc);
     return {
       plantel: lerPlantel(doc),
-      stats:   lerEstatisticas(doc),
+      stats:   e.jogadores,
+      provas:  e.provas,
       jogos:   lerJogos(doc)
     };
   }

@@ -13,20 +13,35 @@ python C:/Users/user/sporting-hud/servidor.py
 
 Depois **http://localhost:8123**
 
-### Entrar
+### Contas
 
-| | |
-|---|---|
-| Utilizador | `sporting` |
-| Palavra-passe | `1906` |
+Da primeira vez, o ecrã abre em **CRIAR CONTA**. Escolhes um nome de
+utilizador (3 a 20 caracteres, letras, números, `.` `_` `-`) e uma
+palavra-passe (mínimo 6). O nome tem de ser único — maiúsculas e acentos
+contam como iguais, por isso `Miguel` e `miguel` são a mesma conta. Assim que
+crias, entras logo.
 
-Com «manter a sessão iniciada» só é pedido uma vez. O botão **SAIR**, no canto
-superior direito, termina a sessão.
+Depois é só **ENTRAR**, com a opção **manter a sessão iniciada**:
 
-É um cadeado de cortesia, do lado do browser — evita que qualquer pessoa que
-abra a página entre, mas não é segurança a sério: quem souber ver o
-código-fonte passa à frente. Para mudar os dados, edita `UTILIZADOR` e
-`PALAVRA` no início do `js/app.js`.
+- ligada → ficas dentro mesmo depois de fechar o browser
+- desligada → a sessão acaba quando fechas o separador
+
+O botão **SAIR**, no canto superior direito, termina a sessão. O teu nome
+aparece ao lado.
+
+**Isto vive todo no browser.** Não há servidor nenhum a validar contas: ficam
+guardadas neste computador, neste browser. A palavra-passe **não** é guardada —
+guarda-se `SHA-256(sal + palavra-passe)`, com um sal diferente por conta, para
+não ficar lá escrita em claro. Ainda assim, quem souber abrir as ferramentas de
+programador mexe nisto à vontade.
+
+**Não uses aqui uma palavra-passe que uses noutro sítio.**
+
+> **As contas são por site.** O browser guarda os dados separados por endereço,
+> por isso uma conta criada em `http://localhost:8123` **não existe** no site
+> publicado, e vice-versa. Não é avaria: em cada endereço tens de criar a conta
+> uma vez. Para as contas serem as mesmas em todo o lado era preciso uma base de
+> dados no servidor.
 
 Tem de ser este servidor (não `python -m http.server`, nem duplo-clique no
 `index.html`). É o `servidor.py` que vai buscar os feeds dos jornais — o browser,
@@ -64,15 +79,10 @@ Para acrescentar um jornal: mete o RSS em `CONFIG.feeds` (`js/data.js`) **e** o
 domínio em `DOMINIOS_PERMITIDOS`, nos dois sítios — `servidor.py` (local) e
 `api/rss.py` (Vercel).
 
-### Ler notícias sem sair do site
+### Abrir notícias
 
-Carregar numa notícia abre-a **dentro do site**, num leitor próprio. O
-`servidor.py` vai buscar o artigo, tira-lhe os scripts e serve-o — é por isso
-que funciona mesmo com jornais que normalmente não deixam ser mostrados dentro
-de outra página. O botão **abrir no jornal ↗** leva ao site original, e `Esc`
-fecha o leitor.
-
-Se algum jornal não abrir, aparece uma mensagem com a ligação para o site.
+Carregar numa notícia abre-a **num separador novo do browser**, no site do
+jornal.
 
 ### Ficha de jogo
 
@@ -112,25 +122,54 @@ As fotos de quem já saiu vêm do `atualizar_fotos.py`, que também descarrega o
 ex-jogadores listados em `EX_JOGADORES` (id da API confirmado um a um). Quem não
 estiver lá aparece com as iniciais.
 
-### Onze provável (aba FORMAÇÃO)
+### A tua formação (aba FORMAÇÃO)
 
-Campo à esquerda com as onze camisolas na posição certa (número e nome por
-baixo), lista dos titulares e do banco à direita. Carregar numa camisola ou
-num nome abre a ficha desse jogador.
+Montas o teu onze:
 
-**É um palpite, não é a equipa oficial** — o onze só se sabe cerca de uma hora
-antes do jogo. Edita-se em `js/data.js`, na secção `FORMACAO`:
+1. **DESENHO** — escolhe entre 4-3-3, 4-2-3-1, 3-4-3, 3-4-2-1, 3-5-2, 4-4-2 e
+   5-3-2. Ao trocar, quem já lá estava mantém-se nas posições equivalentes.
+2. **Carrega numa posição** (no campo ou na lista) e escolhe o jogador. A lista
+   mostra primeiro quem joga nessa posição e tem procura por nome.
+3. Se escolheres alguém que já estava noutra posição, os dois **trocam** de
+   sítio — nunca fica ninguém repetido.
+4. **PREENCHER** completa os buracos sozinho, **LIMPAR** esvazia tudo.
 
-```js
-{ nome:"Gonçalo Inácio", papel:"DC", x:50, y:78, capitao:true }
-```
+Fica guardada na tua conta, neste browser, e volta como a deixaste. Cada conta
+tem a sua. À direita ficam o teu onze e o resto do plantel.
 
-`x` é a largura (0 esquerda → 100 direita) e `y` a profundidade
-(0 baliza adversária → 100 nossa baliza). Os números das camisolas **não** se
-escrevem aqui: são procurados no plantel pelo nome, por isso mantêm-se certos
-sozinhos. Se puseres alguém que já saiu, a página avisa-te por baixo do campo.
+Da primeira vez aparece já preenchida com a sugestão que está em
+`FORMACAO.titulares`, no `js/data.js` — a partir daí manda a tua.
+
+Os desenhos disponíveis estão em `FORMACOES`, no mesmo ficheiro; cada posição é
+`{papel, x, y}`, com `x` de 0 (esquerda) a 100 (direita) e `y` de 0 (baliza
+adversária) a 100 (a nossa).
 
 Por baixo ficam as notícias da formação (escalões jovens).
+
+### Estatísticas por competição
+
+A aba **ESTATÍSTICAS** tem um filtro por prova: **TODAS**, **LIGA**,
+**TAÇA DE PORTUGAL**, **TAÇA DA LIGA** e a **competição europeia** em que o
+Sporting estiver (Champions, Liga Europa ou Conference). As provas não estão
+escritas à mão — são lidas do cabeçalho da tabela do Wikipédia, por isso se o
+clube passar a jogar outra prova ela aparece sozinha.
+
+### Fantasy
+
+Na aba **FORMAÇÃO**, por baixo do campo. Pontua o teu onze com estatísticas
+reais e faz o ranking das contas deste browser (top 10).
+
+Cada jogador vale:
+
+- **golos da época** × peso da posição — 10 para guarda-redes, 6 defesas,
+  5 médios, 4 avançados
+- **jogos da época** × 2
+- **carreira 2022-24** (golos, assistências, jogos da API) a pesar 25%, para
+  o jogo ter substância antes de a época arrancar
+- **prémio de nota** para quem tem média acima de 6.5
+
+O **capitão** vale 1,5× — carregas no jogador na lista para lhe pores a
+braçadeira. Os pesos estão todos em `FANTASY`, no `js/data.js`.
 
 ### Carreira do jogador
 
@@ -163,10 +202,18 @@ esta pasta nem a partilhes tal como está.
 
 ### Emblema do clube
 
-Está a ser usado o **emblema de 2026** (`img/crest.svg`), o atual.
+Guarda a imagem em `img/` com o nome **`crest`** — qualquer extensão serve
+(`.png`, `.jpg`, `.webp`…) e ganha ao `crest.svg` que já lá está.
 
-Para pôr outro: guarda-o em `img/` com o nome **`crest`** — qualquer extensão
-serve (`.png`, `.jpg`, `.webp`…) e ganha ao `.svg` que já lá está.
+O mesmo ficheiro é usado em **três sítios ao mesmo tempo**: cabeçalho do site,
+ecrã de entrada e ícone do separador do browser. Trocas um ficheiro, mudam os
+três.
+
+> **No site publicado:** as imagens são procuradas pelo caminho do ficheiro
+> (`img/crest.png`, `img/entrada.jpg`…) e não por uma rota do servidor, por
+> isso funcionam tanto em local como no Vercel. Mas **só aparecem se o ficheiro
+> estiver no repositório** — grava a imagem, faz `git add` e `git push`. Se a
+> tiveres só no teu disco, o site publicado não a tem.
 
 ### Fotografia do ecrã de entrada
 

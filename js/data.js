@@ -169,6 +169,32 @@ const VALOR_MERCADO = {
 const EPOCAS_API = [2024, 2023, 2022];
 
 /* =========================================================================
+   FANTASY — quanto vale cada coisa
+   -------------------------------------------------------------------------
+   Um golo de um guarda-redes ou de um defesa vale muito mais do que um golo
+   de um avançado, como é hábito neste tipo de jogo. Muda os números à
+   vontade: a pontuação é recalculada logo a seguir.
+   ========================================================================= */
+const FANTASY = {
+  /* SÓ CONTA A ÉPOCA 2026/27. Nada de carreira, nada de épocas passadas:
+     quem não jogar esta época não pontua. */
+
+  /* pontos por golo, conforme a posição de quem marca */
+  golo: { GR:10, DEF:6, MED:5, AVA:4 },
+
+  /* pontos por cada jogo disputado */
+  jogo: { GR:2, DEF:2, MED:2, AVA:2 },
+
+  /* multiplicador do capitão */
+  capitao: 1.5,
+
+  /* como é explicado na página */
+  rotulos: {
+    GR:'Guarda-redes', DEF:'Defesas', MED:'Médios', AVA:'Avançados'
+  }
+};
+
+/* =========================================================================
    ONZE PROVÁVEL E BANCO
    -------------------------------------------------------------------------
    ISTO É UM PALPITE, não é a equipa oficial — só se sabe uma hora antes do
@@ -181,9 +207,69 @@ const EPOCAS_API = [2024, 2023, 2022];
      x = 0 (esquerda) … 100 (direita)
      y = 0 (baliza adversária) … 100 (nossa baliza)
    ========================================================================= */
+/* =========================================================================
+   DESENHOS TÁCTICOS disponíveis em «A TUA FORMAÇÃO»
+   x = 0 (esquerda) … 100 (direita)   ·   y = 0 (baliza adversária) … 100 (a nossa)
+   ========================================================================= */
+const FORMACOES = {
+  "4-3-3": [
+    {papel:"GR",x:50,y:91},
+    {papel:"LE",x:12,y:72},{papel:"DC",x:36,y:78},{papel:"DC",x:64,y:78},{papel:"LD",x:88,y:72},
+    {papel:"MC",x:30,y:55},{papel:"MC",x:50,y:61},{papel:"MC",x:70,y:55},
+    {papel:"EXT",x:14,y:26},{papel:"PL",x:50,y:15},{papel:"EXT",x:86,y:26}
+  ],
+  "4-2-3-1": [
+    {papel:"GR",x:50,y:91},
+    {papel:"LE",x:12,y:72},{papel:"DC",x:36,y:78},{papel:"DC",x:64,y:78},{papel:"LD",x:88,y:72},
+    {papel:"MDC",x:36,y:60},{papel:"MDC",x:64,y:60},
+    {papel:"EXT",x:13,y:38},{papel:"MO",x:50,y:36},{papel:"EXT",x:87,y:38},
+    {papel:"PL",x:50,y:13}
+  ],
+  "3-4-3": [
+    {papel:"GR",x:50,y:91},
+    {papel:"DC",x:26,y:77},{papel:"DC",x:50,y:80},{papel:"DC",x:74,y:77},
+    {papel:"ALA",x:10,y:55},{papel:"MC",x:37,y:58},{papel:"MC",x:63,y:58},{papel:"ALA",x:90,y:55},
+    {papel:"EXT",x:16,y:26},{papel:"PL",x:50,y:15},{papel:"EXT",x:84,y:26}
+  ],
+  "3-4-2-1": [
+    {papel:"GR",x:50,y:91},
+    {papel:"DC",x:26,y:76},{papel:"DC",x:50,y:79},{papel:"DC",x:74,y:76},
+    {papel:"ALA",x:10,y:54},{papel:"MC",x:37,y:58},{papel:"MC",x:63,y:58},{papel:"ALA",x:90,y:54},
+    {papel:"MO",x:32,y:32},{papel:"MO",x:68,y:32},
+    {papel:"PL",x:50,y:13}
+  ],
+  "3-5-2": [
+    {papel:"GR",x:50,y:91},
+    {papel:"DC",x:26,y:78},{papel:"DC",x:50,y:81},{papel:"DC",x:74,y:78},
+    {papel:"ALA",x:9,y:55},{papel:"MC",x:32,y:58},{papel:"MC",x:50,y:63},{papel:"MC",x:68,y:58},{papel:"ALA",x:91,y:55},
+    {papel:"PL",x:37,y:17},{papel:"PL",x:63,y:17}
+  ],
+  "4-4-2": [
+    {papel:"GR",x:50,y:91},
+    {papel:"LE",x:12,y:74},{papel:"DC",x:36,y:79},{papel:"DC",x:64,y:79},{papel:"LD",x:88,y:74},
+    {papel:"EXT",x:12,y:50},{papel:"MC",x:37,y:55},{papel:"MC",x:63,y:55},{papel:"EXT",x:88,y:50},
+    {papel:"PL",x:37,y:18},{papel:"PL",x:63,y:18}
+  ],
+  "5-3-2": [
+    {papel:"GR",x:50,y:91},
+    {papel:"ALA",x:8,y:66},{papel:"DC",x:28,y:80},{papel:"DC",x:50,y:83},{papel:"DC",x:72,y:80},{papel:"ALA",x:92,y:66},
+    {papel:"MC",x:30,y:54},{papel:"MC",x:50,y:58},{papel:"MC",x:70,y:54},
+    {papel:"PL",x:37,y:20},{papel:"PL",x:63,y:20}
+  ]
+};
+
+/* que posições do plantel encaixam em cada papel (só para sugerir primeiro) */
+const PAPEL_GRUPO = {
+  GR:"GR", DC:"DEF", LE:"DEF", LD:"DEF", ALA:"DEF",
+  MDC:"MED", MC:"MED", MO:"MED",
+  EXT:"AVA", PL:"AVA"
+};
+
+/* Onze de arranque sugerido — é o que aparece antes de mexeres em nada.
+   A partir do momento em que escolheres jogadores, fica guardada a tua. */
 const FORMACAO = {
   desenho: "3-4-2-1",
-  nota: "onze provável para a 1.ª jornada",
+  nota: "sugestão de arranque",
 
   titulares: [
     { nome:"Rui Silva",          papel:"GR",     x:50, y:91 },

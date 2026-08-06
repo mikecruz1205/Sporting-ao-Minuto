@@ -22,82 +22,188 @@ let vistaAtual = 'inicio';
 let filtroFonte = 'todas';
 let filtroPos = 'todos';
 let procuraTexto = '';
+let provaAtiva = 'Total';
+let PROVAS_DISPONIVEIS = ['Total'];
 
 /* =========================================================================
    1. EMBLEMAS
    ========================================================================= */
 /* Ordem de preferência: o teu ficheiro → o emblema oficial descarregado
    pela API → o escudo desenhado em código. */
-/* /emblema serve qualquer img/crest.* — se puseres um ficheiro teu (.png,
-   .jpg, .webp) ganha ao crest.svg de 2026 que já lá está. */
-const EMBLEMAS_SCP = ['/emblema', 'img/teams/228.png'];
+/* -------------------------------------------------------------------------
+   Imagens que podem estar em vários sítios.
+   O /emblema e o /fundo só existem no servidor.py local — no site publicado
+   (Vercel) não há essas rotas. Por isso experimentam-se os ficheiros
+   diretamente e fica-se pelo primeiro que carregar. Assim funciona nos dois.
+   ------------------------------------------------------------------------- */
+const EMBLEMAS_SCP = [
+  'img/crest.png', 'img/crest.jpg', 'img/crest.jpeg', 'img/crest.webp',
+  '/emblema', 'img/crest.svg', 'img/teams/228.png'
+];
+const FUNDOS_ENTRADA = [
+  'img/entrada.jpg', 'img/entrada.jpeg', 'img/entrada.png',
+  'img/entrada.webp', '/fundo'
+];
 
-function montarEmblema(){
+/* devolve o primeiro caminho que carregue, ou null */
+function primeiraImagem(caminhos){
+  return new Promise(resolve => {
+    let i = 0;
+    const tentar = () => {
+      if(i >= caminhos.length) return resolve(null);
+      const caminho = caminhos[i++];
+      const img = new Image();
+      img.onload  = () => resolve(caminho);
+      img.onerror = tentar;
+      img.src = caminho;
+    };
+    tentar();
+  });
+}
+
+async function montarEmblema(){
   const alvos = [$('#emblema'), $('#acesso-emblema')].filter(Boolean);
   alvos.forEach(a => a.innerHTML = EMBLEMA_SVG);
 
-  const tentar = i => {
-    if(i >= EMBLEMAS_SCP.length) return;
+  const caminho = await primeiraImagem(EMBLEMAS_SCP);
+  if(!caminho) return;
+
+  alvos.forEach(a => {
     const img = new Image();
-    img.onload = () => alvos.forEach(a => {
-      const c = img.cloneNode();
-      c.alt = 'Sporting CP';
-      a.innerHTML = '';
-      a.appendChild(c);
-    });
-    img.onerror = () => tentar(i + 1);
-    img.src = EMBLEMAS_SCP[i];
-  };
-  tentar(0);
+    img.src = caminho;
+    img.alt = 'Sporting CP';
+    a.innerHTML = '';
+    a.appendChild(img);
+  });
+
+  /* o ícone do separador segue o mesmo ficheiro */
+  const icone = document.querySelector('link[rel="icon"]');
+  if(icone) icone.href = caminho;
+}
+
+async function montarFundoEntrada(){
+  const caminho = await primeiraImagem(FUNDOS_ENTRADA);
+  if(!caminho) return;
+  const foto = $('#acesso-foto');
+  if(!foto) return;
+  foto.style.backgroundImage = `url('${caminho}')`;
+  foto.classList.add('tem');
+  $('#acesso')?.classList.add('com-foto');
 }
 
 /* =========================================================================
-   1b. ACESSO
-   Nota: isto é um cadeado de cortesia, do lado do browser. Serve para não
-   entrar qualquer pessoa que abra a página, não é segurança a sério —
-   quem souber ver o código-fonte passa à frente.
+   1b. ACESSO — registo e entrada (ver js/contas.js)
    ========================================================================= */
-const UTILIZADOR = 'sporting';
-const PALAVRA    = '1906';
-const SESSAO     = 'scp-sessao';
+let UTILIZADOR_ATUAL = null;
 
 function abrirSite(animar){
   const ecra = $('#acesso');
+  if(!ecra) return;
   if(animar){
     ecra.classList.add('fechado');
-    setTimeout(() => { ecra.remove(); }, 520);
+    setTimeout(() => ecra.remove(), 520);
   }else{
     ecra.remove();
   }
   document.body.classList.remove('trancado');
+  $('#quem').textContent = UTILIZADOR_ATUAL ? '@' + UTILIZADOR_ATUAL : '';
+}
+
+function treme(){
+  const caixa = $('.acesso__caixa');
+  caixa.classList.remove('treme');
+  void caixa.offsetWidth;
+  caixa.classList.add('treme');
+}
+
+function mostrarAba(qual){
+  const entrar = qual === 'entrar';
+  $('#form-entrar').hidden = !entrar;
+  $('#form-criar').hidden  = entrar;
+  $('#aba-entrar').classList.toggle('is-on', entrar);
+  $('#aba-criar').classList.toggle('is-on', !entrar);
+  $('#aba-entrar').setAttribute('aria-selected', entrar);
+  $('#aba-criar').setAttribute('aria-selected', !entrar);
+  setTimeout(() => $(entrar ? '#entrar-utilizador' : '#criar-utilizador').focus(), 60);
 }
 
 function ligarAcesso(){
-  if(localStorage.getItem(SESSAO) === 'aberta'){ abrirSite(false); return; }
+  const sessao = Contas.sessao();
+  if(sessao){
+    UTILIZADOR_ATUAL = sessao.nome;
+    abrirSite(false);
+    return;
+  }
 
-  const form = $('#acesso-form');
-  form.addEventListener('submit', e => {
-    e.preventDefault();
-    const u = $('#utilizador').value.trim().toLowerCase();
-    const p = $('#palavra').value.trim();
+  /* sem contas ainda? abre logo no registo */
+  if(Contas.quantas() === 0) mostrarAba('criar');
 
-    if(u === UTILIZADOR && p === PALAVRA){
-      if($('#lembrar').checked) localStorage.setItem(SESSAO, 'aberta');
-      abrirSite(true);
-      return;
-    }
-    const caixa = $('.acesso__caixa');
-    caixa.classList.remove('treme');
-    void caixa.offsetWidth;                       // reinicia a animação
-    caixa.classList.add('treme');
-    $('#acesso-erro').textContent = !u || !p
-      ? 'Preenche os dois campos.'
-      : 'Utilizador ou palavra-passe errados.';
-    $('#palavra').value = '';
-    $('#palavra').focus();
+  $('#aba-entrar').addEventListener('click', () => mostrarAba('entrar'));
+  $('#aba-criar').addEventListener('click',  () => mostrarAba('criar'));
+  $$('.acesso__ligacao').forEach(b =>
+    b.addEventListener('click', () => mostrarAba(b.dataset.aba)));
+
+  /* olho para ver a palavra-passe */
+  $$('.ver-palavra').forEach(b => b.addEventListener('click', () => {
+    const campo = document.getElementById(b.dataset.alvo);
+    const escondida = campo.type === 'password';
+    campo.type = escondida ? 'text' : 'password';
+    b.setAttribute('aria-label', escondida ? 'Esconder palavra-passe' : 'Mostrar palavra-passe');
+    b.classList.toggle('is-on', escondida);
+    campo.focus();
+  }));
+
+  /* nome livre ou já usado, à medida que se escreve */
+  const campoNovo = $('#criar-utilizador');
+  campoNovo.addEventListener('input', () => {
+    const v = campoNovo.value.trim();
+    const estado = $('#estado-utilizador');
+    if(!v){ estado.textContent = ''; estado.className = 'acesso__estado'; return; }
+    const erro = Contas.validarUtilizador(v);
+    if(erro){ estado.textContent = erro; estado.className = 'acesso__estado mau'; return; }
+    const usado = Contas.existe(v);
+    estado.textContent = usado ? 'Já está a ser usado.' : 'Está livre.';
+    estado.className = 'acesso__estado ' + (usado ? 'mau' : 'bom');
   });
 
-  setTimeout(() => $('#utilizador').focus(), 300);
+  /* ---- criar conta ---- */
+  $('#form-criar').addEventListener('submit', async e => {
+    e.preventDefault();
+    const erroEl = $('#erro-criar');
+    erroEl.textContent = '';
+
+    const r = await Contas.registar(campoNovo.value, $('#criar-palavra').value);
+    if(r.erro){ erroEl.textContent = r.erro; treme(); return; }
+
+    /* conta criada: entra já, sem obrigar a escrever outra vez */
+    await Contas.entrar(campoNovo.value, $('#criar-palavra').value, true);
+    UTILIZADOR_ATUAL = r.nome;
+    abrirSite(true);
+    carregarFormacaoGuardada();
+  });
+
+  /* ---- entrar ---- */
+  $('#form-entrar').addEventListener('submit', async e => {
+    e.preventDefault();
+    const erroEl = $('#erro-entrar');
+    erroEl.textContent = '';
+
+    const r = await Contas.entrar($('#entrar-utilizador').value,
+                                  $('#entrar-palavra').value,
+                                  $('#lembrar').checked);
+    if(r.erro){
+      erroEl.textContent = r.erro;
+      $('#entrar-palavra').value = '';
+      $('#entrar-palavra').focus();
+      treme();
+      return;
+    }
+    UTILIZADOR_ATUAL = r.nome;
+    abrirSite(true);
+    carregarFormacaoGuardada();
+  });
+
+  setTimeout(() => $(Contas.quantas() ? '#entrar-utilizador' : '#criar-utilizador').focus(), 300);
 }
 
 /* nomes como os escrevemos → nomes na base de emblemas da API */
@@ -473,49 +579,10 @@ function pintarLinhaTempo(){
    O servidor.py vai buscar o artigo, tira-lhe os scripts e devolve-o.
    Se o jornal não deixar, fica o botão para abrir no site original.
    ========================================================================= */
-function abrirLeitor(link, titulo, fonte){
-  const leitor = $('#leitor');
-  $('#leitor-titulo').textContent = titulo || '';
-  $('#leitor-fonte').textContent = fonte || 'ARTIGO';
-  $('#leitor-externo').href = link;
-  $('#leitor-carga').classList.remove('escondido');
-  $('#leitor-quadro').src = '/ler?url=' + encodeURIComponent(link);
-  leitor.hidden = false;
-  document.body.style.overflow = 'hidden';
-}
-
-function fecharLeitor(){
-  $('#leitor').hidden = true;
-  $('#leitor-quadro').src = 'about:blank';
-  document.body.style.overflow = '';
-}
-
-function ligarLeitor(){
-  /* qualquer ligação de notícia passa a abrir aqui dentro */
-  document.addEventListener('click', e => {
-    const a = e.target.closest('a[href^="http"]');
-    if(!a) return;
-    if(!a.closest('.lista-noticias, .lista-rumores, .linha-tempo, .dst')) return;
-    e.preventDefault();
-
-    const cartao = a.closest('li, article');
-    const titulo = a.querySelector('h4, b')?.textContent
-                || cartao?.querySelector('h3, h4, b')?.textContent || a.textContent;
-    const fonte = cartao?.querySelector('.cat i, .ev__fonte, .dst__meta')?.textContent
-                || 'ARTIGO';
-    abrirLeitor(a.href, titulo.trim(), fonte.replace(/^·\s*/,'').trim());
-  });
-
-  $('#leitor-fechar').addEventListener('click', fecharLeitor);
-  $('#leitor-recuar').addEventListener('click', () => {
-    $('#leitor-quadro').src = $('#leitor-quadro').src;
-  });
-  $('#leitor-quadro').addEventListener('load', () =>
-    $('#leitor-carga').classList.add('escondido'));
-  addEventListener('keydown', e => {
-    if(e.key === 'Escape' && !$('#leitor').hidden) fecharLeitor();
-  });
-}
+/* As notícias abrem num separador novo do browser, no site do jornal.
+   O leitor dentro do site foi tirado — os links já levam target="_blank",
+   por isso aqui só se garante que nada intercepta o clique. */
+function ligarLeitor(){ /* nada a fazer */ }
 
 /* =========================================================================
    4. JOGOS
@@ -758,7 +825,7 @@ async function buscarCarreira(id){
   for(const epoca of EPOCAS_API){
     try{
       const p = `players?id=${id}&season=${epoca}`;
-      const r = await fetch('/api?p=' + encodeURIComponent(p), {cache:'no-store'});
+      const r = await fetch('/api/api?p=' + encodeURIComponent(p), {cache:'no-store'});
       if(!r.ok) continue;
       const d = await r.json();
       const jog = d.response?.[0];
@@ -952,6 +1019,164 @@ function desenharRadar(attrs){
 /* =========================================================================
    7. ESTATÍSTICAS
    ========================================================================= */
+/* =========================================================================
+   7c. FANTASY — pontuação do teu onze e ranking das contas
+   ========================================================================= */
+const RANKING = 'scp-ranking-v1';
+
+/* Pontos de um jogador — SÓ com o que fez na época 2026/27.
+   Enquanto não houver jogos, ninguém pontua: é essa a ideia. */
+function pontosJogador(p){
+  const g = p.posGrupo;
+  const s = p.stats || {jogos:0, golos:0};
+
+  const porGolos = s.golos * (FANTASY.golo[g] ?? 4);
+  const porJogos = s.jogos * (FANTASY.jogo[g] ?? 2);
+
+  return {
+    total: porGolos + porJogos,
+    porGolos, porJogos,
+    golos: s.golos, jogos: s.jogos
+  };
+}
+
+function pintarFantasy(){
+  const alvo = $('#fantasy-jogadores');
+  if(!alvo) return;
+
+  const escolhidos = meuOnze.map((nome, i) => {
+    const p = nome ? acharJogador(nome) : null;
+    if(!p) return null;
+    return { p, i, capitao: i === capitaoIdx, pts: pontosJogador(p) };
+  }).filter(Boolean);
+
+  if(!escolhidos.length){
+    alvo.innerHTML = '<li class="vazio">Monta o teu onze aqui em cima para teres pontos.</li>';
+    $('#fantasy-pontos').textContent = '0';
+    $('#fantasy-detalhe').textContent = 'escolhe o teu onze';
+    $('#fantasy-nota').textContent = '';
+    pintarTabelaPontos();
+    pintarRanking();
+    return;
+  }
+
+  /* Sem capitão escolhido, fica quem mais pontua e não é guarda-redes.
+     Só quando já houver pontos — antes disso a braçadeira sairia à sorte. */
+  const haPontos = escolhidos.some(e => e.pts.total > 0);
+  if(haPontos && (capitaoIdx < 0 || !meuOnze[capitaoIdx])){
+    const melhor = escolhidos
+      .filter(e => e.p.posGrupo !== 'GR')
+      .sort((a,b) => b.pts.total - a.pts.total)[0] || escolhidos[0];
+    capitaoIdx = melhor.i;
+    escolhidos.forEach(e => e.capitao = e.i === capitaoIdx);
+    guardarFormacao();
+  }
+
+  const total = escolhidos.reduce((s,e) =>
+    s + Math.round(e.pts.total * (e.capitao ? FANTASY.capitao : 1)), 0);
+
+  $('#fantasy-pontos').textContent = total.toLocaleString('pt-PT');
+  $('#fantasy-detalhe').textContent = haPontos
+    ? `${escolhidos.length}/11 escolhidos · ${desenhoAtual}`
+    : `${escolhidos.length}/11 escolhidos · ainda sem jogos oficiais`;
+  $('#fantasy-nota').textContent = UTILIZADOR_ATUAL ? '@' + UTILIZADOR_ATUAL : '';
+
+  alvo.innerHTML = [...escolhidos]
+    .sort((a,b) => b.pts.total - a.pts.total || (a.i - b.i))
+    .map(e => `
+      <li class="${e.capitao ? 'e-capitao' : ''}" data-i="${e.i}"
+          title="Carrega para pôr a braçadeira">
+        <img src="${e.p.foto}" alt="" loading="lazy"
+             onerror="this.onerror=null;this.src='${avatarJogador(e.p)}'">
+        <span class="fj__txt">
+          <b>${ALCUNHAS[e.p.nome] || e.p.nome}${e.capitao ? ' <i class="fj__c">C</i>' : ''}</b>
+          <span>${FORMACOES[desenhoAtual][e.i].papel} ·
+            ${e.pts.jogos} jogos (${e.pts.porJogos}) ·
+            ${e.pts.golos} golos (${e.pts.porGolos})</span>
+        </span>
+        <b class="fj__pts">${Math.round(e.pts.total * (e.capitao ? FANTASY.capitao : 1))}</b>
+      </li>`).join('');
+
+  $$('#fantasy-jogadores li[data-i]').forEach(li =>
+    li.addEventListener('click', () => {
+      capitaoIdx = +li.dataset.i;
+      guardarFormacao();
+      pintarFantasy();
+    }));
+
+  pintarTabelaPontos();
+  guardarPontuacao(total, escolhidos.length);
+  pintarRanking();
+}
+
+/* tabela visível com as regras da pontuação */
+function pintarTabelaPontos(){
+  const alvo = $('#pontuacao');
+  if(!alvo) return;
+  $('#fantasy-epoca').textContent = CONFIG.epoca;
+
+  const grupos = ['GR','DEF','MED','AVA'];
+  alvo.innerHTML = `
+    <table class="tabela tabela--pontos">
+      <thead>
+        <tr><th>POSIÇÃO</th><th>POR GOLO</th><th>POR JOGO</th></tr>
+      </thead>
+      <tbody>
+        ${grupos.map(g => `<tr>
+          <td>${FANTASY.rotulos[g]}</td>
+          <td><b>${FANTASY.golo[g]}</b></td>
+          <td>${FANTASY.jogo[g]}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    <ul class="pontuacao__notas">
+      <li><b>Capitão ×${String(FANTASY.capitao).replace('.',',')}</b> — carrega
+          num jogador da lista acima para lhe pores a braçadeira.</li>
+      <li>Um golo de um guarda-redes vale ${FANTASY.golo.GR} pontos; o mesmo golo
+          de um avançado vale ${FANTASY.golo.AVA}.</li>
+      <li>Contam jogos e golos em <b>provas oficiais</b> — os particulares de
+          pré-época não entram.</li>
+    </ul>`;
+}
+
+function guardarPontuacao(total, quantos){
+  if(!UTILIZADOR_ATUAL) return;
+  let tabela = {};
+  try{ tabela = JSON.parse(localStorage.getItem(RANKING) || '{}'); }catch(e){}
+  tabela[Contas.idDe(UTILIZADOR_ATUAL)] = {
+    nome: UTILIZADOR_ATUAL, pontos: total, jogadores: quantos,
+    desenho: desenhoAtual, quando: Date.now()
+  };
+  try{ localStorage.setItem(RANKING, JSON.stringify(tabela)); }catch(e){}
+}
+
+function pintarRanking(){
+  let tabela = {};
+  try{ tabela = JSON.parse(localStorage.getItem(RANKING) || '{}'); }catch(e){}
+
+  /* junta entradas repetidas do mesmo nome (pode haver restos de versões
+     antigas da chave) ficando com a melhor pontuação */
+  const porNome = new Map();
+  Object.values(tabela).forEach(e => {
+    const id = Contas.idDe(e.nome);
+    if(!porNome.has(id) || porNome.get(id).pontos < e.pontos) porNome.set(id, e);
+  });
+
+  const lista = [...porNome.values()]
+    .sort((a,b) => b.pontos - a.pontos)
+    .slice(0,10);
+
+  $('#ranking').innerHTML = lista.length
+    ? lista.map((e,i) => `
+        <li class="${chaveNome(e.nome) === chaveNome(UTILIZADOR_ATUAL || '') ? 'eu' : ''}">
+          <span class="rk__pos ${i<3?'rk__pos--podio':''}">${i+1}</span>
+          <span class="rk__nome">@${e.nome}</span>
+          <span class="rk__eq">${e.desenho} · ${e.jogadores}/11</span>
+          <b>${e.pontos.toLocaleString('pt-PT')}</b>
+        </li>`).join('')
+    : '<li class="vazio">Ainda ninguém pontuou.</li>';
+}
+
 function pintarEstatisticas(){
   const marcadores = PLANTEL.filter(p => p.stats.golos > 0)
                             .sort((a,b) => b.stats.golos - a.stats.golos).slice(0,5);
@@ -961,32 +1186,106 @@ function pintarEstatisticas(){
         <span>${ALCUNHAS[p.nome] || p.nome}</span><b>${p.stats.golos}</b></li>`).join('')
     : `<li class="vazio">Sem golos registados — a época começa a 8 de agosto.</li>`;
 
-  const feitos = JOGOS.filter(jogado);
-  const r = feitos.map(resultadoSCP);
-  const gm = r.reduce((s,x)=>s+x.nos,0), gs = r.reduce((s,x)=>s+x.deles,0);
-  const v = r.filter(x=>x.r==='V').length;
-  const cs = r.filter(x=>x.deles===0).length;
-  const n = feitos.length;
+  /* caixas da equipa a partir de um conjunto de jogos */
+  const caixasDe = jogos => {
+    const r = jogos.map(resultadoSCP);
+    const gm = r.reduce((s,x)=>s+x.nos,0), gs = r.reduce((s,x)=>s+x.deles,0);
+    const v = r.filter(x=>x.r==='V').length;
+    const cs = r.filter(x=>x.deles===0).length;
+    const n = jogos.length;
+    return [
+      ['JOGOS',            n,   ''],
+      ['GOLOS<br>MARCADOS',gm,  n ? (gm/n).toFixed(1)+' por jogo' : ''],
+      ['GOLOS<br>SOFRIDOS',gs,  n ? (gs/n).toFixed(1)+' por jogo' : ''],
+      ['VITÓRIAS',         n ? v + '/' + n : '0', n ? Math.round(v/n*100)+'%' : ''],
+      ['SEM<br>SOFRER',    cs,  n ? Math.round(cs/n*100)+'%' : '']
+    ].map(([l,val,sub]) =>
+      `<div class="caixa"><label>${l}</label><b>${val}</b><i>${sub}</i></div>`).join('');
+  };
 
-  const caixas = [
-    ['GOLOS<br>MARCADOS', gm, n ? (gm/n).toFixed(1)+' por jogo' : ''],
-    ['GOLOS<br>SOFRIDOS', gs, n ? (gs/n).toFixed(1)+' por jogo' : ''],
-    ['VITÓRIAS', v + '/' + n, n ? Math.round(v/n*100)+'%' : ''],
-    ['SEM<br>SOFRER', cs, n ? Math.round(cs/n*100)+'%' : '']
-  ];
-  const html = caixas.map(([l,val,sub]) =>
-    `<div class="caixa"><label>${l}</label><b>${val}</b><i>${sub}</i></div>`).join('');
-  $('#caixas-equipa').innerHTML = html;
-  $('#caixas-equipa-total').innerHTML = html;
+  /* página inicial: tudo o que já se jogou, pré-época incluída */
+  const todosFeitos = JOGOS.filter(jogado);
+  $('#caixas-equipa').innerHTML = todosFeitos.length
+    ? caixasDe(todosFeitos)
+    : `<div class="vazio" style="grid-column:1/-1">Ainda não há jogos.</div>`;
 
-  $('#tabela-jogadores tbody').innerHTML = [...PLANTEL]
-    .sort((a,b) => b.stats.golos - a.stats.golos || b.stats.jogos - a.stats.jogos)
-    .map(p => `<tr>
-      <td><img src="${p.foto}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${avatarJogador(p)}'"></td>
-      <td><b>${ALCUNHAS[p.nome] || p.nome}</b></td>
-      <td>${p.pos}</td><td>${p.n ?? '–'}</td>
-      <td>${p.stats.jogos}</td><td><b>${p.stats.golos}</b></td>
-    </tr>`).join('');
+  /* ---- filtro por competição ---- */
+  const temPreEpoca = JOGOS.some(j => jogado(j) && provaDoJogo(j) === 'Pré-época');
+  const opcoes = [...PROVAS_DISPONIVEIS, ...(temPreEpoca ? ['Pré-época'] : [])];
+
+  const caixa = $('#provas-filtro');
+  if(caixa && caixa.dataset.n !== opcoes.join('|')){
+    caixa.dataset.n = opcoes.join('|');
+    caixa.innerHTML = opcoes.map(nome =>
+      `<button class="pilula ${nome===provaAtiva?'is-on':''}" data-prova="${nome}">
+         ${nome === 'Total' ? 'TODAS AS OFICIAIS' : nome.toUpperCase()}
+       </button>`).join('');
+    $$('#provas-filtro .pilula').forEach(b => b.addEventListener('click', () => {
+      provaAtiva = b.dataset.prova;
+      caixa.dataset.n = '';
+      pintarEstatisticas();
+    }));
+  }
+
+  /* jogos da prova escolhida — "Total" = todas as oficiais, sem pré-época */
+  const jogosDaProva = JOGOS.filter(jogado).filter(j => {
+    const prova = provaDoJogo(j);
+    return provaAtiva === 'Total' ? prova !== 'Pré-época' : prova === provaAtiva;
+  });
+
+  $('#caixas-equipa-total').innerHTML = jogosDaProva.length
+    ? caixasDe(jogosDaProva)
+    : `<div class="vazio" style="grid-column:1/-1">
+         Ainda não há jogos ${provaAtiva === 'Total' ? 'oficiais' : 'nesta prova'} —
+         por isso não há golos nem resultados para mostrar.
+       </div>`;
+
+  /* ---- tabela de jogadores ---- */
+  $('#prova-nota').textContent = provaAtiva === 'Total'
+    ? 'todas as provas oficiais' : provaAtiva;
+
+  /* a pré-época não tem estatísticas individuais publicadas */
+  if(provaAtiva === 'Pré-época'){
+    $('#tabela-jogadores tbody').innerHTML =
+      `<tr><td colspan="6" class="vazio">
+        Os particulares de pré-época não têm estatísticas individuais publicadas.
+      </td></tr>`;
+    return;
+  }
+
+  const daProva = p => (provaAtiva === 'Total' || !p.stats.provas)
+    ? { jogos: p.stats.jogos, golos: p.stats.golos }
+    : (p.stats.provas[provaAtiva] || { jogos:0, golos:0 });
+
+  const linhas = PLANTEL.map(p => ({ p, s: daProva(p) }))
+    .sort((a,b) => b.s.golos - a.s.golos || b.s.jogos - a.s.jogos);
+
+  const alguem = linhas.some(l => l.s.jogos || l.s.golos);
+  $('#tabela-jogadores tbody').innerHTML = alguem
+    ? linhas.map(({p,s}) => `<tr>
+        <td><img src="${p.foto}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${avatarJogador(p)}'"></td>
+        <td><b>${ALCUNHAS[p.nome] || p.nome}</b></td>
+        <td>${p.pos}</td><td>${p.n ?? '–'}</td>
+        <td>${s.jogos}</td><td><b>${s.golos}</b></td>
+      </tr>`).join('')
+    : `<tr><td colspan="6" class="vazio">
+         Ninguém jogou ${provaAtiva === 'Total' ? 'em provas oficiais' : 'nesta prova'} até agora,
+         por isso ninguém tem golos.
+       </td></tr>`;
+}
+
+/* a que prova pertence um jogo do calendário */
+function provaDoJogo(j){
+  const c = (j.comp || '').toUpperCase();
+  if(/^PR[ÉE]/.test(c))            return 'Pré-época';
+  if(c.includes('TAÇA DA LIGA'))   return 'Taça da Liga';
+  if(c.includes('TAÇA DE PORTUGAL'))return 'Taça de Portugal';
+  if(c.includes('SUPERTAÇA'))      return 'Supertaça';
+  if(c.includes('CHAMPIONS'))      return 'Champions';
+  if(c.includes('EUROPA'))         return 'Liga Europa';
+  if(c.includes('CONFERENCE'))     return 'Conference';
+  if(c.includes('LIGA'))           return 'Liga';
+  return 'Outra';
 }
 
 /* =========================================================================
@@ -1020,78 +1319,258 @@ function nomeCurto(nome){
   return repetido ? `${partes[0][0]}. ${ultimo}` : ultimo;
 }
 
+/* ---------- estado da tua formação ---------- */
+let desenhoAtual = FORMACAO.desenho;
+let meuOnze = [];              // um nome (ou null) por posição do desenho
+let posicaoAberta = -1;
+let capitaoIdx = -1;      // posicao do capitao no onze (x1.5 na fantasy)
+
+/* Contas.idDe mantem os numeros do nome — o chaveNome() do app deita-os
+   fora, e "mike1"/"mike2" acabavam a partilhar a mesma formacao. */
+const chaveFormacao = () =>
+  'scp-formacao-' + (UTILIZADOR_ATUAL ? Contas.idDe(UTILIZADOR_ATUAL) : 'convidado');
+
+function guardarFormacao(){
+  try{
+    localStorage.setItem(chaveFormacao(),
+      JSON.stringify({ desenho: desenhoAtual, onze: meuOnze, capitao: capitaoIdx }));
+  }catch(e){}
+}
+
+function carregarFormacaoGuardada(){
+  let guardada = null;
+  try{ guardada = JSON.parse(localStorage.getItem(chaveFormacao()) || 'null'); }
+  catch(e){}
+
+  if(guardada && FORMACOES[guardada.desenho]){
+    desenhoAtual = guardada.desenho;
+    meuOnze = FORMACOES[desenhoAtual].map((_, i) => guardada.onze?.[i] ?? null);
+    capitaoIdx = Number.isInteger(guardada.capitao) ? guardada.capitao : -1;
+  }else{
+    /* primeira vez: arranca com a sugestão de data.js */
+    desenhoAtual = FORMACOES[FORMACAO.desenho] ? FORMACAO.desenho : Object.keys(FORMACOES)[0];
+    meuOnze = FORMACOES[desenhoAtual].map((slot, i) =>
+      FORMACAO.titulares[i]?.nome ?? null);
+  }
+  pintarFormacao();
+}
+
+/* muda de desenho tentando manter quem já lá está, posição a posição */
+function mudarDesenho(novo){
+  if(!FORMACOES[novo]) return;
+  const antigos = meuOnze.slice();
+  const antesSlots = FORMACOES[desenhoAtual];
+  desenhoAtual = novo;
+
+  const usados = new Set();
+  meuOnze = FORMACOES[novo].map(slot => {
+    /* procura alguém do desenho anterior com o mesmo papel e ainda livre */
+    const i = antesSlots.findIndex((s, k) =>
+      s.papel === slot.papel && antigos[k] && !usados.has(k));
+    if(i >= 0){ usados.add(i); return antigos[i]; }
+    return null;
+  });
+
+  /* quem sobrou tenta entrar nas posições vazias do mesmo grupo */
+  const sobra = antigos.filter((n, k) => n && !usados.has(k));
+  FORMACOES[novo].forEach((slot, i) => {
+    if(meuOnze[i]) return;
+    const j = sobra.findIndex(n => {
+      const p = acharJogador(n);
+      return p && p.posGrupo === PAPEL_GRUPO[slot.papel] && !meuOnze.includes(n);
+    });
+    if(j >= 0) meuOnze[i] = sobra.splice(j, 1)[0];
+  });
+
+  guardarFormacao();
+  pintarFormacao();
+}
+
+/* preenche os buracos com quem estiver livre e der para a posição */
+function preencherAuto(){
+  FORMACOES[desenhoAtual].forEach((slot, i) => {
+    if(meuOnze[i]) return;
+    const grupo = PAPEL_GRUPO[slot.papel];
+    const candidato =
+      PLANTEL.find(p => p.posGrupo === grupo && !meuOnze.includes(p.nome)) ||
+      PLANTEL.find(p => !meuOnze.includes(p.nome) && p.posGrupo !== 'GR');
+    if(candidato) meuOnze[i] = candidato.nome;
+  });
+  guardarFormacao();
+  pintarFormacao();
+}
+
+/* ---------- desenhar ---------- */
 function pintarFormacao(){
   const alvo = $('#campo');
   if(!alvo) return;
 
-  $('#formacao-nota').textContent = `${FORMACAO.desenho} · ${FORMACAO.nota}`;
+  const slots = FORMACOES[desenhoAtual] || [];
+  if(meuOnze.length !== slots.length)
+    meuOnze = slots.map((_, i) => meuOnze[i] ?? null);
 
-  /* ---- campo ---- */
+  /* selector de desenho */
+  const sel = $('#escolher-formacao');
+  if(sel && sel.options.length !== Object.keys(FORMACOES).length){
+    sel.innerHTML = Object.keys(FORMACOES)
+      .map(d => `<option value="${d}">${d}</option>`).join('');
+  }
+  if(sel) sel.value = desenhoAtual;
+
+  const escolhidos = meuOnze.filter(Boolean).length;
+  $('#onze-conta').textContent = `${escolhidos}/11`;
+
+  /* campo */
   alvo.innerHTML = `
     <div class="campo__relva"></div>
     <svg class="campo__linhas" viewBox="0 0 100 150" preserveAspectRatio="none">
-      <rect x="2" y="2" width="96" height="146" fill="none" stroke="#ffffff" stroke-width="0.7" opacity=".75"/>
-      <line x1="2" y1="75" x2="98" y2="75" stroke="#ffffff" stroke-width="0.7" opacity=".75"/>
-      <circle cx="50" cy="75" r="13" fill="none" stroke="#ffffff" stroke-width="0.7" opacity=".75"/>
-      <circle cx="50" cy="75" r="1" fill="#ffffff" opacity=".75"/>
-      <rect x="24" y="2" width="52" height="22" fill="none" stroke="#ffffff" stroke-width="0.7" opacity=".75"/>
-      <rect x="38" y="2" width="24" height="9"  fill="none" stroke="#ffffff" stroke-width="0.7" opacity=".75"/>
-      <rect x="24" y="126" width="52" height="22" fill="none" stroke="#ffffff" stroke-width="0.7" opacity=".75"/>
-      <rect x="38" y="139" width="24" height="9"  fill="none" stroke="#ffffff" stroke-width="0.7" opacity=".75"/>
-      <path d="M40 24 a13 13 0 0 0 20 0" fill="none" stroke="#ffffff" stroke-width="0.7" opacity=".75"/>
-      <path d="M40 126 a13 13 0 0 1 20 0" fill="none" stroke="#ffffff" stroke-width="0.7" opacity=".75"/>
+      <rect x="2" y="2" width="96" height="146" fill="none" stroke="#fff" stroke-width="0.7" opacity=".75"/>
+      <line x1="2" y1="75" x2="98" y2="75" stroke="#fff" stroke-width="0.7" opacity=".75"/>
+      <circle cx="50" cy="75" r="13" fill="none" stroke="#fff" stroke-width="0.7" opacity=".75"/>
+      <circle cx="50" cy="75" r="1" fill="#fff" opacity=".75"/>
+      <rect x="24" y="2" width="52" height="22" fill="none" stroke="#fff" stroke-width="0.7" opacity=".75"/>
+      <rect x="38" y="2" width="24" height="9" fill="none" stroke="#fff" stroke-width="0.7" opacity=".75"/>
+      <rect x="24" y="126" width="52" height="22" fill="none" stroke="#fff" stroke-width="0.7" opacity=".75"/>
+      <rect x="38" y="139" width="24" height="9" fill="none" stroke="#fff" stroke-width="0.7" opacity=".75"/>
+      <path d="M40 24 a13 13 0 0 0 20 0" fill="none" stroke="#fff" stroke-width="0.7" opacity=".75"/>
+      <path d="M40 126 a13 13 0 0 1 20 0" fill="none" stroke="#fff" stroke-width="0.7" opacity=".75"/>
     </svg>
-    ${FORMACAO.titulares.map((t,i) => {
-      const p = acharJogador(t.nome);
-      const gr = t.papel === 'GR';
-      return `<div class="posicao" style="left:${t.x}%; top:${t.y}%; animation-delay:${i*.05}s"
-                   data-nome="${p ? p.nome : t.nome}" title="${t.nome} · ${t.papel}">
-        <div class="posicao__camisola">${camisolaSVG(p?.n ?? '', gr ? 'gr' : 'campo')}</div>
-        <span class="posicao__nome">${nomeCurto(t.nome)}${t.capitao ? ' <i>(C)</i>' : ''}</span>
-      </div>`;
+    ${slots.map((slot, i) => {
+      const nome = meuOnze[i];
+      const p = nome ? acharJogador(nome) : null;
+      const gr = slot.papel === 'GR';
+
+      if(!p){
+        return `<button class="posicao posicao--vazia" data-i="${i}"
+                     style="left:${slot.x}%; top:${slot.y}%; animation-delay:${i*.04}s"
+                     title="Escolher ${slot.papel}">
+          <span class="posicao__vazia"><i>+</i></span>
+          <span class="posicao__nome posicao__nome--papel">${slot.papel}</span>
+        </button>`;
+      }
+      return `<button class="posicao" data-i="${i}"
+                   style="left:${slot.x}%; top:${slot.y}%; animation-delay:${i*.04}s"
+                   title="${p.nome} · ${slot.papel} — carrega para trocar">
+        <span class="posicao__camisola">${camisolaSVG(p.n ?? '', gr ? 'gr' : 'campo')}</span>
+        <span class="posicao__nome">${nomeCurto(p.nome)}</span>
+      </button>`;
     }).join('')}`;
 
-  $$('#campo .posicao').forEach(el => el.addEventListener('click', () => {
-    const p = PLANTEL.find(x => x.nome === el.dataset.nome);
-    if(!p) return;
-    irPara('equipa');
-    mostrarFicha(p);
-    $$('.jog').forEach(b => b.classList.toggle('is-on', b.dataset.nome === p.nome));
-  }));
+  $$('#campo .posicao').forEach(el =>
+    el.addEventListener('click', () => abrirEscolha(+el.dataset.i)));
 
-  /* ---- listas à direita ---- */
-  const linha = (nome, papel) => {
-    const p = acharJogador(nome);
-    return `<li data-nome="${p ? p.nome : ''}">
-      <span class="onze__n">${p?.n ?? '–'}</span>
-      <span class="onze__nome">${ALCUNHAS[p?.nome] || nome}</span>
-      <span class="onze__papel">${papel || p?.pos || ''}</span>
+  /* listas à direita */
+  $('#lista-titulares').innerHTML = slots.map((slot, i) => {
+    const p = meuOnze[i] ? acharJogador(meuOnze[i]) : null;
+    return `<li class="${p ? '' : 'onze--vazio'}" data-i="${i}">
+      <span class="onze__n">${p?.n ?? '·'}</span>
+      <span class="onze__nome">${p ? (ALCUNHAS[p.nome] || p.nome) : 'por escolher'}</span>
+      <span class="onze__papel">${slot.papel}</span>
     </li>`;
-  };
+  }).join('');
 
-  $('#lista-titulares').innerHTML =
-    FORMACAO.titulares.map(t => linha(t.nome, t.papel + (t.capitao ? ' · C' : ''))).join('');
-  $('#lista-suplentes').innerHTML =
-    FORMACAO.suplentes.map(n => linha(n, '')).join('');
+  $$('#lista-titulares li').forEach(li =>
+    li.addEventListener('click', () => abrirEscolha(+li.dataset.i)));
 
-  $$('.onze li').forEach(li => li.addEventListener('click', () => {
-    const p = PLANTEL.find(x => x.nome === li.dataset.nome);
-    if(!p) return;
-    irPara('equipa');
-    mostrarFicha(p);
-    $$('.jog').forEach(b => b.classList.toggle('is-on', b.dataset.nome === p.nome));
-  }));
+  const fora = PLANTEL.filter(p => !meuOnze.includes(p.nome));
+  $('#lista-suplentes').innerHTML = fora.map(p => `
+    <li data-nome="${p.nome}">
+      <span class="onze__n">${p.n ?? '–'}</span>
+      <span class="onze__nome">${ALCUNHAS[p.nome] || p.nome}</span>
+      <span class="onze__papel">${p.pos}</span>
+    </li>`).join('') || '<li class="onze--vazio"><span class="onze__nome">ninguém de fora</span></li>';
 
-  /* avisa se algum nome já não existe no plantel */
-  const emFalta = [...FORMACAO.titulares.map(t => t.nome), ...FORMACAO.suplentes]
-                    .filter(n => !acharJogador(n));
-  const aviso = $('.formacao__aviso');
-  if(aviso && emFalta.length){
-    aviso.innerHTML += `<br><b style="color:var(--amarelo)">Já não estão no plantel:
-      ${emFalta.join(', ')}</b> — corrige em js/data.js.`;
-  }
+  $$('#lista-suplentes li[data-nome]').forEach(li =>
+    li.addEventListener('click', () => {
+      const p = PLANTEL.find(x => x.nome === li.dataset.nome);
+      if(!p) return;
+      irPara('equipa');
+      mostrarFicha(p);
+      $$('.jog').forEach(b => b.classList.toggle('is-on', b.dataset.nome === p.nome));
+    }));
+
+  pintarFantasy();
 }
 
+/* ---------- escolher quem joga numa posição ---------- */
+function abrirEscolha(i){
+  posicaoAberta = i;
+  const slot = FORMACOES[desenhoAtual][i];
+  const dlg = $('#escolha');
+
+  $('#escolha-papel').textContent = slot.papel;
+  $('#escolha-nota').textContent = meuOnze[i]
+    ? 'está lá ' + meuOnze[i]
+    : 'escolhe quem joga aqui';
+  $('#escolha-tirar').hidden = !meuOnze[i];
+  $('#escolha-procura').value = '';
+
+  listarCandidatos('');
+  dlg.showModal();
+  setTimeout(() => $('#escolha-procura').focus(), 50);
+}
+
+function listarCandidatos(procura){
+  const slot = FORMACOES[desenhoAtual][posicaoAberta];
+  const grupo = PAPEL_GRUPO[slot.papel];
+  const q = semAcentos(procura);
+
+  /* primeiro os da posição certa, depois os restantes */
+  const ordenado = [...PLANTEL].sort((a,b) => {
+    const pa = a.posGrupo === grupo ? 0 : 1;
+    const pb = b.posGrupo === grupo ? 0 : 1;
+    return pa - pb || (a.n ?? 999) - (b.n ?? 999);
+  }).filter(p => !q || semAcentos(p.nome + ' ' + p.pos).includes(q));
+
+  $('#escolha-lista').innerHTML = ordenado.map(p => {
+    const onde = meuOnze.indexOf(p.nome);
+    const jaJoga = onde >= 0 && onde !== posicaoAberta;
+    return `<button class="cand ${p.posGrupo === grupo ? 'cand--certo' : ''}"
+                 data-nome="${p.nome}">
+      <img src="${p.foto}" alt="" loading="lazy"
+           onerror="this.onerror=null;this.src='${avatarJogador(p)}'">
+      <span class="cand__txt">
+        <b>${ALCUNHAS[p.nome] || p.nome}</b>
+        <span>${p.pos} · ${p.nac} · ${p.stats.golos} golos</span>
+      </span>
+      <span class="cand__n">${p.n ?? '–'}</span>
+      ${jaJoga ? `<span class="cand__aviso">já joga a ${FORMACOES[desenhoAtual][onde].papel}</span>` : ''}
+    </button>`;
+  }).join('') || '<div class="vazio">Ninguém com esse nome.</div>';
+
+  $$('#escolha-lista .cand').forEach(b => b.addEventListener('click', () => {
+    const nome = b.dataset.nome;
+    const onde = meuOnze.indexOf(nome);
+    /* se já jogava noutro sítio, trocam de posição */
+    if(onde >= 0 && onde !== posicaoAberta) meuOnze[onde] = meuOnze[posicaoAberta];
+    meuOnze[posicaoAberta] = nome;
+    guardarFormacao();
+    pintarFormacao();
+    $('#escolha').close();
+  }));
+}
+
+function ligarEscolha(){
+  const dlg = $('#escolha');
+  $('#escolha-fechar').addEventListener('click', () => dlg.close());
+  $('#escolha-procura').addEventListener('input', e => listarCandidatos(e.target.value));
+  $('#escolha-tirar').addEventListener('click', () => {
+    meuOnze[posicaoAberta] = null;
+    guardarFormacao();
+    pintarFormacao();
+    dlg.close();
+  });
+  /* clicar fora fecha */
+  dlg.addEventListener('click', e => { if(e.target === dlg) dlg.close(); });
+
+  $('#escolher-formacao').addEventListener('change', e => mudarDesenho(e.target.value));
+  $('#formacao-auto').addEventListener('click', preencherAuto);
+  $('#formacao-limpar').addEventListener('click', () => {
+    meuOnze = meuOnze.map(() => null);
+    guardarFormacao();
+    pintarFormacao();
+  });
+}
 /* =========================================================================
    8. MERCADO E CLUBE
    ========================================================================= */
@@ -1247,16 +1726,19 @@ async function sincronizar(){
   }catch(e){ falhas.push('classificação'); }
 
   try{
-    const { plantel, stats, jogos } = await Wiki.sincronizarSporting();
+    const { plantel, stats, provas, jogos } = await Wiki.sincronizarSporting();
+
+    if(provas?.length) PROVAS_DISPONIVEIS = provas;
 
     if(plantel.length){
       PLANTEL = plantel.map(p => {
         const chave = Object.keys(stats).find(k => chaveNome(k) === chaveNome(p.nome));
-        return {...p, stats: stats[chave] || {jogos:0, golos:0}, idade:null};
+        return {...p, stats: stats[chave] || {jogos:0, golos:0, provas:{}}, idade:null};
       });
       ligarFotos();
       pintarPlantel();
-      pintarFormacao();
+      /* só agora há plantel a sério para pôr no campo */
+      carregarFormacaoGuardada();
       /* estes dois usam as fotos do plantel, por isso repintam-se agora */
       pintarMercado();
       pintarClube();
@@ -1298,7 +1780,6 @@ async function arranque(){
   ligarAcesso();
   ligarLeitor();
   $('#lema').textContent = CONFIG.lema;
-  $('#menu-loja').href = CONFIG.lojaUrl;
   CLUBE.treinador = CONFIG.treinador;
 
   /* fotos e emblemas descarregados por atualizar_fotos.py */
@@ -1315,15 +1796,11 @@ async function arranque(){
 
   pintarMercado(); pintarClube(); pintarTabela();
   pintarProximoJogo(); pintarCalendario(); pintarResultados();
-  pintarJogosTodos(); pintarPlantel(); pintarEstatisticas(); pintarFormacao();
+  pintarJogosTodos(); pintarPlantel(); pintarEstatisticas();
+  carregarFormacaoGuardada();
+  ligarEscolha();
 
-  /* fotografia do ecrã de entrada: qualquer img/entrada.* serve */
-  const foto = new Image();
-  foto.onload = () => {
-    $('#acesso-foto')?.classList.add('tem');
-    $('#acesso')?.classList.add('com-foto');
-  };
-  foto.src = '/fundo';
+  montarFundoEntrada();
 
   /* mostra já o arquivo guardado, enquanto os feeds respondem */
   if(lerArquivo()) pintarNoticias();
@@ -1376,7 +1853,7 @@ async function arranque(){
   $('#btn-conta').addEventListener('click', () => irPara('clube'));
 
   $('#btn-sair').addEventListener('click', () => {
-    localStorage.removeItem(SESSAO);
+    Contas.sair();
     location.reload();
   });
 
