@@ -60,6 +60,12 @@ const CONFIG = {
 
   palavrasQuentes: /oficial|confirmad|les[ãa]o|golo|hat-?trick|expuls|resciso?|apresentad/i,
 
+  /* categorias usadas nos filtros da homepage e nos cartões */
+  categorias: ['EQUIPA PRINCIPAL','MERCADO','FORMAÇÃO','FEMININO','MODALIDADES','DESTAQUE'],
+  filtroFeminino: /feminin[ao]s?|equipa feminina/i,
+  filtroModalidades: /futsal|andebol|atletismo|voleibol|h[óo]quei|nata[çc][ãa]o|basquetebol|r[ûu]gbi|ciclismo|t[ée]nis|judo|xadrez|modalidades/i,
+  filtroVideo: /v[íi]deo|assiste|em imagens|highlights|resumo do jogo|declara[çc][õo]es em v/i,
+
   wiki: {
     api:      "https://en.wikipedia.org/w/api.php",
     epocaSCP: "2026–27 Sporting CP season",

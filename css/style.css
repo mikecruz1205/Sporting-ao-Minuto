@@ -3,25 +3,8 @@
    Fundo escuro, cartões, acento verde. Layout igual ao painel de referência.
    ========================================================================= */
 
-:root{
-  --fundo:        #0b0d0c;
-  --fundo-2:      #101312;
-  --cartao:       #141817;
-  --cartao-topo:  #171d1a;
-  --linha:        #232a26;
-  --verde:        #0a9d5f;
-  --verde-claro:  #2fd98a;
-  --verde-escuro: #063d26;
-  --texto:        #e6ece9;
-  --texto-2:      #9aa8a1;
-  --texto-3:      #64726b;
-  --amarelo:      #f2c14e;
-  --vermelho:     #e05252;
-  --raio:         6px;
-
-  --f-tit: 'Barlow Condensed', 'Arial Narrow', sans-serif;
-  --f-ui:  'Inter', system-ui, sans-serif;
-}
+/* As cores, escalas e tipos de letra estão em css/base.css, que carrega
+   antes deste ficheiro. Aqui fica só o layout e as vistas. */
 
 *{ box-sizing:border-box; margin:0; padding:0; }
 

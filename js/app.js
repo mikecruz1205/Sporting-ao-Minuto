@@ -62,7 +62,7 @@ function primeiraImagem(caminhos){
 }
 
 async function montarEmblema(){
-  const alvos = [$('#emblema'), $('#acesso-emblema')].filter(Boolean);
+  const alvos = [$('#emblema'), $('#acesso-emblema'), $('#emblema-rodape')].filter(Boolean);
   alvos.forEach(a => a.innerHTML = EMBLEMA_SVG);
 
   const caminho = await primeiraImagem(EMBLEMAS_SCP);
@@ -270,7 +270,12 @@ function limparTexto(html){
                      .replace(/\s+/g,' ').trim();
 }
 
+/* A ordem importa: a primeira que bater é a que fica. Feminino e
+   modalidades vêm à frente para não serem engolidos pelo "mercado". */
 function classificar(n){
+  const t = n.titulo + ' ' + (n.resumo || '');
+  if(CONFIG.filtroFeminino.test(t))        return 'FEMININO';
+  if(CONFIG.filtroModalidades.test(t))     return 'MODALIDADES';
   if(CONFIG.filtroFormacao.test(n.titulo)) return 'FORMAÇÃO';
   if(CONFIG.filtroRumores.test(n.titulo))  return 'MERCADO';
   if(CONFIG.palavrasQuentes.test(n.titulo))return 'DESTAQUE';
@@ -442,6 +447,149 @@ function noticiasFiltradas(){
   return l;
 }
 
+/* =========================================================================
+   3c. HOMEPAGE — hero, últimas, mercado, vídeos, mais lidas
+   ========================================================================= */
+const LIDAS = 'scp-lidas-v1';
+let categoriaHome = 'todas';
+
+/* conta as aberturas de cada notícia, para a lista "mais lidas" */
+function registarLeitura(link, titulo, fonte){
+  try{
+    const t = JSON.parse(localStorage.getItem(LIDAS) || '{}');
+    const e = t[link] || { link, titulo, fonte, vezes: 0 };
+    e.vezes++; e.quando = Date.now(); e.titulo = titulo; e.fonte = fonte;
+    t[link] = e;
+    /* não deixar crescer para sempre */
+    const todas = Object.values(t).sort((a,b) => b.quando - a.quando).slice(0,120);
+    localStorage.setItem(LIDAS, JSON.stringify(
+      Object.fromEntries(todas.map(x => [x.link, x]))));
+  }catch(e){}
+}
+
+function pintarHome(){
+  const lista = noticiasFiltradas();
+
+  /* ---- hero ---- */
+  const alvoHero = $('#hero');
+  const principal = escolherPrincipal(lista);
+  if(alvoHero){
+    alvoHero.innerHTML = NOTICIAS.length
+      ? Componentes.hero(principal, procuraTexto)
+      : Componentes.esqueletoHero();
+  }
+
+  /* ---- filtros de categoria ---- */
+  pintarFiltrosCategoria();
+
+  /* ---- últimas ---- */
+  const alvoUltimas = $('#ultimas');
+  if(alvoUltimas){
+    const restantes = lista.filter(n => n !== principal)
+                           .filter(n => categoriaHome === 'todas' || n.categoria === categoriaHome)
+                           .slice(0,8);
+    alvoUltimas.innerHTML = !NOTICIAS.length
+      ? Componentes.esqueletoCartao(5)
+      : restantes.length
+        ? restantes.map(n => Componentes.cartaoNoticia(n, {destaque: procuraTexto})).join('')
+        : Componentes.vazio('Nada nesta categoria',
+            'Experimenta outro filtro — as notícias entram de minuto a minuto.', '◎');
+  }
+
+  /* ---- mercado ---- */
+  const alvoMercado = $('#mercado-home');
+  if(alvoMercado){
+    const mercado = NOTICIAS.filter(n => n.categoria === 'MERCADO').slice(0,4);
+    alvoMercado.innerHTML = !NOTICIAS.length
+      ? Componentes.esqueletoCartao(3)
+      : mercado.length
+        ? mercado.map(n => Componentes.cartaoNoticia(n, {modo:'grelha'})).join('')
+        : Componentes.vazio('Mercado calmo', 'Sem movimentações na imprensa neste momento.', '⇄');
+  }
+
+  /* ---- vídeos ---- */
+  const alvoVideos = $('#videos');
+  if(alvoVideos){
+    const videos = NOTICIAS.filter(n => CONFIG.filtroVideo.test(n.titulo + ' ' + n.resumo)).slice(0,4);
+    alvoVideos.closest('.seccao').hidden = NOTICIAS.length > 0 && videos.length === 0;
+    alvoVideos.innerHTML = !NOTICIAS.length
+      ? Componentes.esqueletoCartao(2)
+      : videos.map(n => Componentes.cartaoNoticia(n, {modo:'grelha'})).join('');
+  }
+
+  /* ---- mais lidas ---- */
+  pintarMaisLidas();
+}
+
+/* Qual é a notícia principal.
+   Não é só a mais recente: uma notícia quente (oficial, lesão, golo) das
+   últimas horas vale mais do que uma notícia morna acabada de sair. */
+function escolherPrincipal(lista){
+  const comFoto = lista.filter(n => n.imagem);
+  if(!comFoto.length) return lista[0];
+
+  const agora = Date.now();
+  const pontos = n => {
+    const horas = (agora - n.data.getTime()) / 3600000;
+    let p = Math.max(0, 48 - horas);                 // quanto mais fresca, melhor
+    if(n.categoria === 'DESTAQUE') p += 30;
+    if(n.categoria === 'MERCADO')  p += 10;
+    if((n.resumo || '').length > 80) p += 5;         // tem resumo a sério
+    return p;
+  };
+  return [...comFoto].sort((a,b) => pontos(b) - pontos(a))[0];
+}
+
+function pintarFiltrosCategoria(){
+  const alvo = $('#filtros-categoria');
+  if(!alvo || !NOTICIAS.length) return;
+
+  const contas = {};
+  NOTICIAS.forEach(n => contas[n.categoria] = (contas[n.categoria] || 0) + 1);
+  const cats = ['todas', ...CONFIG.categorias.filter(c => contas[c])];
+
+  const chave = cats.map(c => c + (contas[c]||0)).join('|') + categoriaHome;
+  if(alvo.dataset.chave === chave) return;
+  alvo.dataset.chave = chave;
+
+  alvo.innerHTML = cats.map(c => `
+    <button class="filtro-cat ${c===categoriaHome?'is-on':''}" data-cat="${c}"
+            aria-pressed="${c===categoriaHome}">
+      ${c === 'todas' ? 'Todas' : c}
+      ${c !== 'todas' ? `<span class="filtro-cat__n">${contas[c]}</span>` : ''}
+    </button>`).join('');
+
+  $$('#filtros-categoria .filtro-cat').forEach(b =>
+    b.addEventListener('click', () => {
+      categoriaHome = b.dataset.cat;
+      alvo.dataset.chave = '';
+      pintarHome();
+    }));
+}
+
+function pintarMaisLidas(){
+  const alvo = $('#mais-lidas');
+  if(!alvo) return;
+
+  let guardadas = [];
+  try{
+    guardadas = Object.values(JSON.parse(localStorage.getItem(LIDAS) || '{}'))
+      .sort((a,b) => b.vezes - a.vezes || b.quando - a.quando).slice(0,5);
+  }catch(e){}
+
+  if(guardadas.length){
+    alvo.innerHTML = guardadas.map((e,i) => Componentes.itemCompacto({
+      titulo: e.titulo, link: e.link, fonte: e.fonte, data: new Date(e.quando)
+    }, i+1)).join('');
+    return;
+  }
+
+  /* ainda ninguém leu nada: mostra as mais recentes */
+  alvo.innerHTML = NOTICIAS.length
+    ? NOTICIAS.slice(0,5).map((n,i) => Componentes.itemCompacto(n, i+1)).join('')
+    : Componentes.esqueletoCompacto(5);
+}
+
 function pintarNoticias(){
   const vazio = `<li class="vazio">Sem notícias de momento.<br>
      Arranca com <b>python servidor.py</b> para ler os feeds sem bloqueios.</li>`;
@@ -482,6 +630,7 @@ function pintarNoticias(){
   pintarFontes();
   pintarDestaque();
   pintarLinhaTempo();
+  pintarHome();
 }
 
 function pintarFontes(){
@@ -582,7 +731,21 @@ function pintarLinhaTempo(){
 /* As notícias abrem num separador novo do browser, no site do jornal.
    O leitor dentro do site foi tirado — os links já levam target="_blank",
    por isso aqui só se garante que nada intercepta o clique. */
-function ligarLeitor(){ /* nada a fazer */ }
+function ligarLeitor(){
+  /* conta as aberturas para a lista "mais lidas" e abre em separador novo */
+  document.addEventListener('click', ev => {
+    const a = ev.target.closest('a[data-link]');
+    if(!a) return;
+    ev.preventDefault();
+    const link = a.dataset.link;
+    const cartao = a.closest('.ncartao, .hero, .compacto');
+    const titulo = cartao?.querySelector('.ncartao__titulo, .hero__titulo, b')?.textContent?.trim() || link;
+    const fonte  = cartao?.querySelector('.ncartao__fonte, .hero__meta span:nth-child(2), .compacto__txt span')?.textContent?.trim() || '';
+    registarLeitura(link, titulo, fonte);
+    pintarMaisLidas();
+    window.open(link, '_blank', 'noopener');
+  });
+}
 
 /* =========================================================================
    4. JOGOS
@@ -1757,6 +1920,10 @@ async function sincronizar(){
   }catch(e){ falhas.push('plantel/jogos'); }
 
   const hora = new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+  const noRodape = $('#rodape-estado');
+  if(noRodape) noRodape.textContent = falhas.length
+    ? 'dados parciais · ' + hora
+    : 'dados atualizados às ' + hora;
   if(!falhas.length){ marca.textContent = `dados reais · ${hora}`; marca.className = 'menu__estado ok'; }
   else if(falhas.length === 1){ marca.textContent = `parcial: falhou ${falhas[0]}`; marca.className = 'menu__estado aviso'; }
   else { marca.textContent = 'offline · dados locais'; marca.className = 'menu__estado erro'; }
@@ -1765,6 +1932,128 @@ async function sincronizar(){
 /* =========================================================================
    10. NAVEGAÇÃO
    ========================================================================= */
+/* =========================================================================
+   10b. CROMOS DE INTERFACE — menu mobile, voltar ao topo, textos legais
+   ========================================================================= */
+function ligarMenuMobile(){
+  const menu = $('#menu');
+  const botao = $('#menu-abrir');
+  if(!menu || !botao) return;
+
+  const veu = document.createElement('div');
+  veu.className = 'menu-veu';
+  document.body.appendChild(veu);
+
+  const fechar = () => {
+    menu.classList.remove('aberto');
+    veu.classList.remove('aparece');
+    botao.setAttribute('aria-expanded','false');
+    botao.setAttribute('aria-label','Abrir menu');
+  };
+  const abrir = () => {
+    menu.classList.add('aberto');
+    veu.classList.add('aparece');
+    botao.setAttribute('aria-expanded','true');
+    botao.setAttribute('aria-label','Fechar menu');
+    menu.querySelector('.menu__item')?.focus();
+  };
+
+  botao.addEventListener('click', () =>
+    menu.classList.contains('aberto') ? fechar() : abrir());
+  veu.addEventListener('click', fechar);
+  $$('.menu__item').forEach(b => b.addEventListener('click', fechar));
+  addEventListener('keydown', e => {
+    if(e.key === 'Escape' && menu.classList.contains('aberto')) { fechar(); botao.focus(); }
+  });
+
+  /* a barra fica colada por baixo do cabeçalho — a altura é medida, não adivinhada */
+  const medir = () => document.documentElement.style.setProperty(
+    '--altura-topo', ($('.topo')?.offsetHeight || 92) + 'px');
+  medir();
+  addEventListener('resize', medir);
+}
+
+function ligarAoTopo(){
+  const botao = $('#ao-topo');
+  if(!botao) return;
+  botao.addEventListener('click', () => scrollTo({top:0, behavior:'smooth'}));
+
+  let aEsperar = false;
+  addEventListener('scroll', () => {
+    if(aEsperar) return;
+    aEsperar = true;
+    requestAnimationFrame(() => {
+      botao.classList.toggle('aparece', scrollY > 600);
+      aEsperar = false;
+    });
+  }, {passive:true});
+}
+
+const TEXTOS_LEGAIS = {
+  privacidade: ['Política de Privacidade', `
+    <h4>O que se guarda</h4>
+    <p>Este site não tem servidor de contas nem base de dados. Tudo o que
+    guarda fica <b>no teu browser</b>, no teu computador:</p>
+    <ul>
+      <li>a tua conta (nome e um resumo criptográfico da palavra-passe)</li>
+      <li>a tua formação e a pontuação da Fantasy</li>
+      <li>o arquivo de notícias já lidas e a lista das mais abertas</li>
+    </ul>
+    <h4>O que não se guarda</h4>
+    <p>Nada é enviado para lado nenhum. Não há registo de visitas, nem
+    publicidade, nem partilha com terceiros.</p>
+    <h4>Como apagar</h4>
+    <p>Limpar os dados do site no browser apaga tudo, incluindo a conta.</p>`],
+
+  termos: ['Termos de Utilização', `
+    <h4>O que isto é</h4>
+    <p>Um projeto pessoal de adepto. <b>Não tem qualquer ligação oficial ao
+    Sporting Clube de Portugal.</b> Os emblemas e nomes pertencem aos
+    respetivos donos.</p>
+    <h4>Notícias</h4>
+    <p>As notícias são dos jornais que as publicam. Aqui só se mostra o
+    título, um resumo curto e a ligação — a leitura é sempre feita no site
+    de origem, que recebe a visita.</p>
+    <h4>Sem garantias</h4>
+    <p>Os dados vêm de fontes públicas e podem ter erros ou atraso. Não uses
+    isto como fonte única para nada que interesse a sério.</p>`],
+
+  contacto: ['Contacto', `
+    <h4>Quem faz</h4>
+    <p>Projeto pessoal, feito por um adepto para uso próprio.</p>
+    <h4>Erros e sugestões</h4>
+    <p>Se encontrares um erro nos dados — um jogador que já saiu, um
+    resultado trocado, uma notícia mal categorizada — quase tudo se corrige
+    no ficheiro <code>js/data.js</code>.</p>
+    <h4>Contribuir</h4>
+    <p>O código está em GitHub, em <b>mikecruz1205/Sporting-ao-Minuto</b>.</p>`],
+
+  fontes: ['Fontes dos dados', `
+    <h4>Notícias</h4>
+    <p>RSS diretos de Leonino, Record, Maisfutebol, Notícias ao Minuto,
+    zerozero, RTP, Observador, Bola na Rede, Futebol 365, Correio da Manhã
+    e Público. Atualizam de 60 em 60 segundos.</p>
+    <h4>Plantel, jogos e classificação</h4>
+    <p>API do Wikipédia, atualizada poucas horas depois de cada jogo.</p>
+    <h4>Fotografias e emblemas</h4>
+    <p>API-Football, descarregados uma vez para a pasta do projeto.</p>
+    <h4>Valores de mercado</h4>
+    <p>Transfermarkt, escritos à mão — o site bloqueia leitura automática.</p>`]
+};
+
+function ligarLegais(){
+  const dlg = $('#legal');
+  if(!dlg) return;
+  $$('[data-legal]').forEach(b => b.addEventListener('click', () => {
+    const [titulo, corpo] = TEXTOS_LEGAIS[b.dataset.legal] || ['—',''];
+    $('#legal-titulo').textContent = titulo;
+    $('#legal-corpo').innerHTML = corpo;
+    dlg.showModal();
+  }));
+  $('#legal-fechar').addEventListener('click', () => dlg.close());
+  dlg.addEventListener('click', e => { if(e.target === dlg) dlg.close(); });
+}
+
 function irPara(vista){
   vistaAtual = vista;
   $$('.vista').forEach(v => v.classList.toggle('is-on', v.id === 'vista-' + vista));
@@ -1779,6 +2068,10 @@ async function arranque(){
   montarEmblema();
   ligarAcesso();
   ligarLeitor();
+  ligarMenuMobile();
+  ligarAoTopo();
+  ligarLegais();
+  const elAno = $('#ano'); if(elAno) elAno.textContent = new Date().getFullYear();
   $('#lema').textContent = CONFIG.lema;
   CLUBE.treinador = CONFIG.treinador;
 
@@ -1801,6 +2094,9 @@ async function arranque(){
   ligarEscolha();
 
   montarFundoEntrada();
+
+  /* skeletons já visíveis enquanto os feeds não respondem */
+  pintarHome();
 
   /* mostra já o arquivo guardado, enquanto os feeds respondem */
   if(lerArquivo()) pintarNoticias();

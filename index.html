@@ -5,13 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sporting CP</title>
 <!-- o ícone do separador é o mesmo emblema do site (img/crest.*) -->
+<meta name="description" content="Sporting ao Minuto — notícias do Sporting CP ao minuto, mercado, jogos, classificação, plantel e estatísticas.">
+<meta name="theme-color" content="#0b0d0c">
+<meta name="color-scheme" content="dark">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Sporting ao Minuto">
+<meta property="og:title" content="Sporting ao Minuto">
+<meta property="og:description" content="Notícias do Sporting CP ao minuto, mercado, jogos, classificação e plantel.">
+<meta property="og:image" content="img/crest.svg">
+<meta property="og:locale" content="pt_PT">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sporting ao Minuto">
+<meta name="twitter:description" content="Notícias do Sporting CP ao minuto, mercado, jogos e classificação.">
+<meta name="twitter:image" content="img/crest.svg">
 <link rel="icon" href="img/crest.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=19">
+<link rel="stylesheet" href="css/base.css?v=23">
+<link rel="stylesheet" href="css/componentes.css?v=23">
+<link rel="stylesheet" href="css/style.css?v=23">
 </head>
 <body class="trancado">
+
+<a class="saltar" href="#vista-inicio">Saltar para o conteúdo</a>
 
 <!-- ============================ ACESSO ============================ -->
 <div class="acesso" id="acesso">
@@ -115,15 +132,19 @@
 </header>
 
 <!-- ============================ NAVEGAÇÃO ============================ -->
-<nav class="menu" id="menu">
+<button class="menu-abrir" id="menu-abrir" aria-expanded="false" aria-controls="menu" aria-label="Abrir menu">
+  <span></span><span></span><span></span>
+</button>
+
+<nav class="menu" id="menu" aria-label="Navegação principal">
   <button class="menu__item is-on" data-vista="inicio">INÍCIO</button>
   <button class="menu__item" data-vista="noticias">NOTÍCIAS</button>
-  <button class="menu__item" data-vista="aominuto">AO MINUTO</button>
-  <button class="menu__item" data-vista="rumores">RUMORES</button>
-  <button class="menu__item" data-vista="equipa">EQUIPA</button>
+  <button class="menu__item" data-vista="rumores">MERCADO</button>
   <button class="menu__item" data-vista="jogos">JOGOS</button>
-  <button class="menu__item" data-vista="estatisticas">ESTATÍSTICAS</button>
   <button class="menu__item" data-vista="classificacao">CLASSIFICAÇÃO</button>
+  <button class="menu__item" data-vista="equipa">PLANTEL</button>
+  <button class="menu__item" data-vista="aominuto">AO MINUTO</button>
+  <button class="menu__item" data-vista="estatisticas">ESTATÍSTICAS</button>
   <button class="menu__item" data-vista="formacao">FORMAÇÃO</button>
   <button class="menu__item" data-vista="clube">CLUBE</button>
   <span class="menu__estado" id="estado-dados">a ligar…</span>
@@ -131,41 +152,63 @@
 
 <!-- ============================ INÍCIO ============================ -->
 <main class="vista is-on" id="vista-inicio">
+  <div class="pagina">
 
-  <div class="linha linha--topo">
+    <!-- ================= COLUNA PRINCIPAL ================= -->
+    <div class="pagina__principal">
 
-    <!-- AO MINUTO -->
-    <section class="cartao cartao--minuto">
-      <div class="cartao__topo">
-        <h2>AO MINUTO</h2><span class="ponto-vivo"></span>
-      </div>
-      <div class="cartao__corpo">
-        <select class="seletor" id="minuto-filtro">
-          <option value="todos">Todos os eventos</option>
-          <option value="quente">Só destaques</option>
-          <option value="mercado">Só mercado</option>
-        </select>
-        <ol class="linha-tempo" id="linha-tempo"></ol>
-        <button class="botao-largo" data-ir="aominuto">VER AO MINUTO COMPLETO</button>
-      </div>
-    </section>
+      <!-- HERO -->
+      <section class="seccao seccao--hero" aria-labelledby="tit-hero">
+        <h2 class="so-leitor" id="tit-hero">Notícia principal</h2>
+        <div id="hero"></div>
+      </section>
 
-    <!-- DESTAQUE -->
-    <section class="cartao cartao--destaque">
-      <div class="destaque" id="destaque">
-        <div class="destaque__vazio">a carregar…</div>
-      </div>
-      <div class="pontos" id="destaque-pontos"></div>
-    </section>
+      <!-- ÚLTIMAS NOTÍCIAS -->
+      <section class="seccao" aria-labelledby="tit-ultimas">
+        <div class="seccao__topo">
+          <h2 class="seccao__titulo" id="tit-ultimas">Últimas notícias</h2>
+          <button class="seccao__mais" data-ir="noticias">Ver todas <i aria-hidden="true">→</i></button>
+        </div>
+        <div class="filtros-categoria" id="filtros-categoria" role="group" aria-label="Filtrar por categoria"></div>
+        <div class="lista-cartoes" id="ultimas"></div>
+      </section>
 
-    <!-- PRÓXIMO JOGO + RUMORES -->
-    <div class="coluna">
+      <!-- MERCADO -->
+      <section class="seccao" aria-labelledby="tit-mercado-home">
+        <div class="seccao__topo">
+          <h2 class="seccao__titulo" id="tit-mercado-home">Mercado</h2>
+          <button class="seccao__mais" data-ir="rumores">Ver mercado <i aria-hidden="true">→</i></button>
+        </div>
+        <div class="grelha-cartoes" id="mercado-home"></div>
+      </section>
+
+      <!-- VÍDEOS -->
+      <section class="seccao" aria-labelledby="tit-videos">
+        <div class="seccao__topo">
+          <h2 class="seccao__titulo" id="tit-videos">Vídeos</h2>
+        </div>
+        <div class="grelha-cartoes" id="videos"></div>
+      </section>
+
+      <!-- ESTATÍSTICAS DA EQUIPA -->
+      <section class="seccao" aria-labelledby="tit-desempenho">
+        <div class="seccao__topo">
+          <h2 class="seccao__titulo" id="tit-desempenho">Desempenho da equipa</h2>
+          <button class="seccao__mais" data-ir="estatisticas">Ver tudo <i aria-hidden="true">→</i></button>
+        </div>
+        <div class="caixas" id="caixas-equipa"></div>
+      </section>
+    </div>
+
+    <!-- ================= BARRA LATERAL ================= -->
+    <aside class="pagina__lado" aria-label="Informação do clube">
+
       <section class="cartao">
         <div class="cartao__topo">
           <h2>PRÓXIMO JOGO</h2>
           <div class="setas">
-            <button class="seta" id="jogo-ant">‹</button>
-            <button class="seta" id="jogo-seg">›</button>
+            <button class="seta" id="jogo-ant" aria-label="Jogo anterior">‹</button>
+            <button class="seta" id="jogo-seg" aria-label="Jogo seguinte">›</button>
           </div>
         </div>
         <div class="cartao__corpo jogo" id="proximo-jogo"></div>
@@ -173,76 +216,81 @@
 
       <section class="cartao">
         <div class="cartao__topo">
+          <h2>AO MINUTO</h2><span class="ponto-vivo" aria-hidden="true"></span>
+        </div>
+        <div class="cartao__corpo">
+          <label class="so-leitor" for="minuto-filtro">Filtrar eventos</label>
+          <select class="seletor" id="minuto-filtro">
+            <option value="todos">Todos os eventos</option>
+            <option value="quente">Só destaques</option>
+            <option value="mercado">Só mercado</option>
+          </select>
+          <ol class="linha-tempo" id="linha-tempo"></ol>
+          <button class="botao-largo" data-ir="aominuto">VER AO MINUTO COMPLETO</button>
+        </div>
+      </section>
+
+      <section class="cartao">
+        <div class="cartao__topo">
+          <h2>MAIS LIDAS</h2>
+          <span class="tag" title="Contadas neste browser">TUAS</span>
+        </div>
+        <div class="cartao__corpo"><ol class="lista-compacta" id="mais-lidas"></ol></div>
+      </section>
+
+      <section class="cartao">
+        <div class="cartao__topo"><h2>CLASSIFICAÇÃO</h2></div>
+        <div class="cartao__corpo">
+          <table class="tabela" id="tabela-curta">
+            <caption class="so-leitor">Classificação da Liga Portugal</caption>
+            <thead><tr><th scope="col">#</th><th scope="col">EQUIPA</th><th scope="col">J</th><th scope="col">DG</th><th scope="col">PTS</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <button class="botao-largo" data-ir="classificacao">VER CLASSIFICAÇÃO COMPLETA</button>
+        </div>
+      </section>
+
+      <section class="cartao">
+        <div class="cartao__topo">
           <h2>RUMORES</h2>
           <button class="ver-todos" data-ir="rumores">VER TODOS</button>
         </div>
+        <div class="cartao__corpo"><ul class="lista-rumores" id="rumores-curtos"></ul></div>
+      </section>
+
+      <section class="cartao">
+        <div class="cartao__topo"><h2>MELHORES MARCADORES</h2></div>
         <div class="cartao__corpo">
-          <ul class="lista-rumores" id="rumores-curtos"></ul>
+          <ol class="marcadores" id="marcadores"></ol>
+          <button class="botao-largo" data-ir="estatisticas">VER TODAS AS ESTATÍSTICAS</button>
         </div>
       </section>
-    </div>
-  </div>
 
-  <div class="linha linha--meio">
+      <section class="cartao">
+        <div class="cartao__topo">
+          <h2>CALENDÁRIO</h2>
+          <button class="ver-todos" data-ir="jogos">VER TODOS</button>
+        </div>
+        <div class="cartao__corpo"><ul class="calendario" id="calendario"></ul></div>
+      </section>
 
-    <section class="cartao">
-      <div class="cartao__topo">
-        <h2>NOTÍCIAS</h2>
-        <button class="ver-todos" data-ir="noticias">VER TODAS</button>
-      </div>
-      <div class="cartao__corpo">
-        <ul class="lista-noticias" id="noticias-curtas"></ul>
-      </div>
-    </section>
-
-    <section class="cartao">
-      <div class="cartao__topo"><h2>CLASSIFICAÇÃO</h2></div>
-      <div class="cartao__corpo">
-        <table class="tabela" id="tabela-curta">
-          <thead><tr><th>#</th><th>EQUIPA</th><th>J</th><th>DG</th><th>PTS</th></tr></thead>
-          <tbody></tbody>
-        </table>
-        <button class="botao-largo" data-ir="classificacao">VER CLASSIFICAÇÃO COMPLETA</button>
-      </div>
-    </section>
-
-    <section class="cartao">
-      <div class="cartao__topo"><h2>ESTATÍSTICAS DO JOGADOR</h2></div>
-      <div class="cartao__corpo">
-        <div class="sub">MELHORES MARCADORES</div>
-        <ol class="marcadores" id="marcadores"></ol>
-        <button class="botao-largo" data-ir="estatisticas">VER TODAS AS ESTATÍSTICAS</button>
-      </div>
-    </section>
-  </div>
-
-  <div class="linha linha--fundo">
-
-    <section class="cartao">
-      <div class="cartao__topo"><h2>ESTATÍSTICAS DA EQUIPA</h2></div>
-      <div class="cartao__corpo">
-        <div class="caixas" id="caixas-equipa"></div>
-        <button class="botao-largo" data-ir="estatisticas">VER ESTATÍSTICAS COMPLETAS</button>
-      </div>
-    </section>
-
-    <section class="cartao">
-      <div class="cartao__topo">
-        <h2>CALENDÁRIO</h2>
-        <button class="ver-todos" data-ir="jogos">VER TODOS</button>
-      </div>
-      <div class="cartao__corpo"><ul class="calendario" id="calendario"></ul></div>
-    </section>
-
-    <section class="cartao">
-      <div class="cartao__topo">
-        <h2>ÚLTIMOS RESULTADOS</h2>
-        <button class="ver-todos" data-ir="jogos">VER TODOS</button>
-      </div>
-      <div class="cartao__corpo"><ul class="resultados" id="resultados"></ul></div>
-    </section>
+      <section class="cartao">
+        <div class="cartao__topo">
+          <h2>ÚLTIMOS RESULTADOS</h2>
+          <button class="ver-todos" data-ir="jogos">VER TODOS</button>
+        </div>
+        <div class="cartao__corpo"><ul class="resultados" id="resultados"></ul></div>
+      </section>
+    </aside>
   </div>
 </main>
+
+<!-- o carrossel antigo continua a existir para não partir nada, mas escondido -->
+<div hidden>
+  <div id="destaque"></div>
+  <div id="destaque-pontos"></div>
+  <ul id="noticias-curtas"></ul>
+</div>
 
 <!-- ==================== VISTAS SECUNDÁRIAS ==================== -->
 <main class="vista" id="vista-noticias">
@@ -452,10 +500,77 @@
 
 <!-- o ?v= obriga o browser a ir buscar a versão nova quando estes
      ficheiros mudam; sobe o número se alterares algum e não vires a diferença -->
-<script src="js/contas.js?v=19"></script>
-<script src="js/arte.js?v=19"></script>
-<script src="js/data.js?v=19"></script>
-<script src="js/wiki.js?v=19"></script>
-<script src="js/app.js?v=19"></script>
+
+<!-- ============================ RODAPÉ ============================ -->
+<footer class="rodape-site">
+  <div class="rodape-site__grelha">
+    <div class="rodape-site__bloco rodape-site__bloco--marca">
+      <div class="rodape-site__marca">
+        <div class="emblema emblema--pequeno" id="emblema-rodape"></div>
+        <div>
+          <b>SPORTING AO MINUTO</b>
+          <span>Projeto pessoal de adepto</span>
+        </div>
+      </div>
+      <p>Agregador de notícias do Sporting CP. Reúne o que sai nos jornais
+      portugueses e junta-lhe jogos, classificação, plantel e estatísticas.
+      Não é um site oficial do clube.</p>
+    </div>
+
+    <nav class="rodape-site__bloco" aria-labelledby="rod-sec">
+      <h3 id="rod-sec">Secções</h3>
+      <ul>
+        <li><button data-ir="noticias">Notícias</button></li>
+        <li><button data-ir="rumores">Mercado</button></li>
+        <li><button data-ir="jogos">Jogos</button></li>
+        <li><button data-ir="classificacao">Classificação</button></li>
+        <li><button data-ir="equipa">Plantel</button></li>
+        <li><button data-ir="formacao">A tua formação</button></li>
+      </ul>
+    </nav>
+
+    <nav class="rodape-site__bloco" aria-labelledby="rod-lig">
+      <h3 id="rod-lig">Ligações úteis</h3>
+      <ul>
+        <li><a href="https://www.sporting.pt" target="_blank" rel="noopener">Site oficial</a></li>
+        <li><a href="https://store.sporting.pt" target="_blank" rel="noopener">Loja do clube</a></li>
+        <li><a href="https://www.ligaportugal.pt" target="_blank" rel="noopener">Liga Portugal</a></li>
+        <li><a href="https://www.zerozero.pt/equipa/sporting" target="_blank" rel="noopener">zerozero</a></li>
+      </ul>
+    </nav>
+
+    <div class="rodape-site__bloco">
+      <h3>Informação</h3>
+      <ul>
+        <li><button data-legal="privacidade">Política de Privacidade</button></li>
+        <li><button data-legal="termos">Termos de Utilização</button></li>
+        <li><button data-legal="contacto">Contacto</button></li>
+        <li><button data-legal="fontes">Fontes dos dados</button></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="rodape-site__fundo">
+    <span>© <span id="ano">2026</span> Sporting ao Minuto · projeto de adepto, sem ligação oficial ao Sporting Clube de Portugal</span>
+    <span class="rodape-site__estado" id="rodape-estado"></span>
+  </div>
+</footer>
+
+<button class="ao-topo" id="ao-topo" aria-label="Voltar ao topo">↑</button>
+
+<dialog class="legal" id="legal">
+  <div class="legal__topo">
+    <h2 id="legal-titulo">—</h2>
+    <button class="leitor__btn leitor__btn--x" id="legal-fechar" aria-label="Fechar">✕</button>
+  </div>
+  <div class="legal__corpo" id="legal-corpo"></div>
+</dialog>
+
+<script src="js/componentes.js?v=23"></script>
+<script src="js/contas.js?v=23"></script>
+<script src="js/arte.js?v=23"></script>
+<script src="js/data.js?v=23"></script>
+<script src="js/wiki.js?v=23"></script>
+<script src="js/app.js?v=23"></script>
 </body>
 </html>
