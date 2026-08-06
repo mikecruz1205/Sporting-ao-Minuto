@@ -1,0 +1,5 @@
+# chave pessoal da API-Football — nao deve entrar no repositorio
+chave-api.txt
+
+# respostas da API guardadas em disco, geradas pelo servidor
+cache/

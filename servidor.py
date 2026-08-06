@@ -70,28 +70,36 @@ class Manipulador(SimpleHTTPRequestHandler):
         elif self.path.startswith("/api"):
             self.servir_api()
         elif self.path.startswith("/fundo"):
-            self.servir_fundo()
+            self.servir_imagem("entrada")
+        elif self.path.startswith("/emblema"):
+            self.servir_imagem("crest")
         else:
             super().do_GET()
 
     # ------------------------------------------------------------------
-    def servir_fundo(self):
-        """Fotografia do ecra de entrada.
-        Aceita qualquer ficheiro chamado 'entrada' dentro de img/, seja
-        .jpg, .jpeg, .png ou .webp — assim nao ha enganos com extensoes."""
+    def servir_imagem(self, base):
+        """Serve img/<base>.* seja qual for a extensao — .jpg, .jpeg, .png,
+        .webp, .svg… Assim nao ha enganos ao gravar o ficheiro.
+        Usado pela foto do ecra de entrada e pelo emblema do clube."""
         pasta = os.path.join(RAIZ, "img")
         tipos = {".jpg": "image/jpeg", ".jpeg": "image/jpeg",
                  ".png": "image/png", ".webp": "image/webp",
-                 ".gif": "image/gif", ".avif": "image/avif"}
+                 ".gif": "image/gif", ".avif": "image/avif",
+                 ".svg": "image/svg+xml"}
+        # a ordem manda: um ficheiro teu (.png/.jpg) ganha ao .svg de reserva
+        ordem = [".png", ".jpg", ".jpeg", ".webp", ".avif", ".gif", ".svg"]
         try:
-            for nome in sorted(os.listdir(pasta)):
-                raiz, ext = os.path.splitext(nome)
-                if raiz.lower() == "entrada" and ext.lower() in tipos:
-                    with open(os.path.join(pasta, nome), "rb") as f:
-                        return self.responder(f.read(), tipos[ext.lower()])
+            ficheiros = os.listdir(pasta)
         except FileNotFoundError:
-            pass
-        self.erro(404, "sem imagem de entrada")
+            return self.erro(404, "sem pasta img")
+
+        for ext in ordem:
+            for nome in ficheiros:
+                raiz, e = os.path.splitext(nome)
+                if raiz.lower() == base and e.lower() == ext:
+                    with open(os.path.join(pasta, nome), "rb") as f:
+                        return self.responder(f.read(), tipos[ext])
+        self.erro(404, "sem imagem %s" % base)
 
     def end_headers(self):
         if not self.path.startswith("/img/"):

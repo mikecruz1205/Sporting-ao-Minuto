@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=6">
+<link rel="stylesheet" href="css/style.css?v=10">
 </head>
 <body class="trancado">
 
@@ -281,8 +281,32 @@
 
 <main class="vista" id="vista-formacao">
   <section class="cartao">
-    <div class="cartao__topo"><h2>FORMAÇÃO</h2></div>
-    <div class="cartao__corpo"><ul class="lista-noticias lista-noticias--grande" id="formacao-lista"></ul></div>
+    <div class="cartao__topo">
+      <h2>FORMAÇÃO</h2>
+      <span class="sub-inline" id="formacao-nota">—</span>
+    </div>
+    <div class="cartao__corpo">
+      <div class="formacao">
+        <div class="campo" id="campo"></div>
+        <div class="convocados">
+          <div class="sub">ONZE INICIAL</div>
+          <ol class="onze" id="lista-titulares"></ol>
+          <div class="sub sub--banco">SUPLENTES</div>
+          <ol class="onze onze--banco" id="lista-suplentes"></ol>
+        </div>
+      </div>
+      <div class="formacao__aviso">
+        Palpite, não é a equipa oficial — o onze só é conhecido cerca de uma
+        hora antes do jogo. Editável em <b>js/data.js</b>, na secção FORMAÇÃO.
+      </div>
+    </div>
+  </section>
+
+  <section class="cartao" style="margin-top:16px">
+    <div class="cartao__topo"><h2>NOTÍCIAS DA FORMAÇÃO</h2></div>
+    <div class="cartao__corpo">
+      <ul class="lista-noticias" id="formacao-lista"></ul>
+    </div>
   </section>
 </main>
 
@@ -314,9 +338,9 @@
 
 <!-- o ?v= obriga o browser a ir buscar a versão nova quando estes
      ficheiros mudam; sobe o número se alterares algum e não vires a diferença -->
-<script src="js/arte.js?v=6"></script>
-<script src="js/data.js?v=6"></script>
-<script src="js/wiki.js?v=6"></script>
-<script src="js/app.js?v=6"></script>
+<script src="js/arte.js?v=10"></script>
+<script src="js/data.js?v=10"></script>
+<script src="js/wiki.js?v=10"></script>
+<script src="js/app.js?v=10"></script>
 </body>
 </html>

@@ -80,6 +80,35 @@ function avatarJogador(p){
 </svg>`);
 }
 
+/* -------------------------------------------------------------------------
+   CAMISOLA — usada no campo da aba FORMAÇÃO
+   ------------------------------------------------------------------------- */
+function camisolaSVG(numero, tipo){
+  const cores = {
+    campo:  { corpo:'#0a7d4a', barra:'#ffffff', gola:'#ffffff', num:'#ffffff', linha:'#05502f' },
+    gr:     { corpo:'#f2c14e', barra:'#e0ad2e', gola:'#2b2b2b', num:'#2b2b2b', linha:'#c99a1f' },
+    suplente:{ corpo:'#1c2b24', barra:'#2f6b4d', gola:'#9fe3bd', num:'#9fe3bd', linha:'#12201a' }
+  }[tipo || 'campo'];
+
+  return `
+<svg viewBox="0 0 100 92" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <clipPath id="c${tipo || 'campo'}${numero}">
+      <path d="M32 10 L14 18 L6 40 L20 46 L20 88 h60 V46 l14-6 -8-22 -18-8 -9 8 -9 0z"/>
+    </clipPath>
+  </defs>
+  <path d="M32 10 L14 18 L6 40 L20 46 L20 88 h60 V46 l14-6 -8-22 -18-8 -9 8 -9 0z"
+        fill="${cores.corpo}" stroke="${cores.linha}" stroke-width="2.5" stroke-linejoin="round"/>
+  <g clip-path="url(#c${tipo || 'campo'}${numero})" opacity=".95">
+    <rect x="0" y="30" width="100" height="9" fill="${cores.barra}"/>
+    <rect x="0" y="54" width="100" height="9" fill="${cores.barra}"/>
+  </g>
+  <path d="M41 10 q9 11 18 0" fill="none" stroke="${cores.gola}" stroke-width="5" stroke-linecap="round"/>
+  <text x="50" y="72" text-anchor="middle" font-family="Barlow Condensed, Arial Narrow, sans-serif"
+        font-size="42" font-weight="700" fill="${cores.num}">${numero ?? ''}</text>
+</svg>`;
+}
+
 /* emblema de equipa em falta: círculo com as iniciais */
 function escudoIniciais(nome){
   const ini = nome.replace(/^(FC|SC|SL|CD|CF|GD)\s+/i,'')

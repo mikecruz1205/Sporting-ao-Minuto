@@ -28,11 +28,9 @@ let procuraTexto = '';
    ========================================================================= */
 /* Ordem de preferência: o teu ficheiro → o emblema oficial descarregado
    pela API → o escudo desenhado em código. */
-const EMBLEMAS_SCP = [
-  'img/crest.png',    // se puseres um ficheiro teu, ganha a este
-  'img/crest.svg',    // emblema de 2026, o atual
-  'img/teams/228.png' // versão simplificada da API, último recurso
-];
+/* /emblema serve qualquer img/crest.* — se puseres um ficheiro teu (.png,
+   .jpg, .webp) ganha ao crest.svg de 2026 que já lá está. */
+const EMBLEMAS_SCP = ['/emblema', 'img/teams/228.png'];
 
 function montarEmblema(){
   const alvos = [$('#emblema'), $('#acesso-emblema')].filter(Boolean);
@@ -992,6 +990,103 @@ function pintarEstatisticas(){
 }
 
 /* =========================================================================
+   7b. FORMAÇÃO — campo à esquerda, convocados à direita
+   ========================================================================= */
+function acharJogador(nome){
+  return PLANTEL.find(p => chaveNome(p.nome) === chaveNome(nome))
+      || PLANTEL.find(p => apelido(p.nome) === apelido(nome));
+}
+
+/* Nome curto para caber debaixo da camisola.
+   Usa a alcunha se houver (Pote), e quando o apelido se repete no plantel
+   (Silva, Gonçalves…) junta a inicial do próprio para não haver confusão. */
+function nomeCurto(nome){
+  const p = acharJogador(nome);
+  if(p && ALCUNHAS[p.nome]) return ALCUNHAS[p.nome];
+
+  const partes = nome.split(' ').filter(Boolean);
+  if(partes.length === 1) return nome;
+
+  let ultimo = partes[partes.length-1];
+  if(ultimo.length <= 3) return partes.slice(-2).join(' ');
+
+  const repetido = PLANTEL.filter(x => apelido(x.nome) === apelido(nome)).length > 1;
+  return repetido ? `${partes[0][0]}. ${ultimo}` : ultimo;
+}
+
+function pintarFormacao(){
+  const alvo = $('#campo');
+  if(!alvo) return;
+
+  $('#formacao-nota').textContent = `${FORMACAO.desenho} · ${FORMACAO.nota}`;
+
+  /* ---- campo ---- */
+  alvo.innerHTML = `
+    <div class="campo__relva"></div>
+    <svg class="campo__linhas" viewBox="0 0 100 150" preserveAspectRatio="none">
+      <rect x="2" y="2" width="96" height="146" fill="none" stroke="#ffffff" stroke-width="0.7" opacity=".75"/>
+      <line x1="2" y1="75" x2="98" y2="75" stroke="#ffffff" stroke-width="0.7" opacity=".75"/>
+      <circle cx="50" cy="75" r="13" fill="none" stroke="#ffffff" stroke-width="0.7" opacity=".75"/>
+      <circle cx="50" cy="75" r="1" fill="#ffffff" opacity=".75"/>
+      <rect x="24" y="2" width="52" height="22" fill="none" stroke="#ffffff" stroke-width="0.7" opacity=".75"/>
+      <rect x="38" y="2" width="24" height="9"  fill="none" stroke="#ffffff" stroke-width="0.7" opacity=".75"/>
+      <rect x="24" y="126" width="52" height="22" fill="none" stroke="#ffffff" stroke-width="0.7" opacity=".75"/>
+      <rect x="38" y="139" width="24" height="9"  fill="none" stroke="#ffffff" stroke-width="0.7" opacity=".75"/>
+      <path d="M40 24 a13 13 0 0 0 20 0" fill="none" stroke="#ffffff" stroke-width="0.7" opacity=".75"/>
+      <path d="M40 126 a13 13 0 0 1 20 0" fill="none" stroke="#ffffff" stroke-width="0.7" opacity=".75"/>
+    </svg>
+    ${FORMACAO.titulares.map((t,i) => {
+      const p = acharJogador(t.nome);
+      const gr = t.papel === 'GR';
+      return `<div class="posicao" style="left:${t.x}%; top:${t.y}%; animation-delay:${i*.05}s"
+                   data-nome="${p ? p.nome : t.nome}" title="${t.nome} · ${t.papel}">
+        <div class="posicao__camisola">${camisolaSVG(p?.n ?? '', gr ? 'gr' : 'campo')}</div>
+        <span class="posicao__nome">${nomeCurto(t.nome)}${t.capitao ? ' <i>(C)</i>' : ''}</span>
+      </div>`;
+    }).join('')}`;
+
+  $$('#campo .posicao').forEach(el => el.addEventListener('click', () => {
+    const p = PLANTEL.find(x => x.nome === el.dataset.nome);
+    if(!p) return;
+    irPara('equipa');
+    mostrarFicha(p);
+    $$('.jog').forEach(b => b.classList.toggle('is-on', b.dataset.nome === p.nome));
+  }));
+
+  /* ---- listas à direita ---- */
+  const linha = (nome, papel) => {
+    const p = acharJogador(nome);
+    return `<li data-nome="${p ? p.nome : ''}">
+      <span class="onze__n">${p?.n ?? '–'}</span>
+      <span class="onze__nome">${ALCUNHAS[p?.nome] || nome}</span>
+      <span class="onze__papel">${papel || p?.pos || ''}</span>
+    </li>`;
+  };
+
+  $('#lista-titulares').innerHTML =
+    FORMACAO.titulares.map(t => linha(t.nome, t.papel + (t.capitao ? ' · C' : ''))).join('');
+  $('#lista-suplentes').innerHTML =
+    FORMACAO.suplentes.map(n => linha(n, '')).join('');
+
+  $$('.onze li').forEach(li => li.addEventListener('click', () => {
+    const p = PLANTEL.find(x => x.nome === li.dataset.nome);
+    if(!p) return;
+    irPara('equipa');
+    mostrarFicha(p);
+    $$('.jog').forEach(b => b.classList.toggle('is-on', b.dataset.nome === p.nome));
+  }));
+
+  /* avisa se algum nome já não existe no plantel */
+  const emFalta = [...FORMACAO.titulares.map(t => t.nome), ...FORMACAO.suplentes]
+                    .filter(n => !acharJogador(n));
+  const aviso = $('.formacao__aviso');
+  if(aviso && emFalta.length){
+    aviso.innerHTML += `<br><b style="color:var(--amarelo)">Já não estão no plantel:
+      ${emFalta.join(', ')}</b> — corrige em js/data.js.`;
+  }
+}
+
+/* =========================================================================
    8. MERCADO E CLUBE
    ========================================================================= */
 function pintarMercado(){
@@ -1068,6 +1163,7 @@ async function sincronizar(){
       });
       ligarFotos();
       pintarPlantel();
+      pintarFormacao();
       mostrarFicha(PLANTEL.find(p => p.nome === escolhido)
                 || PLANTEL.find(p => ALCUNHAS[p.nome] === 'Pote') || PLANTEL[0]);
     }
@@ -1123,7 +1219,7 @@ async function arranque(){
 
   pintarMercado(); pintarClube(); pintarTabela();
   pintarProximoJogo(); pintarCalendario(); pintarResultados();
-  pintarJogosTodos(); pintarPlantel(); pintarEstatisticas();
+  pintarJogosTodos(); pintarPlantel(); pintarEstatisticas(); pintarFormacao();
 
   /* fotografia do ecrã de entrada: qualquer img/entrada.* serve */
   const foto = new Image();

@@ -164,6 +164,47 @@ const VALOR_MERCADO = {
 const EPOCAS_API = [2024, 2023, 2022];
 
 /* =========================================================================
+   ONZE PROVÁVEL E BANCO
+   -------------------------------------------------------------------------
+   ISTO É UM PALPITE, não é a equipa oficial — só se sabe uma hora antes do
+   jogo. Escrito à mão, muda à vontade.
+
+   Os números das camisolas e as fotos não se escrevem aqui: são procurados
+   no plantel pelo nome, por isso mantêm-se certos sozinhos.
+
+   x e y são a posição no campo, em percentagem:
+     x = 0 (esquerda) … 100 (direita)
+     y = 0 (baliza adversária) … 100 (nossa baliza)
+   ========================================================================= */
+const FORMACAO = {
+  desenho: "3-4-2-1",
+  nota: "onze provável para a 1.ª jornada",
+
+  titulares: [
+    { nome:"Rui Silva",          papel:"GR",     x:50, y:91 },
+
+    { nome:"Ousmane Diomande",   papel:"DC",     x:26, y:75 },
+    { nome:"Gonçalo Inácio",     papel:"DC",     x:50, y:78, capitao:true },
+    { nome:"Zeno Debast",        papel:"DC",     x:74, y:75 },
+
+    { nome:"Maximiliano Araújo", papel:"ALA E",  x:10, y:53 },
+    { nome:"Silas Andersen",     papel:"MC",     x:37, y:57 },
+    { nome:"Sergi Altimira",     papel:"MC",     x:63, y:57 },
+    { nome:"Georgios Vagiannidis",papel:"ALA D", x:90, y:53 },
+
+    { nome:"Pedro Gonçalves",    papel:"MO",     x:32, y:32 },
+    { nome:"Rodrigo Zalazar",    papel:"MO",     x:68, y:32 },
+
+    { nome:"Fotis Ioannidis",    papel:"PL",     x:50, y:14 }
+  ],
+
+  suplentes: [
+    "João Virgínia", "Eduardo Quaresma", "Iván Fresneda", "Ibrahima Ba",
+    "Daniel Bragança", "Issa Doumbia", "Geny Catamo", "Luis Suárez", "Rafael Nel"
+  ]
+};
+
+/* =========================================================================
    CALENDÁRIO DE RESERVA
    Usado só se o Wikipédia não responder. Pré-época com resultados reais.
    ========================================================================= */

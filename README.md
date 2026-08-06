@@ -81,6 +81,26 @@ Os particulares de pré-época não têm ficha publicada, por isso aparecem vazi
 **Posse de bola, remates e cartões não entram** — não há fonte gratuita para a
 época atual; seria preciso o plano pago da API-Football.
 
+### Onze provável (aba FORMAÇÃO)
+
+Campo à esquerda com as onze camisolas na posição certa (número e nome por
+baixo), lista dos titulares e do banco à direita. Carregar numa camisola ou
+num nome abre a ficha desse jogador.
+
+**É um palpite, não é a equipa oficial** — o onze só se sabe cerca de uma hora
+antes do jogo. Edita-se em `js/data.js`, na secção `FORMACAO`:
+
+```js
+{ nome:"Gonçalo Inácio", papel:"DC", x:50, y:78, capitao:true }
+```
+
+`x` é a largura (0 esquerda → 100 direita) e `y` a profundidade
+(0 baliza adversária → 100 nossa baliza). Os números das camisolas **não** se
+escrevem aqui: são procurados no plantel pelo nome, por isso mantêm-se certos
+sozinhos. Se puseres alguém que já saiu, a página avisa-te por baixo do campo.
+
+Por baixo ficam as notícias da formação (escalões jovens).
+
 ### Carreira do jogador
 
 Na vista **EQUIPA**, ao carregar num jogador aparece a carreira dele nas épocas
@@ -112,23 +132,21 @@ esta pasta nem a partilhes tal como está.
 
 ### Emblema do clube
 
-Está a ser usado o **emblema de 2026** (`img/crest.svg`), o atual. A ordem é:
+Está a ser usado o **emblema de 2026** (`img/crest.svg`), o atual.
 
-1. `img/crest.png` — se puseres um ficheiro teu, é esse que manda
-2. `img/crest.svg` — o emblema de 2026
-3. `img/teams/228.png` — versão simplificada da API, último recurso
+Para pôr outro: guarda-o em `img/` com o nome **`crest`** — qualquer extensão
+serve (`.png`, `.jpg`, `.webp`…) e ganha ao `.svg` que já lá está.
 
 ### Fotografia do ecrã de entrada
 
-Guarda a imagem na pasta **`img/`** com o nome **`entrada`**. A extensão não
-interessa — `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif` ou `.avif`, todas servem.
-Depois recarrega a página (`F5`).
+Guarda a imagem em `img/` com o nome **`entrada`** — outra vez, a extensão não
+interessa. Depois `F5`.
 
-Passa a ser o fundo do ecrã de acesso, com um zoom lento e escurecida o
-suficiente para a caixa de login se ler. Se não existir nenhuma, fica só o
-degradê verde — não parte nada.
+Fica de fundo no ecrã de acesso com um zoom muito lento, e a caixa de login
+ganha desfoque por trás para se ler sem apagar a foto. Se não houver imagem,
+fica só o degradê verde.
 
-Para trocar de imagem: apaga a antiga, mete a nova, `F5`.
+Para trocar: apaga a antiga, mete a nova com o mesmo nome, `F5`.
 
 ---
 
