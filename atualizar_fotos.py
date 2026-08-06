@@ -24,6 +24,17 @@ API = "https://v3.football.api-sports.io/"
 EQUIPA_SCP = 228
 LIGA = 94
 
+# Jogadores que ja sairam mas continuam a aparecer no painel de mercado.
+# O id vem de /players/profiles?search=<nome> — confirmado um a um, para nao
+# haver enganos com homonimos.
+EX_JOGADORES = {
+    7712:   "Morten Hjulmand",
+    41112:  "Francisco Trincao",
+    419582: "Geovany Quenda",
+    32960:  "Hidemasa Morita",
+    336575: "Diogo Travassos",
+}
+
 PASTA_JOGADORES = os.path.join(RAIZ, "img", "players")
 PASTA_EQUIPAS = os.path.join(RAIZ, "img", "teams")
 PASTA_DADOS = os.path.join(RAIZ, "dados")
@@ -95,6 +106,20 @@ def main():
             "foto": "img/players/" + ficheiro,
         })
     print("  %d fotos novas" % novas)
+
+    # ---------- ex-jogadores (painel de mercado) ----------
+    print("A ler fotos de quem ja saiu...")
+    novas_ex = 0
+    for pid, nome in EX_JOGADORES.items():
+        ficheiro = "%d.png" % pid
+        url = "https://media.api-sports.io/football/players/%d.png" % pid
+        if descarregar(url, os.path.join(PASTA_JOGADORES, ficheiro)):
+            novas_ex += 1
+        saida.append({
+            "id": pid, "nome": nome, "n": None, "posicao": None, "idade": None,
+            "foto": "img/players/" + ficheiro, "saiu": True,
+        })
+    print("  %d ex-jogadores, %d fotos novas" % (len(EX_JOGADORES), novas_ex))
 
     # ---------- emblemas ----------
     print("A ler emblemas das equipas...")

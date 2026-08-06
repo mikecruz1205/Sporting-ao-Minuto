@@ -32,15 +32,21 @@ FICHEIRO_CHAVE = os.path.join(RAIZ, "chave-api.txt")
 
 # de onde se deixa ir buscar feeds e artigos
 DOMINIOS_PERMITIDOS = (
+    "leonino.pt", "www.leonino.pt",
     "www.record.pt", "record.pt",
     "maisfutebol.iol.pt", "www.maisfutebol.iol.pt",
     "www.noticiasaominuto.com", "noticiasaominuto.com",
     "www.zerozero.pt", "zerozero.pt",
     "observador.pt", "www.observador.pt",
     "www.rtp.pt", "rtp.pt",
+    "bolanarede.pt", "www.bolanarede.pt",
+    "futebol365.pt", "www.futebol365.pt",
+    "www.cmjornal.pt", "cmjornal.pt",
     "feeds.feedburner.com", "www.publico.pt", "publico.pt",
+    "www.playmakerstats.com", "playmakerstats.com",
     "www.abola.pt", "abola.pt", "www.ojogo.pt", "ojogo.pt",
-    "sapo.pt", "desporto.sapo.pt", "sicnoticias.pt", "cnnportugal.iol.pt",
+    "sapo.pt", "desporto.sapo.pt", "24.sapo.pt", "eco.sapo.pt",
+    "sicnoticias.pt", "cnnportugal.iol.pt", "tvi.iol.pt",
     "news.google.com", "www.sporting.pt",
     "en.wikipedia.org", "pt.wikipedia.org",
 )
@@ -63,9 +69,11 @@ class Manipulador(SimpleHTTPRequestHandler):
 
     # ------------------------------------------------------------------
     def do_GET(self):
-        if self.path.startswith("/rss"):
+        # /api/rss tem de vir ANTES de /api: no Vercel os feeds sao servidos
+        # por api/rss.py, e o data.js usa esse caminho tambem aqui
+        if self.path.startswith("/rss") or self.path.startswith("/api/rss"):
             self.servir_rss()
-        elif self.path.startswith("/ler"):
+        elif self.path.startswith("/ler") or self.path.startswith("/api/ler"):
             self.servir_artigo()
         elif self.path.startswith("/api"):
             self.servir_api()

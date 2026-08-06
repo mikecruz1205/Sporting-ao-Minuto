@@ -1,5 +1,5 @@
 {
- "atualizado": "2026-08-05 20:26",
+ "atualizado": "2026-08-06 01:45",
  "jogadores": [
   {
    "id": 330296,
@@ -218,14 +218,6 @@
    "foto": "img/players/385674.png"
   },
   {
-   "id": 353771,
-   "nome": "S. Faye",
-   "n": 15,
-   "posicao": "Attacker",
-   "idade": 22,
-   "foto": "img/players/353771.png"
-  },
-  {
    "id": 490759,
    "nome": "Flávio Gonçalves",
    "n": 58,
@@ -288,6 +280,51 @@
    "posicao": "Attacker",
    "idade": 28,
    "foto": "img/players/47237.png"
+  },
+  {
+   "id": 7712,
+   "nome": "Morten Hjulmand",
+   "n": null,
+   "posicao": null,
+   "idade": null,
+   "foto": "img/players/7712.png",
+   "saiu": true
+  },
+  {
+   "id": 41112,
+   "nome": "Francisco Trincao",
+   "n": null,
+   "posicao": null,
+   "idade": null,
+   "foto": "img/players/41112.png",
+   "saiu": true
+  },
+  {
+   "id": 419582,
+   "nome": "Geovany Quenda",
+   "n": null,
+   "posicao": null,
+   "idade": null,
+   "foto": "img/players/419582.png",
+   "saiu": true
+  },
+  {
+   "id": 32960,
+   "nome": "Hidemasa Morita",
+   "n": null,
+   "posicao": null,
+   "idade": null,
+   "foto": "img/players/32960.png",
+   "saiu": true
+  },
+  {
+   "id": 336575,
+   "nome": "Diogo Travassos",
+   "n": null,
+   "posicao": null,
+   "idade": null,
+   "foto": "img/players/336575.png",
+   "saiu": true
   }
  ],
  "equipas": {

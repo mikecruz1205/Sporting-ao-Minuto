@@ -845,30 +845,148 @@ body.trancado .topo, body.trancado .menu, body.trancado .vista{ filter:blur(6px)
 .formacao__aviso b{ color:var(--texto-2); }
 
 /* =========================================================================
-   MERCADO — valores e somas
+   PALMARÉS
    ========================================================================= */
-.mv li b{ font-family:var(--f-tit); font-size:16px; font-weight:700; flex:none; }
-.mv--in li b{ color:var(--vermelho); }
-.mv--out li b{ color:var(--verde-claro); }
-.mv li i{ font-style:normal; font-size:9.5px; color:var(--texto-3); display:block; }
-.mv__nome{ flex:1; min-width:0; }
+.palmares{ display:grid; grid-template-columns:repeat(auto-fit,minmax(168px,1fr)); gap:14px; }
+.trofeu{
+  position:relative; overflow:hidden;
+  background:linear-gradient(170deg, #17231d, #121615);
+  border:1px solid var(--linha); border-radius:10px;
+  padding:20px 14px 16px; text-align:center;
+  animation:sobeTrofeu .5s cubic-bezier(.2,.9,.3,1) backwards;
+  transition:.25s;
+}
+@keyframes sobeTrofeu{ from{ opacity:0; transform:translateY(16px); } }
+.trofeu:hover{ transform:translateY(-4px); border-color:rgba(232,197,106,.45); }
+.trofeu__brilho{
+  position:absolute; top:-40%; left:50%; transform:translateX(-50%);
+  width:150%; height:120%;
+  background:radial-gradient(ellipse at 50% 40%, rgba(232,197,106,.16), transparent 62%);
+  pointer-events:none;
+}
+.trofeu__taca{ position:relative; width:70px; margin:0 auto 8px; }
+.trofeu__taca svg{ width:100%; height:auto; display:block;
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,.5)); }
+.trofeu:hover .trofeu__taca{ animation:baloica 1.4s ease-in-out; }
+@keyframes baloica{ 25%{ transform:rotate(-7deg) } 60%{ transform:rotate(5deg) } 100%{ transform:rotate(0) } }
+.trofeu__n{
+  position:relative; display:block;
+  font-family:var(--f-tit); font-size:44px; font-weight:700; line-height:.9;
+  color:#fff; text-shadow:0 2px 16px rgba(232,197,106,.35);
+}
+.trofeu__nome{
+  position:relative; display:block; margin-top:6px;
+  font-size:11.5px; font-weight:700; letter-spacing:.7px; color:var(--texto);
+}
+.trofeu__ultima{
+  position:relative; display:block; margin-top:4px;
+  font-size:10px; color:var(--texto-3);
+}
+.trofeu__ultima--vazia{ opacity:.35; }
+
+/* =========================================================================
+   CAMPEÕES NO PLANTEL
+   ========================================================================= */
+.campeoes{ display:grid; grid-template-columns:repeat(auto-fill,minmax(122px,1fr)); gap:12px; }
+.campeao{
+  text-align:center; padding:12px 8px 11px;
+  background:var(--fundo-2); border:1px solid var(--linha); border-radius:10px;
+  transition:.2s; animation:sobeTrofeu .45s ease backwards;
+}
+.campeao:hover{ transform:translateY(-3px); border-color:var(--verde); }
+.campeao__foto{ position:relative; display:block; width:66px; margin:0 auto 8px; }
+.campeao__foto img{
+  width:66px; height:66px; border-radius:50%; object-fit:cover; object-position:top center;
+  background:#1a1f1c; border:2px solid rgba(232,197,106,.55);
+}
+.campeao__n{
+  position:absolute; right:-2px; bottom:-2px;
+  width:22px; height:22px; border-radius:50%;
+  background:var(--verde); color:#04150d;
+  font-family:var(--f-tit); font-size:12px; font-weight:700; font-style:normal;
+  display:grid; place-items:center; border:2px solid var(--fundo-2);
+}
+.campeao b{ display:block; font-size:12.5px; font-weight:600; }
+.campeao span{ display:block; margin-top:3px; font-size:9.5px; color:var(--texto-3); line-height:1.3; }
+
+/* =========================================================================
+   MERCADO — negócios, valores e somas
+   ========================================================================= */
+.mv h4{ display:flex; align-items:center; gap:7px; }
+.mv h4 em{
+  font-style:normal; font-size:10px; color:var(--texto-3);
+  border:1px solid var(--linha); border-radius:20px; padding:1px 7px;
+}
+.mv__seta{ font-size:12px; }
+.mv--in .mv__seta{ color:var(--verde-claro); }
+.mv--out .mv__seta{ color:var(--vermelho); }
+
+/* .negocio e não .neg: «neg» já serve para pintar valores negativos */
+.negocio{
+  display:flex !important; align-items:center; gap:11px;
+  padding:9px 6px !important; border-radius:6px;
+  transition:.18s;
+}
+.negocio[data-nome]{ cursor:pointer; }
+.negocio[data-nome]:hover{ background:#1a201d; transform:translateX(3px); }
+
+.negocio__foto{ flex:none; width:40px; height:40px; }
+.negocio__foto img{
+  width:40px; height:40px; border-radius:50%; object-fit:cover; object-position:top center;
+  background:#1a1f1c;
+}
+.negocio__ini{
+  width:40px; height:40px; border-radius:50%; display:grid; place-items:center;
+  background:#1a1f1c; border:1px solid var(--linha);
+  font-style:normal; font-size:12px; font-weight:700; color:var(--texto-3);
+}
+.negocio--in .negocio__foto img{ box-shadow:0 0 0 2px rgba(47,217,138,.5); }
+.negocio--out .negocio__foto img{ box-shadow:0 0 0 2px rgba(224,82,82,.45); }
+
+.negocio__txt{ flex:1; min-width:0; }
+.negocio__txt b{ display:block; font-size:13px; font-weight:600; }
+.negocio__clube{ display:block; font-size:10.5px; color:var(--texto-3); margin-top:1px; }
+.negocio__barra{ display:block; height:3px; background:#1c2320; border-radius:2px; margin-top:6px; overflow:hidden; }
+.negocio__barra i{ display:block; height:100%; border-radius:2px; transition:width .8s cubic-bezier(.2,.9,.3,1); }
+.negocio--in .negocio__barra i{ background:linear-gradient(90deg,#1d6b47,var(--verde-claro)); }
+.negocio--out .negocio__barra i{ background:linear-gradient(90deg,#7a2f2f,var(--vermelho)); }
+
+.negocio__valor{
+  flex:none; text-align:right;
+  font-family:var(--f-tit); font-size:17px; font-weight:700;
+}
+.negocio--in .negocio__valor{ color:var(--verde-claro); }
+.negocio--out .negocio__valor{ color:var(--vermelho); }
+.negocio__valor i{ display:block; font-style:normal; font-family:var(--f-ui);
+  font-size:9.5px; font-weight:500; color:var(--texto-3); }
+
 .mv__soma{
   display:flex; align-items:baseline; justify-content:space-between;
-  margin-top:10px; padding-top:10px; border-top:1px solid var(--linha);
+  margin-top:12px; padding-top:11px; border-top:1px solid var(--linha);
 }
 .mv__soma span{ font-size:10px; font-weight:700; letter-spacing:1.2px; color:var(--texto-3); }
-.mv__soma b{ font-family:var(--f-tit); font-size:24px; }
-.mv--in .mv__soma b{ color:var(--vermelho); }
-.mv--out .mv__soma b{ color:var(--verde-claro); }
+.mv__soma b{ font-family:var(--f-tit); font-size:26px; }
+.mv--in .mv__soma b{ color:var(--verde-claro); }
+.mv--out .mv__soma b{ color:var(--vermelho); }
+.mv__extra{ font-size:10.5px; color:var(--texto-3); text-align:right; margin-top:2px; }
 
 .saldo{
   grid-column:1 / -1;
-  display:flex; align-items:center; justify-content:center; gap:14px;
-  background:var(--fundo-2); border:1px solid var(--linha); border-radius:var(--raio);
-  padding:15px;
+  background:var(--fundo-2); border:1px solid var(--linha); border-radius:10px;
+  padding:16px 18px;
 }
-.saldo span{ font-size:11px; font-weight:700; letter-spacing:1.4px; color:var(--texto-3); }
-.saldo b{ font-family:var(--f-tit); font-size:34px; }
+.saldo__lados{ display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:14px; }
+.saldo__lado, .saldo__meio{ text-align:center; }
+.saldo label{ display:block; font-size:9.5px; font-weight:700; letter-spacing:1.2px; color:var(--texto-3); }
+.saldo b{ display:block; font-family:var(--f-tit); font-weight:700; font-size:24px; margin-top:2px; }
+.saldo__meio b{ font-size:38px; }
 .saldo b.pos{ color:var(--verde-claro); }
 .saldo b.neg{ color:var(--vermelho); }
-.saldo i{ font-style:normal; font-size:10.5px; color:var(--texto-3); }
+.saldo__barra{ display:flex; height:8px; border-radius:5px; overflow:hidden; margin-top:14px; background:#1c2320; }
+.saldo__barra i{ display:block; height:100%; transition:width 1s cubic-bezier(.2,.9,.3,1); }
+.saldo__in{ background:linear-gradient(90deg,#7a2f2f,var(--vermelho)); }
+.saldo__out{ background:linear-gradient(90deg,var(--verde),var(--verde-claro)); }
+.saldo__nota{ font-size:10px; color:var(--texto-3); text-align:center; margin-top:8px; }
+@media (max-width:600px){
+  .saldo__lados{ grid-template-columns:1fr; gap:10px; }
+}

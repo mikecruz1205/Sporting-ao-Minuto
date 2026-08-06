@@ -38,7 +38,7 @@ sozinho, não consegue por causa das regras de origem cruzada.
 
 | O quê | Fonte | Atualiza |
 |---|---|---|
-| Notícias, ao minuto, rumores, formação | RSS diretos: Record, Maisfutebol, Notícias ao Minuto, zerozero, RTP, Observador | 60 s |
+| Notícias, ao minuto, rumores, formação | RSS diretos de 11 fontes: **Leonino** (dedicado ao Sporting), Record, Maisfutebol, Notícias ao Minuto, zerozero, RTP, Observador, Bola na Rede, Futebol 365, Correio da Manhã, Público | 60 s |
 | Classificação | API do Wikipédia | 15 min |
 | Plantel (nº, posição, país) | API do Wikipédia | 15 min |
 | Presenças e golos | API do Wikipédia | 15 min |
@@ -60,6 +60,10 @@ A barra por cima da lista diz quantas notícias há, desde que data, e quando
 foi a última leitura — com `+N novas` a piscar quando entra alguma. O sino no
 topo mostra quantas chegaram desde a última vez que lá foste.
 
+Para acrescentar um jornal: mete o RSS em `CONFIG.feeds` (`js/data.js`) **e** o
+domínio em `DOMINIOS_PERMITIDOS`, nos dois sítios — `servidor.py` (local) e
+`api/rss.py` (Vercel).
+
 ### Ler notícias sem sair do site
 
 Carregar numa notícia abre-a **dentro do site**, num leitor próprio. O
@@ -80,6 +84,33 @@ Wikipédia e enche-se sozinho depois de cada jogo.
 Os particulares de pré-época não têm ficha publicada, por isso aparecem vazios.
 **Posse de bola, remates e cartões não entram** — não há fonte gratuita para a
 época atual; seria preciso o plano pago da API-Football.
+
+### Palmarés e campeões (aba CLUBE)
+
+Cada troféu é um cartão com a taça desenhada em código (silhueta diferente por
+prova), o número de conquistas e a última. Por baixo, **CAMPEÕES NO PLANTEL**:
+as caras dos jogadores atuais que já levantaram troféus pelo clube — carrega
+num para abrir a ficha.
+
+Editável em `js/data.js`, no `CLUBE`:
+
+```js
+titulos:  [{ nome:"Campeonatos Nacionais", n:21, taca:"liga", ultima:"2024/25" }]
+campeoes: [{ nome:"Gonçalo Inácio", titulos:"2 Campeonatos · Taça · Supertaça" }]
+```
+
+`taca` escolhe o desenho: `liga`, `taca`, `supertaca`, `ligacup` ou `europa`.
+Quem estiver em `campeoes` mas já não estiver no plantel desaparece sozinho.
+
+### Mercado (aba RUMORES)
+
+Cada negócio mostra a cara do jogador, o clube de origem/destino, o valor e uma
+barra proporcional ao maior negócio da janela. No fundo, o saldo com as duas
+somas e a barra a comparar o que entrou e o que saiu.
+
+As fotos de quem já saiu vêm do `atualizar_fotos.py`, que também descarrega os
+ex-jogadores listados em `EX_JOGADORES` (id da API confirmado um a um). Quem não
+estiver lá aparece com as iniciais.
 
 ### Onze provável (aba FORMAÇÃO)
 

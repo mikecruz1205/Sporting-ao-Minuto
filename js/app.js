@@ -992,9 +992,15 @@ function pintarEstatisticas(){
 /* =========================================================================
    7b. FORMAÇÃO — campo à esquerda, convocados à direita
    ========================================================================= */
+/* Procura no plantel pelo nome. O apelido sozinho não chega: "Alisson
+   Santos" apanhava o Nuno Santos. Por isso a inicial do primeiro nome
+   também tem de bater certo. */
 function acharJogador(nome){
-  return PLANTEL.find(p => chaveNome(p.nome) === chaveNome(nome))
-      || PLANTEL.find(p => apelido(p.nome) === apelido(nome));
+  const k = chaveNome(nome);
+  const exato = PLANTEL.find(p => chaveNome(p.nome) === k);
+  if(exato) return exato;
+  return PLANTEL.find(p => apelido(p.nome) === apelido(nome)
+                        && chaveNome(p.nome)[0] === k[0]) || null;
 }
 
 /* Nome curto para caber debaixo da camisola.
@@ -1097,44 +1103,131 @@ function pintarMercado(){
   const encaixe= soma(SAIDAS),    encaixeB= bonus(SAIDAS);
   const saldo  = encaixe - gasto;
 
-  const linha = (x, ondeCampo) => `
-    <li>
-      <span class="mv__nome">${x.nome}<i>${x[ondeCampo]}${x.nota ? ' · ' + x.nota : ''}</i></span>
-      <b>${x.valor ? milhoes(x.valor) : (x.nota === 'empréstimo' ? 'cedência' : 'livre')}</b>
+  /* barra proporcional: o maior negócio enche a barra toda */
+  const maior = Math.max(...[...ENTRADAS, ...SAIDAS].map(x => x.valor || 0), 1);
+
+  const cartao = (x, campo, sentido) => {
+    const p = acharJogador(x.nome);
+    /* quem já saiu não está no plantel — a foto vem do plantel.json,
+       onde o atualizar_fotos.py também guarda os ex-jogadores */
+    const ex = p ? null : FOTOS.jogadores.find(j =>
+      chaveNome(j.nome) === chaveNome(x.nome) ||
+      (apelido(j.nome) === apelido(x.nome) &&
+       chaveNome(j.nome)[0] === chaveNome(x.nome)[0]));
+    const foto = p ? p.foto : (ex ? ex.foto : null);
+    const inicial = x.nome.split(' ').map(s => s[0]).slice(0,2).join('');
+    return `
+    <li class="negocio negocio--${sentido}" ${p ? `data-nome="${p.nome}"` : ''}>
+      <span class="negocio__foto">
+        ${foto ? `<img src="${foto}" alt="" loading="lazy"
+                      onerror="this.onerror=null;this.src='${avatarJogador(p || {nome:x.nome})}'">`
+               : `<i class="negocio__ini">${inicial}</i>`}
+      </span>
+      <span class="negocio__txt">
+        <b>${x.nome}</b>
+        <span class="negocio__clube">${sentido === 'in' ? '←' : '→'} ${x[campo]}${x.nota ? ' · ' + x.nota : ''}</span>
+        <span class="negocio__barra"><i style="width:${(x.valor || 0)/maior*100}%"></i></span>
+      </span>
+      <span class="negocio__valor">
+        ${x.valor ? milhoes(x.valor) : (x.nota === 'empréstimo' ? 'cedência' : 'livre')}
+        ${x.bonus ? `<i>+${milhoes(x.bonus)}</i>` : ''}
+      </span>
     </li>`;
+  };
 
   $('#mercado').innerHTML = `
     <div class="mv mv--in">
-      <h4>▲ ENTRARAM (${ENTRADAS.length})</h4>
-      <ul>${ENTRADAS.map(e => linha(e,'origem')).join('')}</ul>
+      <h4><span class="mv__seta">▼</span> CHEGARAM <em>${ENTRADAS.length}</em></h4>
+      <ul>${ENTRADAS.map(e => cartao(e,'origem','in')).join('')}</ul>
       <div class="mv__soma"><span>INVESTIDO</span><b>${milhoes(gasto)}</b></div>
-      ${gastoB ? `<div class="mv__soma" style="border:none;padding-top:2px;margin-top:0">
-         <span>+ OBJETIVOS</span><i style="font-style:normal;color:var(--texto-3)">${milhoes(gastoB)}</i></div>` : ''}
+      ${gastoB ? `<div class="mv__extra">mais ${milhoes(gastoB)} por objetivos</div>` : ''}
     </div>
 
     <div class="mv mv--out">
-      <h4>▼ SAÍRAM (${SAIDAS.length})</h4>
-      <ul>${SAIDAS.map(s => linha(s,'destino')).join('')}</ul>
+      <h4><span class="mv__seta">▲</span> SAÍRAM <em>${SAIDAS.length}</em></h4>
+      <ul>${SAIDAS.map(s => cartao(s,'destino','out')).join('')}</ul>
       <div class="mv__soma"><span>ENCAIXADO</span><b>${milhoes(encaixe)}</b></div>
-      ${encaixeB ? `<div class="mv__soma" style="border:none;padding-top:2px;margin-top:0">
-         <span>+ OBJETIVOS</span><i style="font-style:normal;color:var(--texto-3)">${milhoes(encaixeB)}</i></div>` : ''}
+      ${encaixeB ? `<div class="mv__extra">mais ${milhoes(encaixeB)} por objetivos</div>` : ''}
     </div>
 
     <div class="saldo">
-      <span>SALDO DO MERCADO</span>
-      <b class="${saldo >= 0 ? 'pos' : 'neg'}">${saldo >= 0 ? '+' : '−'}${milhoes(Math.abs(saldo))}</b>
-      <i>${milhoes(encaixe)} a entrar · ${milhoes(gasto)} a sair · valores fixos</i>
+      <div class="saldo__lados">
+        <div class="saldo__lado">
+          <label>SAIU DO COFRE</label><b class="neg">${milhoes(gasto)}</b>
+        </div>
+        <div class="saldo__meio">
+          <label>SALDO</label>
+          <b class="${saldo >= 0 ? 'pos' : 'neg'}">${saldo >= 0 ? '+' : '−'}${milhoes(Math.abs(saldo))}</b>
+        </div>
+        <div class="saldo__lado">
+          <label>ENTROU NO COFRE</label><b class="pos">${milhoes(encaixe)}</b>
+        </div>
+      </div>
+      <div class="saldo__barra">
+        <i class="saldo__in"  style="width:${gasto/(gasto+encaixe)*100}%"></i>
+        <i class="saldo__out" style="width:${encaixe/(gasto+encaixe)*100}%"></i>
+      </div>
+      <div class="saldo__nota">só valores fixos — os objetivos não entram na conta</div>
     </div>`;
+
+  $$('#mercado .negocio[data-nome]').forEach(li => li.addEventListener('click', () => {
+    const p = PLANTEL.find(x => x.nome === li.dataset.nome);
+    if(!p) return;
+    irPara('equipa');
+    mostrarFicha(p);
+    $$('.jog').forEach(b => b.classList.toggle('is-on', b.dataset.nome === p.nome));
+  }));
 }
 
 function pintarClube(){
+  const total = CLUBE.titulos.reduce((s,t) => s + t.n, 0);
+
   $('#clube').innerHTML = `
     <div class="clube__bloco"><h4>FUNDAÇÃO</h4><p>${CLUBE.fundacao}</p></div>
     <div class="clube__bloco"><h4>ESTÁDIO</h4><p>${CLUBE.estadio}<br><span style="color:var(--texto-3)">${CLUBE.lugares} lugares</span></p></div>
     <div class="clube__bloco"><h4>TREINADOR</h4><p>${CLUBE.treinador || CONFIG.treinador}</p></div>
-    <div class="clube__bloco"><h4>CORES</h4><p>${CLUBE.cores}</p></div>
-    <div class="clube__bloco" style="grid-column:span 2"><h4>PALMARÉS</h4><ul>
-      ${CLUBE.titulos.map(([t,n]) => `<li>${t}<b>${n}</b></li>`).join('')}</ul></div>`;
+    <div class="clube__bloco"><h4>CORES</h4><p>${CLUBE.cores}</p></div>`;
+
+  /* ---- palmarés ---- */
+  $('#palmares-total').textContent = `${total} troféus`;
+  $('#palmares').innerHTML = CLUBE.titulos.map((t,i) => `
+    <article class="trofeu" style="animation-delay:${i*.07}s">
+      <div class="trofeu__brilho"></div>
+      <div class="trofeu__taca">${tacaSVG(t.taca, t.cor)}</div>
+      <b class="trofeu__n">${t.n}</b>
+      <span class="trofeu__nome">${t.nome}</span>
+      ${t.ultima ? `<span class="trofeu__ultima">última em ${t.ultima}</span>`
+                 : `<span class="trofeu__ultima trofeu__ultima--vazia">—</span>`}
+    </article>`).join('');
+
+  /* ---- campeões que ainda estão no plantel ---- */
+  const lista = (CLUBE.campeoes || [])
+    .map(c => ({...c, jogador: acharJogador(c.nome)}))
+    .filter(c => c.jogador);
+
+  $('#campeoes-nota').textContent = lista.length
+    ? `${lista.length} no plantel atual`
+    : '';
+  $('#campeoes').innerHTML = lista.length
+    ? lista.map((c,i) => `
+        <button class="campeao" data-nome="${c.jogador.nome}" style="animation-delay:${i*.04}s">
+          <span class="campeao__foto">
+            <img src="${c.jogador.foto}" alt="${c.nome}" loading="lazy"
+                 onerror="this.onerror=null;this.src='${avatarJogador(c.jogador)}'">
+            <i class="campeao__n">${c.jogador.n ?? ''}</i>
+          </span>
+          <b>${ALCUNHAS[c.jogador.nome] || nomeCurto(c.nome)}</b>
+          <span>${c.titulos}</span>
+        </button>`).join('')
+    : `<div class="vazio">Ninguém do plantel atual está na lista — edita CLUBE.campeoes em js/data.js.</div>`;
+
+  $$('#campeoes .campeao').forEach(b => b.addEventListener('click', () => {
+    const p = PLANTEL.find(x => x.nome === b.dataset.nome);
+    if(!p) return;
+    irPara('equipa');
+    mostrarFicha(p);
+    $$('.jog').forEach(x => x.classList.toggle('is-on', x.dataset.nome === p.nome));
+  }));
 }
 
 /* =========================================================================
@@ -1164,6 +1257,9 @@ async function sincronizar(){
       ligarFotos();
       pintarPlantel();
       pintarFormacao();
+      /* estes dois usam as fotos do plantel, por isso repintam-se agora */
+      pintarMercado();
+      pintarClube();
       mostrarFicha(PLANTEL.find(p => p.nome === escolhido)
                 || PLANTEL.find(p => ALCUNHAS[p.nome] === 'Pote') || PLANTEL[0]);
     }

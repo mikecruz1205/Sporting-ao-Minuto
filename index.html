@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=10">
+<link rel="stylesheet" href="css/style.css?v=14">
 </head>
 <body class="trancado">
 
@@ -315,6 +315,31 @@
     <div class="cartao__topo"><h2>O CLUBE</h2></div>
     <div class="cartao__corpo"><div class="clube" id="clube"></div></div>
   </section>
+
+  <section class="cartao" style="margin-top:16px">
+    <div class="cartao__topo">
+      <h2>PALMARÉS</h2>
+      <span class="sub-inline" id="palmares-total">—</span>
+    </div>
+    <div class="cartao__corpo">
+      <div class="palmares" id="palmares"></div>
+    </div>
+  </section>
+
+  <section class="cartao" style="margin-top:16px">
+    <div class="cartao__topo">
+      <h2>CAMPEÕES NO PLANTEL</h2>
+      <span class="sub-inline" id="campeoes-nota">—</span>
+    </div>
+    <div class="cartao__corpo">
+      <div class="campeoes" id="campeoes"></div>
+      <div class="formacao__aviso">
+        Jogadores do plantel atual que já levantaram troféus pelo clube.
+        Lista escrita à mão em <b>js/data.js</b> (<b>CLUBE.campeoes</b>) — as caras
+        vêm das fotografias da API. Carrega num para abrir a ficha.
+      </div>
+    </div>
+  </section>
 </main>
 
 <!-- ==================== LEITOR DE NOTÍCIAS ==================== -->
@@ -338,9 +363,9 @@
 
 <!-- o ?v= obriga o browser a ir buscar a versão nova quando estes
      ficheiros mudam; sobe o número se alterares algum e não vires a diferença -->
-<script src="js/arte.js?v=10"></script>
-<script src="js/data.js?v=10"></script>
-<script src="js/wiki.js?v=10"></script>
-<script src="js/app.js?v=10"></script>
+<script src="js/arte.js?v=14"></script>
+<script src="js/data.js?v=14"></script>
+<script src="js/wiki.js?v=14"></script>
+<script src="js/app.js?v=14"></script>
 </body>
 </html>

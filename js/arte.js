@@ -109,6 +109,56 @@ function camisolaSVG(numero, tipo){
 </svg>`;
 }
 
+/* -------------------------------------------------------------------------
+   TAÇAS — desenhadas em código, uma silhueta diferente por competição
+   ------------------------------------------------------------------------- */
+const TACAS = {
+  /* taça de asas largas, tipo campeonato */
+  liga: `<path d="M28 14h44v16c0 13-9 22-22 22S28 43 28 30z"/>
+         <path d="M28 18h-9c-5 0-8 4-8 9 0 8 7 13 15 14" fill="none" stroke-width="5"/>
+         <path d="M72 18h9c5 0 8 4 8 9 0 8-7 13-15 14" fill="none" stroke-width="5"/>
+         <rect x="45" y="52" width="10" height="14"/>
+         <path d="M32 66h36l3 10H29z"/><rect x="25" y="76" width="50" height="8" rx="2"/>`,
+
+  /* taça alta e estreita, tipo taça nacional */
+  taca: `<path d="M34 12h32v22c0 11-7 18-16 18s-16-7-16-18z"/>
+         <path d="M34 16h-8c-4 0-7 3-7 8 0 7 6 11 13 12" fill="none" stroke-width="4.5"/>
+         <path d="M66 16h8c4 0 7 3 7 8 0 7-6 11-13 12" fill="none" stroke-width="4.5"/>
+         <rect x="46" y="52" width="8" height="16"/>
+         <ellipse cx="50" cy="72" rx="16" ry="5"/><rect x="30" y="74" width="40" height="8" rx="2"/>`,
+
+  /* prato/salva, tipo supertaça */
+  supertaca: `<ellipse cx="50" cy="34" rx="34" ry="20"/>
+              <ellipse cx="50" cy="30" rx="26" ry="14" fill="#0b0d0c" opacity=".28"/>
+              <rect x="46" y="52" width="8" height="14"/>
+              <ellipse cx="50" cy="70" rx="18" ry="5"/><rect x="28" y="72" width="44" height="8" rx="2"/>`,
+
+  /* taça larga com pegas quadradas, tipo taça da liga */
+  ligacup: `<path d="M30 14h40v20c0 12-8 20-20 20s-20-8-20-20z"/>
+            <rect x="14" y="16" width="14" height="6"/><rect x="14" y="16" width="6" height="20"/>
+            <rect x="72" y="16" width="14" height="6"/><rect x="80" y="16" width="6" height="20"/>
+            <rect x="46" y="54" width="8" height="12"/>
+            <path d="M33 66h34l2 9H31z"/><rect x="27" y="75" width="46" height="8" rx="2"/>`,
+
+  /* taça europeia, com orelhas grandes */
+  europa: `<path d="M32 12h36v18c0 12-8 20-18 20s-18-8-18-20z"/>
+           <path d="M32 14c-12 0-18 6-18 14s7 13 15 14" fill="none" stroke-width="5"/>
+           <path d="M68 14c12 0 18 6 18 14s-7 13-15 14" fill="none" stroke-width="5"/>
+           <rect x="46" y="50" width="8" height="16"/>
+           <path d="M31 66h38l3 10H28z"/><rect x="24" y="76" width="52" height="8" rx="2"/>
+           <circle cx="50" cy="28" r="7" fill="#0b0d0c" opacity=".25"/>`
+};
+
+function tacaSVG(tipo, cor){
+  const c = cor || '#e8c56a';
+  return `
+<svg viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g fill="${c}" stroke="${c}" stroke-width="0" stroke-linejoin="round">
+    ${TACAS[tipo] || TACAS.taca}
+  </g>
+</svg>`;
+}
+
 /* emblema de equipa em falta: círculo com as iniciais */
 function escudoIniciais(nome){
   const ini = nome.replace(/^(FC|SC|SL|CD|CF|GD)\s+/i,'')

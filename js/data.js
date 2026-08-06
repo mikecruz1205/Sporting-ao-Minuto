@@ -31,12 +31,17 @@ const CONFIG = {
      DOMINIOS_PERMITIDOS no servidor.py.
      --------------------------------------------------------------------- */
   feeds: [
+    { id:"leonino", nome:"LEONINO",            url:"https://leonino.pt/feed" },
     { id:"record",  nome:"RECORD",             url:"https://www.record.pt/rss" },
     { id:"mf",      nome:"MAISFUTEBOL",        url:"https://maisfutebol.iol.pt/rss" },
     { id:"nam",     nome:"NOTÍCIAS AO MINUTO", url:"https://www.noticiasaominuto.com/rss/desporto" },
     { id:"zz",      nome:"ZEROZERO",           url:"https://www.zerozero.pt/rss/noticias.php" },
     { id:"rtp",     nome:"RTP",                url:"https://www.rtp.pt/noticias/rss/desporto" },
-    { id:"obs",     nome:"OBSERVADOR",         url:"https://observador.pt/seccao/desporto/feed/" }
+    { id:"obs",     nome:"OBSERVADOR",         url:"https://observador.pt/seccao/desporto/feed/" },
+    { id:"bnr",     nome:"BOLA NA REDE",       url:"https://bolanarede.pt/feed/" },
+    { id:"f365",    nome:"FUTEBOL 365",        url:"https://futebol365.pt/feed/" },
+    { id:"cm",      nome:"CORREIO DA MANHÃ",   url:"https://www.cmjornal.pt/rss" },
+    { id:"publico", nome:"PÚBLICO",            url:"https://feeds.feedburner.com/PublicoRSS" }
   ],
 
   /* uma notícia só entra se falar do clube.
@@ -236,11 +241,31 @@ const CLUBE = {
   lugares: "50.095",
   alcunha: "Leões",
   cores: "Verde e branco",
+  /* taca: liga · taca · supertaca · ligacup · europa (desenhos em arte.js) */
   titulos: [
-    ["Campeonatos nacionais", 21],
-    ["Taças de Portugal", 18],
-    ["Supertaças", 11],
-    ["Taças da Liga", 5],
-    ["Taça das Taças (UEFA)", 1]
+    { nome:"Campeonatos Nacionais", n:21, taca:"liga",      ultima:"2024/25", cor:"#e8c56a" },
+    { nome:"Taças de Portugal",     n:18, taca:"taca",      ultima:"2024/25", cor:"#dfe6e9" },
+    { nome:"Supertaças",            n:11, taca:"supertaca", ultima:"",        cor:"#e8c56a" },
+    { nome:"Taças da Liga",         n:5,  taca:"ligacup",   ultima:"",        cor:"#dfe6e9" },
+    { nome:"Taça das Taças",        n:1,  taca:"europa",    ultima:"1963/64", cor:"#9fe3bd" }
+  ],
+
+  /* Jogadores do plantel atual que já levantaram troféus pelo clube.
+     Lista à mão — acrescenta ou tira à vontade. As caras vêm das
+     fotografias que já estão em img/players/. */
+  campeoes: [
+    { nome:"Gonçalo Inácio",       titulos:"2 Campeonatos · Taça · Supertaça" },
+    { nome:"Pedro Gonçalves",      titulos:"2 Campeonatos · Taça · Supertaça" },
+    { nome:"Ousmane Diomande",     titulos:"2 Campeonatos · Taça" },
+    { nome:"Eduardo Quaresma",     titulos:"2 Campeonatos · Taça" },
+    { nome:"Daniel Bragança",      titulos:"2 Campeonatos · Taça" },
+    { nome:"Nuno Santos",          titulos:"2 Campeonatos · Taça · Supertaça" },
+    { nome:"Geny Catamo",          titulos:"2 Campeonatos · Taça" },
+    { nome:"João Virgínia",        titulos:"2 Campeonatos · Taça" },
+    { nome:"Iván Fresneda",        titulos:"2 Campeonatos · Taça" },
+    { nome:"Maximiliano Araújo",   titulos:"Campeonato · Taça" },
+    { nome:"Georgios Vagiannidis", titulos:"Campeonato · Taça" },
+    { nome:"Rui Silva",            titulos:"Campeonato · Taça" },
+    { nome:"João Simões",          titulos:"Campeonato" }
   ]
 };
