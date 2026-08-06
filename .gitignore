@@ -1,5 +1,12 @@
-# chave pessoal da API-Football — nao deve entrar no repositorio
+# ATENCAO: chave-api.txt e cache/ ja foram commitados antes de este ficheiro
+# existir, por isso continuam a ser seguidos pelo git. Estas regras so valem
+# para clones novos. Para deixarem de ser seguidos aqui:
+#     git rm --cached chave-api.txt
+#     git rm -r --cached cache/
+# (a deploy no Vercel le a chave de chave-api.txt — ver api/api.py)
+
+# chave pessoal da API-Football
 chave-api.txt
 
-# respostas da API guardadas em disco, geradas pelo servidor
+# respostas da API guardadas em disco pelo servidor
 cache/
