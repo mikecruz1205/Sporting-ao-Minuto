@@ -1493,10 +1493,59 @@ let capitaoIdx = -1;      // posicao do capitao no onze (x1.5 na fantasy)
 const chaveFormacao = () =>
   'scp-formacao-' + (UTILIZADOR_ATUAL ? Contas.idDe(UTILIZADOR_ATUAL) : 'convidado');
 
+/* =========================================================================
+   REGRAS DA FANTASY — tranca e substituições
+   -------------------------------------------------------------------------
+   Antes do primeiro jogo oficial mexe-se à vontade. Assim que a bola rolar,
+   a equipa tranca e só se fazem 2 trocas por jornada.
+   ========================================================================= */
+let jornadaGuardada = 0;
+let substituicoesUsadas = 0;
+
+/* quantos jogos oficiais já se jogaram (a pré-época não conta) */
+function jornadaAtual(){
+  return JOGOS.filter(j => jogado(j) && provaDoJogo(j) !== 'Pré-época').length;
+}
+
+const equipaTrancada = () => jornadaAtual() > 0;
+
+function substituicoesRestantes(){
+  if(!equipaTrancada()) return Infinity;
+  return Math.max(0, FANTASY.substituicoesPorJornada - substituicoesUsadas);
+}
+
+/* Cada mexida no onze gasta uma substituição — mas só depois de a época
+   começar, e só se for mesmo uma troca (pôr alguém numa vaga vazia
+   durante a montagem inicial não conta). */
+function podeMexer(){
+  if(!equipaTrancada()) return { pode: true };
+  if(substituicoesRestantes() > 0) return { pode: true };
+  return { pode: false,
+           razao: `Já usaste as ${FANTASY.substituicoesPorJornada} substituições desta jornada. ` +
+                  `Podes voltar a mexer depois do próximo jogo.` };
+}
+
+function gastarSubstituicao(){
+  if(!equipaTrancada()) return;
+  substituicoesUsadas++;
+  guardarFormacao();
+}
+
+/* quando muda a jornada, o saldo de trocas volta a zero */
+function acertarJornada(){
+  const agora = jornadaAtual();
+  if(agora !== jornadaGuardada){
+    jornadaGuardada = agora;
+    substituicoesUsadas = 0;
+    guardarFormacao();
+  }
+}
+
 function guardarFormacao(){
   try{
     localStorage.setItem(chaveFormacao(),
-      JSON.stringify({ desenho: desenhoAtual, onze: meuOnze, capitao: capitaoIdx }));
+      JSON.stringify({ desenho: desenhoAtual, onze: meuOnze, capitao: capitaoIdx,
+                       jornada: jornadaGuardada, substituicoes: substituicoesUsadas }));
   }catch(e){}
 }
 
@@ -1509,6 +1558,8 @@ function carregarFormacaoGuardada(){
     desenhoAtual = guardada.desenho;
     meuOnze = FORMACOES[desenhoAtual].map((_, i) => guardada.onze?.[i] ?? null);
     capitaoIdx = Number.isInteger(guardada.capitao) ? guardada.capitao : -1;
+    jornadaGuardada = guardada.jornada | 0;
+    substituicoesUsadas = guardada.substituicoes | 0;
   }else{
     /* primeira vez: arranca com a sugestão de data.js */
     desenhoAtual = FORMACOES[FORMACAO.desenho] ? FORMACAO.desenho : Object.keys(FORMACOES)[0];
@@ -1583,6 +1634,22 @@ function pintarFormacao(){
   const escolhidos = meuOnze.filter(Boolean).length;
   $('#onze-conta').textContent = `${escolhidos}/11`;
 
+  /* estado das substituições */
+  const aviso = $('#formacao-aviso');
+  if(aviso && !aviso.classList.contains('formacao__aviso--alerta')){
+    if(!equipaTrancada()){
+      aviso.innerHTML = 'Arrasta os jogadores para trocar de posição, ou carrega numa para '
+        + 'escolher outro. <b>Enquanto a época não começar mexes à vontade</b> — a partir do '
+        + 'primeiro jogo oficial só podes fazer '
+        + FANTASY.substituicoesPorJornada + ' substituições por jornada.';
+    }else{
+      const restam = substituicoesRestantes();
+      aviso.innerHTML = `Jornada ${jornadaAtual()} · <b>${restam} de `
+        + `${FANTASY.substituicoesPorJornada} substituições</b> por usar. `
+        + 'Trocar dois jogadores de posição entre si não gasta substituição.';
+    }
+  }
+
   /* campo */
   alvo.innerHTML = `
     <div class="campo__relva"></div>
@@ -1655,6 +1722,105 @@ function pintarFormacao(){
   pintarFantasy();
 }
 
+/* aviso curto no topo do campo */
+function avisarSubstituicoes(texto){
+  const alvo = $('#formacao-aviso');
+  if(!alvo) return;
+  alvo.classList.add('formacao__aviso--alerta');
+  alvo.innerHTML = `<b>${texto}</b>`;
+  clearTimeout(avisarSubstituicoes._t);
+  avisarSubstituicoes._t = setTimeout(() => {
+    alvo.classList.remove('formacao__aviso--alerta');
+    pintarFormacao();
+  }, 5000);
+}
+
+/* =========================================================================
+   ARRASTAR JOGADORES — com rato e com dedo
+   Usa Pointer Events, que dão os dois casos com o mesmo código.
+   ========================================================================= */
+function ligarArrastar(){
+  const campo = $('#campo');
+  if(!campo) return;
+
+  let origem = null, fantasma = null, aArrastar = false, inicio = null;
+
+  const posicaoSob = (x, y) => {
+    const el = document.elementFromPoint(x, y);
+    return el?.closest('.posicao');
+  };
+
+  const limpar = () => {
+    fantasma?.remove(); fantasma = null;
+    origem?.classList.remove('a-arrastar');
+    $$('#campo .posicao').forEach(p => p.classList.remove('alvo-troca'));
+    origem = null; aArrastar = false; inicio = null;
+  };
+
+  campo.addEventListener('pointerdown', e => {
+    const p = e.target.closest('.posicao');
+    if(!p || e.button === 2) return;
+    origem = p;
+    inicio = { x: e.clientX, y: e.clientY };
+  });
+
+  campo.addEventListener('pointermove', e => {
+    if(!origem || !inicio) return;
+
+    /* só começa a arrastar depois de uns pixéis — senão estraga o clique */
+    if(!aArrastar){
+      const dist = Math.hypot(e.clientX - inicio.x, e.clientY - inicio.y);
+      if(dist < 8) return;
+      aArrastar = true;
+      origem.setPointerCapture?.(e.pointerId);
+      origem.classList.add('a-arrastar');
+
+      fantasma = origem.cloneNode(true);
+      fantasma.className = 'posicao posicao--fantasma';
+      document.body.appendChild(fantasma);
+    }
+
+    e.preventDefault();
+    fantasma.style.left = e.clientX + 'px';
+    fantasma.style.top  = e.clientY + 'px';
+
+    const sob = posicaoSob(e.clientX, e.clientY);
+    $$('#campo .posicao').forEach(p =>
+      p.classList.toggle('alvo-troca', p === sob && p !== origem));
+  });
+
+  const largar = e => {
+    if(!origem) return;
+    if(!aArrastar){ limpar(); return; }
+
+    const destino = posicaoSob(e.clientX, e.clientY);
+    const de = +origem.dataset.i;
+    const para = destino ? +destino.dataset.i : -1;
+    limpar();
+
+    if(para < 0 || para === de) return;
+
+    /* trocar dois jogadores do onze é reorganizar — não gasta substituição.
+       Só gasta se uma das pontas estiver vazia (entra alguém de fora). */
+    const vazia = !meuOnze[de] || !meuOnze[para];
+    if(vazia){
+      const r = podeMexer();
+      if(!r.pode){ avisarSubstituicoes(r.razao); return; }
+    }
+
+    [meuOnze[de], meuOnze[para]] = [meuOnze[para], meuOnze[de]];
+    if(capitaoIdx === de) capitaoIdx = para;
+    else if(capitaoIdx === para) capitaoIdx = de;
+
+    if(vazia) gastarSubstituicao();
+    guardarFormacao();
+    pintarFormacao();
+  };
+
+  campo.addEventListener('pointerup', largar);
+  campo.addEventListener('pointercancel', limpar);
+}
+
 /* ---------- escolher quem joga numa posição ---------- */
 function abrirEscolha(i){
   posicaoAberta = i;
@@ -1704,9 +1870,21 @@ function listarCandidatos(procura){
   $$('#escolha-lista .cand').forEach(b => b.addEventListener('click', () => {
     const nome = b.dataset.nome;
     const onde = meuOnze.indexOf(nome);
-    /* se já jogava noutro sítio, trocam de posição */
+
+    /* trocar entre duas posições do próprio onze não gasta substituição:
+       é reorganizar, não é mudar de jogador */
+    const soReorganiza = onde >= 0;
+    const trazDeFora = !soReorganiza && meuOnze[posicaoAberta];
+
+    if(trazDeFora){
+      const r = podeMexer();
+      if(!r.pode){ avisarSubstituicoes(r.razao); return; }
+    }
+
     if(onde >= 0 && onde !== posicaoAberta) meuOnze[onde] = meuOnze[posicaoAberta];
     meuOnze[posicaoAberta] = nome;
+
+    if(trazDeFora) gastarSubstituicao();
     guardarFormacao();
     pintarFormacao();
     $('#escolha').close();
@@ -1734,6 +1912,141 @@ function ligarEscolha(){
     pintarFormacao();
   });
 }
+/* =========================================================================
+   7d. CHAT — comentários sobre os jogos, com fotografias
+   Precisa de ligação: as mensagens são as mesmas para toda a gente.
+   ========================================================================= */
+let fotoEscolhida = null;
+let pararDeOuvir = null;
+
+function estadoChat(texto, tipo){
+  const el = $('#chat-estado');
+  if(el){ el.textContent = texto; el.className = 'sub-inline ' + (tipo || ''); }
+}
+
+async function pintarChat(){
+  const lista = $('#chat-lista');
+  if(!lista) return;
+
+  if(!Nuvem.ligado){
+    lista.innerHTML = Componentes.vazio('Chat offline',
+      'O chat precisa de ligação ao servidor. Verifica a Internet e recarrega.', '⚡');
+    estadoChat('sem ligação', 'erro');
+    $('#chat-form').hidden = true;
+    return;
+  }
+
+  const eu = Nuvem.perfil;
+  $('#chat-form').hidden = !eu;
+  estadoChat(eu ? 'ligado como @' + eu.utilizador : 'entra na tua conta para escrever',
+             eu ? 'ok' : '');
+
+  const mensagens = await Nuvem.lerMensagens(60);
+  if(!mensagens.length){
+    lista.innerHTML = Componentes.vazio('Ainda ninguém falou',
+      'Sê o primeiro a comentar o jogo.', '◌');
+    return;
+  }
+
+  const perto = lista.scrollHeight - lista.scrollTop - lista.clientHeight < 80;
+
+  lista.innerHTML = mensagens.map(m => {
+    const meu = eu && m.perfil_id === eu.id;
+    const nome = m.perfis?.nome_mostrado || m.perfis?.utilizador || 'alguém';
+    const quando = new Date(m.criado_em);
+    return `
+    <li class="msg ${meu ? 'msg--minha' : ''}">
+      <div class="msg__cabeca">
+        <span class="msg__avatar" aria-hidden="true">${Componentes.seguro(nome[0].toUpperCase())}</span>
+        <b>@${Componentes.seguro(nome)}</b>
+        <time datetime="${quando.toISOString()}">${Componentes.haQuanto(quando)}</time>
+        ${meu ? `<button class="msg__apagar" data-id="${m.id}" aria-label="Apagar mensagem">✕</button>` : ''}
+      </div>
+      ${m.texto ? `<p class="msg__texto">${Componentes.seguro(m.texto)}</p>` : ''}
+      ${m.foto_url ? `<a class="msg__foto" href="${Componentes.seguro(m.foto_url)}"
+           target="_blank" rel="noopener">
+           <img src="${Componentes.seguro(m.foto_url)}" alt="Fotografia de @${Componentes.seguro(nome)}"
+                loading="lazy" decoding="async"></a>` : ''}
+    </li>`;
+  }).join('');
+
+  $$('#chat-lista .msg__apagar').forEach(b => b.addEventListener('click', async () => {
+    if(!confirm('Apagar esta mensagem?')) return;
+    await Nuvem.apagarMensagem(+b.dataset.id);
+    pintarChat();
+  }));
+
+  if(perto) lista.scrollTop = lista.scrollHeight;
+}
+
+function ligarChat(){
+  const form = $('#chat-form');
+  if(!form) return;
+
+  const campo = $('#chat-texto');
+  const erro = $('#chat-erro');
+
+  /* a caixa cresce com o texto */
+  campo.addEventListener('input', () => {
+    campo.style.height = 'auto';
+    campo.style.height = Math.min(campo.scrollHeight, 140) + 'px';
+  });
+
+  /* Enter envia, Shift+Enter muda de linha */
+  campo.addEventListener('keydown', e => {
+    if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); form.requestSubmit(); }
+  });
+
+  /* fotografia */
+  $('#chat-ficheiro').addEventListener('change', e => {
+    const f = e.target.files?.[0];
+    if(!f) return;
+    if(f.size > 5*1024*1024){ erro.textContent = 'A imagem tem de ter menos de 5 MB.'; return; }
+    fotoEscolhida = f;
+    $('#chat-previa-img').src = URL.createObjectURL(f);
+    $('#chat-previa').hidden = false;
+    erro.textContent = '';
+  });
+
+  $('#chat-tirar-foto').addEventListener('click', () => {
+    fotoEscolhida = null;
+    $('#chat-previa').hidden = true;
+    $('#chat-ficheiro').value = '';
+  });
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    erro.textContent = '';
+    const botao = $('#chat-enviar');
+    botao.disabled = true;
+    botao.textContent = 'A enviar…';
+
+    try{
+      let url = null;
+      if(fotoEscolhida){
+        const r = await Nuvem.enviarFoto(fotoEscolhida);
+        if(r.erro){ erro.textContent = r.erro; return; }
+        url = r.url;
+      }
+      const jogoAtual = proximoJogo();
+      const r = await Nuvem.enviarMensagem(campo.value, url,
+        jogoAtual ? `${jogoAtual.casa} — ${jogoAtual.fora}` : null);
+      if(r.erro){ erro.textContent = r.erro; return; }
+
+      campo.value = ''; campo.style.height = 'auto';
+      $('#chat-tirar-foto').click();
+      pintarChat();
+    }finally{
+      botao.disabled = false;
+      botao.textContent = 'Enviar';
+    }
+  });
+
+  /* mensagens novas aparecem sozinhas */
+  pararDeOuvir?.();
+  pararDeOuvir = Nuvem.ouvirChat(() => pintarChat());
+}
+
 /* =========================================================================
    8. MERCADO E CLUBE
    ========================================================================= */
@@ -2056,6 +2369,7 @@ function ligarLegais(){
 
 function irPara(vista){
   vistaAtual = vista;
+  if(vista === 'chat') pintarChat();
   $$('.vista').forEach(v => v.classList.toggle('is-on', v.id === 'vista-' + vista));
   $$('.menu__item').forEach(b => b.classList.toggle('is-on', b.dataset.vista === vista));
   scrollTo({top:0, behavior:'smooth'});
@@ -2066,6 +2380,9 @@ function irPara(vista){
    ========================================================================= */
 async function arranque(){
   montarEmblema();
+  /* a nuvem trata das contas, do ranking e do chat; se nao houver ligacao
+     o site continua a funcionar com as contas locais */
+  await Nuvem.iniciar();
   ligarAcesso();
   ligarLeitor();
   ligarMenuMobile();
@@ -2092,6 +2409,8 @@ async function arranque(){
   pintarJogosTodos(); pintarPlantel(); pintarEstatisticas();
   carregarFormacaoGuardada();
   ligarEscolha();
+  ligarArrastar();
+  ligarChat();
 
   montarFundoEntrada();
 

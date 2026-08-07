@@ -194,6 +194,11 @@ const FANTASY = {
   /* multiplicador do capitão */
   capitao: 1.5,
 
+  /* Regras de mercado da Fantasy.
+     Antes do primeiro jogo oficial mexes à vontade. A partir daí a equipa
+     tranca e só se podem fazer 2 trocas por jornada. */
+  substituicoesPorJornada: 2,
+
   /* como é explicado na página */
   rotulos: {
     GR:'Guarda-redes', DEF:'Defesas', MED:'Médios', AVA:'Avançados'

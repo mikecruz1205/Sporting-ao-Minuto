@@ -22,9 +22,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/base.css?v=23">
-<link rel="stylesheet" href="css/componentes.css?v=23">
-<link rel="stylesheet" href="css/style.css?v=23">
+<link rel="stylesheet" href="css/base.css?v=28">
+<link rel="stylesheet" href="css/componentes.css?v=28">
+<link rel="stylesheet" href="css/style.css?v=28">
 </head>
 <body class="trancado">
 
@@ -101,7 +101,7 @@
     </form>
 
     <p class="acesso__nota">
-      As contas ficam guardadas só neste browser, sem servidor nenhum.
+      A tua conta serve para a Fantasy e para o chat, partilhados com toda a gente.
       Não uses uma palavra-passe que tenhas noutro sítio.
     </p>
   </div>
@@ -146,6 +146,7 @@
   <button class="menu__item" data-vista="aominuto">AO MINUTO</button>
   <button class="menu__item" data-vista="estatisticas">ESTATÍSTICAS</button>
   <button class="menu__item" data-vista="formacao">FORMAÇÃO</button>
+  <button class="menu__item" data-vista="chat">CHAT</button>
   <button class="menu__item" data-vista="clube">CLUBE</button>
   <span class="menu__estado" id="estado-dados">a ligar…</span>
 </nav>
@@ -452,6 +453,39 @@
   </section>
 </main>
 
+<main class="vista" id="vista-chat">
+  <section class="cartao">
+    <div class="cartao__topo">
+      <h2>CHAT</h2>
+      <span class="sub-inline" id="chat-estado">—</span>
+    </div>
+    <div class="cartao__corpo">
+      <div class="chat" id="chat">
+        <ol class="chat__lista" id="chat-lista" aria-live="polite" aria-label="Mensagens"></ol>
+
+        <form class="chat__escrever" id="chat-form">
+          <div class="chat__previa" id="chat-previa" hidden>
+            <img id="chat-previa-img" alt="Pré-visualização da fotografia">
+            <button type="button" id="chat-tirar-foto" aria-label="Tirar fotografia">✕</button>
+          </div>
+          <div class="chat__linha">
+            <label class="chat__foto" for="chat-ficheiro" title="Juntar fotografia">
+              <span aria-hidden="true">⛰</span>
+              <span class="so-leitor">Juntar fotografia</span>
+            </label>
+            <input type="file" id="chat-ficheiro" accept="image/*" hidden>
+            <label class="so-leitor" for="chat-texto">Mensagem</label>
+            <textarea id="chat-texto" rows="1" maxlength="1000"
+                      placeholder="Escreve sobre o jogo…" enterkeyhint="send"></textarea>
+            <button type="submit" class="chat__enviar" id="chat-enviar">Enviar</button>
+          </div>
+          <div class="chat__erro" id="chat-erro" role="alert"></div>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
 <main class="vista" id="vista-clube">
   <section class="cartao">
     <div class="cartao__topo"><h2>O CLUBE</h2></div>
@@ -566,11 +600,13 @@
   <div class="legal__corpo" id="legal-corpo"></div>
 </dialog>
 
-<script src="js/componentes.js?v=23"></script>
-<script src="js/contas.js?v=23"></script>
-<script src="js/arte.js?v=23"></script>
-<script src="js/data.js?v=23"></script>
-<script src="js/wiki.js?v=23"></script>
-<script src="js/app.js?v=23"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.min.js" defer></script>
+<script src="js/nuvem.js?v=28"></script>
+<script src="js/componentes.js?v=28"></script>
+<script src="js/contas.js?v=28"></script>
+<script src="js/arte.js?v=28"></script>
+<script src="js/data.js?v=28"></script>
+<script src="js/wiki.js?v=28"></script>
+<script src="js/app.js?v=28"></script>
 </body>
 </html>

@@ -860,6 +860,27 @@ body.trancado .topo, body.trancado .menu, body.trancado .vista{ filter:blur(6px)
 }
 .posicao__nome i{ font-style:normal; color:var(--verde-claro); }
 
+/* ---------- arrastar jogadores ---------- */
+.posicao{ touch-action: none; }          /* o dedo arrasta em vez de deslizar a página */
+.posicao.a-arrastar{ opacity: .3; }
+.posicao.alvo-troca .posicao__camisola,
+.posicao.alvo-troca .posicao__vazia{
+  outline: 2px dashed var(--verde-claro);
+  outline-offset: 4px; border-radius: 50%;
+}
+.posicao--fantasma{
+  position: fixed; z-index: 300; pointer-events: none;
+  transform: translate(-50%,-50%) scale(1.12);
+  filter: drop-shadow(0 10px 20px rgba(0,0,0,.6));
+  opacity: .95;
+}
+.formacao__aviso--alerta{
+  color: var(--amarelo);
+  border-top-color: rgba(242,193,78,.4);
+  animation: piscaAviso .5s ease 2;
+}
+@keyframes piscaAviso{ 50%{ opacity:.45 } }
+
 /* posição ainda por preencher */
 .posicao--vazia .posicao__vazia{
   display:grid; place-items:center;

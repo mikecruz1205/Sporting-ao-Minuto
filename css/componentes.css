@@ -358,6 +358,96 @@
 .legal__corpo li{ margin-bottom: var(--e-1); }
 
 /* =========================================================================
+   CHAT
+   ========================================================================= */
+.chat{ display: flex; flex-direction: column; gap: var(--e-4); height: min(70vh, 640px); }
+.chat__lista{
+  list-style: none; flex: 1; overflow-y: auto;
+  display: flex; flex-direction: column; gap: var(--e-3);
+  padding-right: var(--e-2); scroll-behavior: smooth;
+}
+
+.msg{
+  background: var(--fundo-2); border: 1px solid var(--linha);
+  border-radius: var(--raio-md); padding: var(--e-3) var(--e-4);
+  max-width: 78%; align-self: flex-start;
+  animation: entraMsg .25s ease;
+}
+@keyframes entraMsg{ from{ opacity:0; transform: translateY(6px); } }
+.msg--minha{
+  align-self: flex-end;
+  background: var(--verde-vidro); border-color: rgba(47,217,138,.28);
+}
+.msg__cabeca{ display: flex; align-items: center; gap: var(--e-2); margin-bottom: var(--e-2); }
+.msg__avatar{
+  width: 24px; height: 24px; border-radius: 50%; flex: none;
+  display: grid; place-items: center;
+  background: var(--verde-escuro); color: var(--verde-claro);
+  font-size: var(--t-xs); font-weight: var(--peso-max);
+}
+.msg__cabeca b{ font-size: var(--t-sm); font-weight: var(--peso-forte); }
+.msg__cabeca time{ font-size: var(--t-xs); color: var(--texto-3); margin-left: auto; }
+.msg__apagar{
+  font-size: var(--t-xs); color: var(--texto-3); padding: 0 var(--e-1);
+  border-radius: var(--raio-sm); transition: color var(--rapido);
+}
+.msg__apagar:hover{ color: var(--vermelho); }
+.msg__texto{ font-size: var(--t-sm); line-height: var(--linha-normal); white-space: pre-wrap; word-break: break-word; }
+.msg__foto{ display: block; margin-top: var(--e-2); }
+.msg__foto img{
+  max-width: 100%; max-height: 320px; border-radius: var(--raio);
+  border: 1px solid var(--linha); display: block;
+}
+
+.chat__escrever{
+  border-top: 1px solid var(--linha); padding-top: var(--e-4);
+  display: flex; flex-direction: column; gap: var(--e-2);
+}
+.chat__escrever[hidden]{ display: none; }
+.chat__linha{ display: flex; align-items: flex-end; gap: var(--e-2); }
+.chat__linha textarea{
+  flex: 1; resize: none; min-height: 42px; max-height: 140px;
+  padding: var(--e-3); border-radius: var(--raio);
+  background: var(--fundo-2); border: 1px solid var(--linha);
+  color: var(--texto); font-size: var(--t-sm); line-height: var(--linha-normal);
+}
+.chat__linha textarea:focus{ outline: none; border-color: var(--verde); }
+.chat__foto{
+  width: 42px; height: 42px; flex: none; border-radius: var(--raio);
+  display: grid; place-items: center; cursor: pointer; font-size: 18px;
+  background: var(--fundo-2); border: 1px solid var(--linha);
+  color: var(--texto-2); transition: all var(--rapido);
+}
+.chat__foto:hover{ border-color: var(--verde); color: var(--verde-claro); }
+.chat__enviar{
+  flex: none; height: 42px; padding: 0 var(--e-5); border-radius: var(--raio);
+  background: var(--verde); color: #04150d;
+  font-size: var(--t-sm); font-weight: var(--peso-max);
+  transition: background var(--rapido);
+}
+.chat__enviar:hover:not(:disabled){ background: var(--verde-claro); }
+.chat__enviar:disabled{ opacity: .6; cursor: wait; }
+
+.chat__previa{ position: relative; align-self: flex-start; }
+.chat__previa[hidden]{ display: none; }
+.chat__previa img{ max-height: 110px; border-radius: var(--raio); border: 1px solid var(--linha); display: block; }
+.chat__previa button{
+  position: absolute; top: -8px; right: -8px;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--vermelho); color: #fff; font-size: 12px;
+  display: grid; place-items: center;
+}
+.chat__erro{ font-size: var(--t-xs); color: var(--vermelho); min-height: 16px; }
+
+.sub-inline.ok::before{ content:'● '; color: var(--verde); }
+.sub-inline.erro::before{ content:'● '; color: var(--vermelho); }
+
+@media (max-width: 700px){
+  .chat{ height: min(66vh, 520px); }
+  .msg{ max-width: 92%; }
+}
+
+/* =========================================================================
    LISTA COMPACTA
    ========================================================================= */
 .compacto{ list-style: none; border-bottom: 1px solid var(--linha); }
