@@ -861,7 +861,12 @@ body.trancado .topo, body.trancado .menu, body.trancado .vista{ filter:blur(6px)
 .posicao__nome i{ font-style:normal; color:var(--verde-claro); }
 
 /* ---------- arrastar jogadores ---------- */
-.posicao{ touch-action: none; }          /* o dedo arrasta em vez de deslizar a página */
+/* o dedo arrasta em vez de deslizar a página */
+.posicao,
+#lista-suplentes li[data-nome]{ touch-action: none; }
+#lista-suplentes li[data-nome]{ cursor: grab; }
+body.a-arrastar-jogador{ user-select: none; }
+body.a-arrastar-jogador *{ cursor: grabbing !important; }
 .posicao.a-arrastar{ opacity: .3; }
 .posicao.alvo-troca .posicao__camisola,
 .posicao.alvo-troca .posicao__vazia{
@@ -1210,3 +1215,133 @@ body.trancado .topo, body.trancado .menu, body.trancado .vista{ filter:blur(6px)
 @media (max-width:600px){
   .saldo__lados{ grid-template-columns:1fr; gap:10px; }
 }
+
+/* =========================================================================
+   ESCOLHER JOGADOR EM TELEMÓVEL
+   Em ecrã pequeno o diálogo passa a folha que sobe de baixo: fica a ocupar
+   o ecrã todo, com a lista a poder crescer e sem o teclado tapar tudo.
+   ========================================================================= */
+@media (max-width: 700px){
+  .escolha{
+    /* folha colada ao fundo: o margin sozinho nao chega, o dialogo fica na
+       camada de topo e escorregava para fora do ecra */
+    position: fixed; inset: auto 0 0 0; margin: 0;
+    width: 100%; max-width: 100%; max-height: 86dvh;
+    border-radius: var(--raio-lg) var(--raio-lg) 0 0;
+    border-bottom: none;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  /* tem de ser .escolha[open]: a regra geral do dialogo ja usa essa
+     especificidade e ganhava, ficando com a animacao errada */
+  .escolha[open]{ animation: sobeFolha .28s cubic-bezier(.2,.9,.3,1); }
+  @keyframes sobeFolha{ from{ transform: translateY(100%); } }
+
+  /* pega de arrastar, como nas apps */
+  .escolha__topo::before{
+    content: ''; position: absolute; top: 7px; left: 50%; transform: translateX(-50%);
+    width: 38px; height: 4px; border-radius: 3px; background: var(--linha-forte);
+  }
+  .escolha__topo{ position: relative; padding-top: var(--e-5); }
+
+  .escolha__lista{ max-height: 46dvh; }
+  .cand{ padding: var(--e-3) var(--e-2); }
+  .cand img{ width: 44px; height: 44px; }
+  .cand__txt b{ font-size: var(--t-base); }
+}
+
+
+/* =========================================================================
+   NAVBAR STICKY + MENU MOBILE
+   ========================================================================= */
+.topo{ position: sticky; top: 0; z-index: calc(var(--z-navbar) + 1); }
+.menu{ position: sticky; top: var(--altura-topo, 92px); z-index: var(--z-navbar); }
+
+.menu-abrir{
+  display: none;
+  position: fixed; top: 14px; right: 14px; z-index: calc(var(--z-navbar) + 5);
+  width: 42px; height: 42px; border-radius: var(--raio);
+  background: var(--cartao); border: 1px solid var(--linha);
+  flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+}
+.menu-abrir span{
+  display: block; width: 18px; height: 2px; border-radius: 2px;
+  background: var(--texto); transition: transform var(--normal), opacity var(--rapido);
+}
+.menu-abrir[aria-expanded="true"] span:nth-child(1){ transform: translateY(7px) rotate(45deg); }
+.menu-abrir[aria-expanded="true"] span:nth-child(2){ opacity: 0; }
+.menu-abrir[aria-expanded="true"] span:nth-child(3){ transform: translateY(-7px) rotate(-45deg); }
+
+@media (max-width: 900px){
+  /* ---- cabeçalho compacto e fixo ---- */
+  .topo{
+    position: sticky; top: 0; z-index: calc(var(--z-navbar) + 1);
+    padding: var(--e-2) var(--e-3);
+    gap: var(--e-2);
+    background: var(--fundo-2);
+    border-bottom: 1px solid var(--linha);
+  }
+  .emblema{ width: 44px; height: 44px; }
+  .marca-txt h1{ font-size: var(--t-lg); }
+  .marca-txt span{ display: none; }          /* o lema não cabe */
+
+  /* deixa espaço para o botão do menu, que é fixo no canto */
+  .topo__acoes{ gap: var(--e-1); margin-right: 46px; }
+  .topo__acoes .quem{ display: none; }
+  .botao-login{ padding: var(--e-2) var(--e-3); font-size: var(--t-xs); }
+  .procura.is-aberta input{ width: min(150px, 34vw); }
+
+  /* ---- botão do menu, alinhado com o cabeçalho ---- */
+  .menu-abrir{
+    display: flex; position: fixed; top: var(--e-2); right: var(--e-3);
+    width: 44px; height: 44px;
+  }
+
+  /* ---- gaveta ---- */
+  .menu{
+    position: fixed; inset: 0 0 0 auto; width: min(290px, 86vw);
+    flex-direction: column; align-items: stretch; justify-content: flex-start;
+    padding: calc(var(--e-6) + 44px) var(--e-4) var(--e-6);
+    background: var(--cartao); border-left: 1px solid var(--linha);
+    box-shadow: var(--sombra-4);
+    overflow-y: auto; overscroll-behavior: contain;
+    transform: translateX(100%); transition: transform var(--normal);
+    z-index: calc(var(--z-navbar) + 2);
+    /* respeita o entalhe e a barra de gestos dos telemóveis */
+    padding-top: max(calc(var(--e-6) + 44px), env(safe-area-inset-top));
+    padding-bottom: max(var(--e-6), env(safe-area-inset-bottom));
+  }
+  .menu.aberto{ transform: none; }
+  .menu__item{
+    width: 100%; text-align: left;
+    padding: var(--e-3) var(--e-3);
+    border-bottom: 1px solid var(--linha); border-left: 3px solid transparent;
+    font-size: var(--t-sm); letter-spacing: .06em;
+    display: flex; align-items: center;
+  }
+  .menu__item.is-on{
+    border-bottom-color: var(--linha);
+    border-left-color: var(--verde);
+    background: var(--verde-vidro);
+  }
+  .menu__estado{
+    margin: var(--e-4) 0 0; padding: var(--e-3) 0 0;
+    border-top: 1px solid var(--linha); font-size: var(--t-xs);
+  }
+
+  .menu-veu{
+    position: fixed; inset: 0; z-index: var(--z-navbar);
+    background: rgba(3,6,4,.66); backdrop-filter: blur(2px);
+    opacity: 0; visibility: hidden; transition: opacity var(--normal), visibility var(--normal);
+  }
+  .menu-veu.aparece{ opacity: 1; visibility: visible; }
+
+  /* com a gaveta aberta a página por baixo não deve deslizar */
+  body.menu-aberto{ overflow: hidden; }
+}
+
+@media (max-width: 400px){
+  .marca-txt h1{ font-size: var(--t-md); }
+  .emblema{ width: 38px; height: 38px; }
+  .topo__acoes .ico{ width: 36px; height: 36px; min-width: 36px; }
+}
+

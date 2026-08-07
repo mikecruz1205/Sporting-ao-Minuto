@@ -238,55 +238,6 @@
 .lista-compacta{ list-style: none; }
 
 /* =========================================================================
-   NAVBAR STICKY + MENU MOBILE
-   ========================================================================= */
-.topo{ position: sticky; top: 0; z-index: calc(var(--z-navbar) + 1); }
-.menu{ position: sticky; top: var(--altura-topo, 92px); z-index: var(--z-navbar); }
-
-.menu-abrir{
-  display: none;
-  position: fixed; top: 14px; right: 14px; z-index: calc(var(--z-navbar) + 5);
-  width: 42px; height: 42px; border-radius: var(--raio);
-  background: var(--cartao); border: 1px solid var(--linha);
-  flex-direction: column; align-items: center; justify-content: center; gap: 5px;
-}
-.menu-abrir span{
-  display: block; width: 18px; height: 2px; border-radius: 2px;
-  background: var(--texto); transition: transform var(--normal), opacity var(--rapido);
-}
-.menu-abrir[aria-expanded="true"] span:nth-child(1){ transform: translateY(7px) rotate(45deg); }
-.menu-abrir[aria-expanded="true"] span:nth-child(2){ opacity: 0; }
-.menu-abrir[aria-expanded="true"] span:nth-child(3){ transform: translateY(-7px) rotate(-45deg); }
-
-@media (max-width: 900px){
-  .menu-abrir{ display: flex; }
-  .topo{ position: static; }
-  .menu{
-    position: fixed; inset: 0 0 0 auto; width: min(280px, 84vw);
-    flex-direction: column; align-items: stretch; justify-content: flex-start;
-    padding: 76px var(--e-4) var(--e-5);
-    background: var(--cartao); border-left: 1px solid var(--linha);
-    box-shadow: var(--sombra-4); overflow-y: auto;
-    transform: translateX(100%); transition: transform var(--normal);
-    z-index: calc(var(--z-navbar) + 2);
-  }
-  .menu.aberto{ transform: none; }
-  .menu__item{
-    width: 100%; text-align: left; padding: var(--e-4) var(--e-3);
-    border-bottom: 1px solid var(--linha); border-left: 3px solid transparent;
-    font-size: var(--t-base);
-  }
-  .menu__item.is-on{ border-bottom-color: var(--linha); border-left-color: var(--verde); }
-  .menu__estado{ margin: var(--e-4) 0 0; padding: 0; }
-  .menu-veu{
-    position: fixed; inset: 0; z-index: var(--z-navbar);
-    background: rgba(3,6,4,.6); backdrop-filter: blur(2px);
-    opacity: 0; visibility: hidden; transition: opacity var(--normal), visibility var(--normal);
-  }
-  .menu-veu.aparece{ opacity: 1; visibility: visible; }
-}
-
-/* =========================================================================
    RODAPÉ
    ========================================================================= */
 .rodape-site{

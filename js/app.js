@@ -550,7 +550,8 @@ function pintarHome(){
       : restantes.length
         ? restantes.map(n => Componentes.cartaoNoticia(n, {destaque: procuraTexto})).join('')
         : Componentes.vazio('Nada nesta categoria',
-            'Experimenta outro filtro — as notícias entram de minuto a minuto.', '◎');
+            'Experimenta outro filtro — as notícias entram de minuto a minuto.',
+            tacaSVG('taca', 'var(--texto-3)'));
   }
 
   /* ---- mercado ---- */
@@ -561,7 +562,8 @@ function pintarHome(){
       ? Componentes.esqueletoCartao(3)
       : mercado.length
         ? mercado.map(n => Componentes.cartaoNoticia(n, {modo:'grelha'})).join('')
-        : Componentes.vazio('Mercado calmo', 'Sem movimentações na imprensa neste momento.', '⇄');
+        : Componentes.vazio('Mercado calmo', 'Sem movimentações na imprensa neste momento.',
+            tacaSVG('supertaca', 'var(--texto-3)'));
   }
 
   /* ---- vídeos ---- */
@@ -1839,43 +1841,56 @@ function avisarSubstituicoes(texto){
    Usa Pointer Events, que dão os dois casos com o mesmo código.
    ========================================================================= */
 function ligarArrastar(){
-  const campo = $('#campo');
-  if(!campo) return;
+  const vistaFormacao = $('#vista-formacao');
+  if(!vistaFormacao) return;
 
   let origem = null, fantasma = null, aArrastar = false, inicio = null;
+  let nomeArrastado = null;      // quando vem da lista do plantel
 
-  const posicaoSob = (x, y) => {
-    const el = document.elementFromPoint(x, y);
-    return el?.closest('.posicao');
-  };
+  const posicaoSob = (x, y) =>
+    document.elementFromPoint(x, y)?.closest('.posicao');
 
   const limpar = () => {
     fantasma?.remove(); fantasma = null;
     origem?.classList.remove('a-arrastar');
-    $$('#campo .posicao').forEach(p => p.classList.remove('alvo-troca'));
-    origem = null; aArrastar = false; inicio = null;
+    $$('.posicao').forEach(p => p.classList.remove('alvo-troca'));
+    document.body.classList.remove('a-arrastar-jogador');
+    origem = null; aArrastar = false; inicio = null; nomeArrastado = null;
   };
 
-  campo.addEventListener('pointerdown', e => {
-    const p = e.target.closest('.posicao');
-    if(!p || e.button === 2) return;
-    origem = p;
+  /* Arrasta-se a partir de dois sítios: das posições no campo e das linhas
+     do plantel à direita. Por isso o ouvinte fica na vista toda. */
+  vistaFormacao.addEventListener('pointerdown', e => {
+    const noCampo = e.target.closest('#campo .posicao');
+    const naLista = e.target.closest('#lista-suplentes li[data-nome]');
+    if((!noCampo && !naLista) || e.button === 2) return;
+
+    origem = noCampo || naLista;
+    nomeArrastado = naLista ? naLista.dataset.nome : null;
     inicio = { x: e.clientX, y: e.clientY };
   });
 
-  campo.addEventListener('pointermove', e => {
+  vistaFormacao.addEventListener('pointermove', e => {
     if(!origem || !inicio) return;
 
     /* só começa a arrastar depois de uns pixéis — senão estraga o clique */
     if(!aArrastar){
-      const dist = Math.hypot(e.clientX - inicio.x, e.clientY - inicio.y);
-      if(dist < 8) return;
+      if(Math.hypot(e.clientX - inicio.x, e.clientY - inicio.y) < 8) return;
       aArrastar = true;
       origem.setPointerCapture?.(e.pointerId);
       origem.classList.add('a-arrastar');
+      document.body.classList.add('a-arrastar-jogador');
 
-      fantasma = origem.cloneNode(true);
+      fantasma = document.createElement('div');
       fantasma.className = 'posicao posicao--fantasma';
+      if(nomeArrastado){
+        const p = acharJogador(nomeArrastado);
+        fantasma.innerHTML =
+          `<span class="posicao__camisola">${camisolaSVG(p?.n ?? '', p?.posGrupo === 'GR' ? 'gr' : 'campo')}</span>
+           <span class="posicao__nome">${nomeCurto(nomeArrastado)}</span>`;
+      }else{
+        fantasma.innerHTML = origem.innerHTML;
+      }
       document.body.appendChild(fantasma);
     }
 
@@ -1893,11 +1908,26 @@ function ligarArrastar(){
     if(!aArrastar){ limpar(); return; }
 
     const destino = posicaoSob(e.clientX, e.clientY);
-    const de = +origem.dataset.i;
+    const vindoDaLista = nomeArrastado;
+    const de = vindoDaLista ? -1 : +origem.dataset.i;
     const para = destino ? +destino.dataset.i : -1;
     limpar();
 
-    if(para < 0 || para === de) return;
+    if(para < 0) return;
+
+    /* ---- veio da lista do plantel: entra alguém de fora ---- */
+    if(vindoDaLista){
+      const r = podeMexer();
+      if(!r.pode){ avisarSubstituicoes(r.razao); return; }
+      meuOnze[para] = vindoDaLista;
+      gastarSubstituicao();
+      guardarFormacao();
+      pintarFormacao();
+      return;
+    }
+
+    /* ---- troca entre duas posições do campo ---- */
+    if(para === de) return;
 
     /* trocar dois jogadores do onze é reorganizar — não gasta substituição.
        Só gasta se uma das pontas estiver vazia (entra alguém de fora). */
@@ -1916,8 +1946,8 @@ function ligarArrastar(){
     pintarFormacao();
   };
 
-  campo.addEventListener('pointerup', largar);
-  campo.addEventListener('pointercancel', limpar);
+  vistaFormacao.addEventListener('pointerup', largar);
+  vistaFormacao.addEventListener('pointercancel', limpar);
 }
 
 /* ---------- escolher quem joga numa posição ---------- */
@@ -1935,7 +1965,10 @@ function abrirEscolha(i){
 
   listarCandidatos('');
   dlg.showModal();
-  setTimeout(() => $('#escolha-procura').focus(), 50);
+
+  /* Em telemóvel não se foca a procura: o teclado subia logo e tapava a
+     lista toda, que é o que se quer ver. No computador foca-se. */
+  if(innerWidth > 700) setTimeout(() => $('#escolha-procura').focus(), 50);
 }
 
 function listarCandidatos(procura){
@@ -2029,7 +2062,8 @@ async function pintarChat(){
 
   if(!Nuvem.ligado){
     lista.innerHTML = Componentes.vazio('Chat offline',
-      'O chat precisa de ligação ao servidor. Verifica a Internet e recarrega.', '⚡');
+      'O chat precisa de ligação ao servidor. Verifica a Internet e recarrega.',
+      tacaSVG('europa', 'var(--texto-3)'));
     estadoChat('sem ligação', 'erro');
     $('#chat-form').hidden = true;
     return;
@@ -2043,7 +2077,7 @@ async function pintarChat(){
   const mensagens = await Nuvem.lerMensagens(60);
   if(!mensagens.length){
     lista.innerHTML = Componentes.vazio('Ainda ninguém falou',
-      'Sê o primeiro a comentar o jogo.', '◌');
+      'Sê o primeiro a comentar o jogo.', tacaSVG('liga', 'var(--texto-3)'));
     return;
   }
 
@@ -2248,6 +2282,8 @@ function pintarClube(){
 
   /* ---- palmarés ---- */
   $('#palmares-total').textContent = `${total} troféus`;
+  const icone = $('#icone-palmares');
+  if(icone && !icone.innerHTML) icone.innerHTML = tacaSVG('liga', 'var(--ouro)');
   $('#palmares').innerHTML = CLUBE.titulos.map((t,i) => `
     <article class="trofeu" style="animation-delay:${i*.07}s">
       <div class="trofeu__brilho"></div>
@@ -2363,12 +2399,15 @@ function ligarMenuMobile(){
   const fechar = () => {
     menu.classList.remove('aberto');
     veu.classList.remove('aparece');
+    document.body.classList.remove('menu-aberto');
     botao.setAttribute('aria-expanded','false');
     botao.setAttribute('aria-label','Abrir menu');
   };
   const abrir = () => {
     menu.classList.add('aberto');
     veu.classList.add('aparece');
+    /* trava o deslize da página por baixo enquanto a gaveta está aberta */
+    document.body.classList.add('menu-aberto');
     botao.setAttribute('aria-expanded','true');
     botao.setAttribute('aria-label','Fechar menu');
     menu.querySelector('.menu__item')?.focus();
@@ -2492,6 +2531,8 @@ async function arranque(){
   ligarAoTopo();
   ligarLegais();
   const elAno = $('#ano'); if(elAno) elAno.textContent = new Date().getFullYear();
+  const tacaMenu = $('.menu__taca');
+  if(tacaMenu) tacaMenu.innerHTML = tacaSVG('liga', 'currentColor');
   $('#lema').textContent = CONFIG.lema;
   CLUBE.treinador = CONFIG.treinador;
 
