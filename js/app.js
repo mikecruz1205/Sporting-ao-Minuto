@@ -127,16 +127,37 @@ function mostrarAba(qual){
   setTimeout(() => $(entrar ? '#entrar-utilizador' : '#criar-utilizador').focus(), 60);
 }
 
+/* As contas vivem na nuvem. Se não houver ligação, cai-se nas contas
+   locais do js/contas.js para o site continuar a abrir — só que aí o chat
+   e o ranking partilhado ficam de fora. */
+const naNuvem = () => Nuvem.ligado;
+
 function ligarAcesso(){
-  const sessao = Contas.sessao();
-  if(sessao){
-    UTILIZADOR_ATUAL = sessao.nome;
+  /* já havia sessão? */
+  if(naNuvem() && Nuvem.perfil){
+    UTILIZADOR_ATUAL = Nuvem.perfil.nome_mostrado;
     abrirSite(false);
     return;
   }
+  if(!naNuvem()){
+    const sessao = Contas.sessao();
+    if(sessao){
+      UTILIZADOR_ATUAL = sessao.nome;
+      abrirSite(false);
+      return;
+    }
+  }
 
-  /* sem contas ainda? abre logo no registo */
-  if(Contas.quantas() === 0) mostrarAba('criar');
+  /* avisa se estiver a trabalhar sem ligação */
+  if(!naNuvem()){
+    const nota = $('.acesso__nota');
+    if(nota) nota.innerHTML = '<b style="color:var(--amarelo)">Sem ligação ao servidor.</b> '
+      + 'Podes entrar com uma conta local, mas o chat e o ranking partilhado '
+      + 'ficam indisponíveis.';
+  }
+
+  /* sem contas locais ainda? abre logo no registo */
+  if(!naNuvem() && Contas.quantas() === 0) mostrarAba('criar');
 
   $('#aba-entrar').addEventListener('click', () => mostrarAba('entrar'));
   $('#aba-criar').addEventListener('click',  () => mostrarAba('criar'));
@@ -161,9 +182,26 @@ function ligarAcesso(){
     if(!v){ estado.textContent = ''; estado.className = 'acesso__estado'; return; }
     const erro = Contas.validarUtilizador(v);
     if(erro){ estado.textContent = erro; estado.className = 'acesso__estado mau'; return; }
-    const usado = Contas.existe(v);
-    estado.textContent = usado ? 'Já está a ser usado.' : 'Está livre.';
-    estado.className = 'acesso__estado ' + (usado ? 'mau' : 'bom');
+
+    if(!naNuvem()){
+      const usado = Contas.existe(v);
+      estado.textContent = usado ? 'Já está a ser usado.' : 'Está livre.';
+      estado.className = 'acesso__estado ' + (usado ? 'mau' : 'bom');
+      return;
+    }
+
+    /* na nuvem a pergunta vai ao servidor — espera-se que a pessoa pare
+       de escrever, senão era um pedido por cada tecla */
+    estado.textContent = 'a verificar…';
+    estado.className = 'acesso__estado';
+    clearTimeout(campoNovo._espera);
+    campoNovo._espera = setTimeout(async () => {
+      if(campoNovo.value.trim() !== v) return;      // já mudou entretanto
+      const livre = await Nuvem.nomeLivre(v);
+      if(campoNovo.value.trim() !== v) return;
+      estado.textContent = livre ? 'Está livre.' : 'Já está a ser usado.';
+      estado.className = 'acesso__estado ' + (livre ? 'bom' : 'mau');
+    }, 400);
   });
 
   /* ---- criar conta ---- */
@@ -172,14 +210,23 @@ function ligarAcesso(){
     const erroEl = $('#erro-criar');
     erroEl.textContent = '';
 
-    const r = await Contas.registar(campoNovo.value, $('#criar-palavra').value);
-    if(r.erro){ erroEl.textContent = r.erro; treme(); return; }
+    const botao = e.target.querySelector('button[type=submit]');
+    botao.disabled = true; botao.textContent = 'A CRIAR…';
+    try{
+      const palavra = $('#criar-palavra').value;
+      const r = naNuvem()
+        ? await Nuvem.registar(campoNovo.value, palavra)
+        : await Contas.registar(campoNovo.value, palavra);
+      if(r.erro){ erroEl.textContent = r.erro; treme(); return; }
 
-    /* conta criada: entra já, sem obrigar a escrever outra vez */
-    await Contas.entrar(campoNovo.value, $('#criar-palavra').value, true);
-    UTILIZADOR_ATUAL = r.nome;
-    abrirSite(true);
-    carregarFormacaoGuardada();
+      /* conta criada: entra já, sem obrigar a escrever outra vez */
+      if(!naNuvem()) await Contas.entrar(campoNovo.value, palavra, true);
+      UTILIZADOR_ATUAL = r.nome;
+      abrirSite(true);
+      await carregarFormacaoGuardada();
+    }finally{
+      botao.disabled = false; botao.textContent = 'CRIAR CONTA';
+    }
   });
 
   /* ---- entrar ---- */
@@ -188,22 +235,32 @@ function ligarAcesso(){
     const erroEl = $('#erro-entrar');
     erroEl.textContent = '';
 
-    const r = await Contas.entrar($('#entrar-utilizador').value,
-                                  $('#entrar-palavra').value,
-                                  $('#lembrar').checked);
-    if(r.erro){
-      erroEl.textContent = r.erro;
-      $('#entrar-palavra').value = '';
-      $('#entrar-palavra').focus();
-      treme();
-      return;
+    const botao = e.target.querySelector('button[type=submit]');
+    botao.disabled = true; botao.textContent = 'A ENTRAR…';
+    try{
+      const utilizador = $('#entrar-utilizador').value;
+      const palavra = $('#entrar-palavra').value;
+      const r = naNuvem()
+        ? await Nuvem.entrar(utilizador, palavra, $('#lembrar').checked)
+        : await Contas.entrar(utilizador, palavra, $('#lembrar').checked);
+
+      if(r.erro){
+        erroEl.textContent = r.erro;
+        $('#entrar-palavra').value = '';
+        $('#entrar-palavra').focus();
+        treme();
+        return;
+      }
+      UTILIZADOR_ATUAL = r.nome;
+      abrirSite(true);
+      await carregarFormacaoGuardada();
+    }finally{
+      botao.disabled = false; botao.textContent = 'ENTRAR';
     }
-    UTILIZADOR_ATUAL = r.nome;
-    abrirSite(true);
-    carregarFormacaoGuardada();
   });
 
-  setTimeout(() => $(Contas.quantas() ? '#entrar-utilizador' : '#criar-utilizador').focus(), 300);
+  const haLocais = !naNuvem() && Contas.quantas() > 0;
+  setTimeout(() => $(naNuvem() || haLocais ? '#entrar-utilizador' : '#criar-utilizador').focus(), 300);
 }
 
 /* nomes como os escrevemos → nomes na base de emblemas da API */
@@ -1313,31 +1370,44 @@ function guardarPontuacao(total, quantos){
   try{ localStorage.setItem(RANKING, JSON.stringify(tabela)); }catch(e){}
 }
 
-function pintarRanking(){
+/* O ranking vem da nuvem quando ha ligacao — e o de toda a gente.
+   Sem ligacao, mostra-se o das contas deste browser. */
+async function pintarRanking(){
+  if(naNuvem()){
+    try{
+      desenharRanking(await Nuvem.ranking(10), 'todas as contas');
+      return;
+    }catch(e){ /* cai para o local */ }
+  }
+
   let tabela = {};
   try{ tabela = JSON.parse(localStorage.getItem(RANKING) || '{}'); }catch(e){}
 
-  /* junta entradas repetidas do mesmo nome (pode haver restos de versões
-     antigas da chave) ficando com a melhor pontuação */
+  /* junta entradas repetidas do mesmo nome (restos de versoes antigas da
+     chave) ficando com a melhor pontuacao */
   const porNome = new Map();
   Object.values(tabela).forEach(e => {
     const id = Contas.idDe(e.nome);
     if(!porNome.has(id) || porNome.get(id).pontos < e.pontos) porNome.set(id, e);
   });
 
-  const lista = [...porNome.values()]
-    .sort((a,b) => b.pontos - a.pontos)
-    .slice(0,10);
+  desenharRanking([...porNome.values()].sort((a,b) => b.pontos - a.pontos).slice(0,10),
+                  'so deste browser');
+}
+
+function desenharRanking(lista, origem){
+  const nota = $('#ranking-origem');
+  if(nota) nota.textContent = origem;
 
   $('#ranking').innerHTML = lista.length
     ? lista.map((e,i) => `
         <li class="${chaveNome(e.nome) === chaveNome(UTILIZADOR_ATUAL || '') ? 'eu' : ''}">
           <span class="rk__pos ${i<3?'rk__pos--podio':''}">${i+1}</span>
-          <span class="rk__nome">@${e.nome}</span>
-          <span class="rk__eq">${e.desenho} · ${e.jogadores}/11</span>
-          <b>${e.pontos.toLocaleString('pt-PT')}</b>
+          <span class="rk__nome">@${Componentes.seguro(e.nome)}</span>
+          <span class="rk__eq">${Componentes.seguro(e.desenho || '')} · ${e.jogadores}/11</span>
+          <b>${(e.pontos||0).toLocaleString('pt-PT')}</b>
         </li>`).join('')
-    : '<li class="vazio">Ainda ninguém pontuou.</li>';
+    : '<li class="vazio">Ainda ninguem pontuou.</li>';
 }
 
 function pintarEstatisticas(){
@@ -1542,17 +1612,46 @@ function acertarJornada(){
 }
 
 function guardarFormacao(){
-  try{
-    localStorage.setItem(chaveFormacao(),
-      JSON.stringify({ desenho: desenhoAtual, onze: meuOnze, capitao: capitaoIdx,
-                       jornada: jornadaGuardada, substituicoes: substituicoesUsadas }));
-  }catch(e){}
+  const equipa = { desenho: desenhoAtual, onze: meuOnze, capitao: capitaoIdx,
+                   jornada: jornadaGuardada, substituicoes: substituicoesUsadas };
+
+  /* copia local: serve de rascunho e faz o site abrir depressa */
+  try{ localStorage.setItem(chaveFormacao(), JSON.stringify(equipa)); }catch(e){}
+
+  /* e na nuvem, para entrar no ranking de toda a gente. Espera-se um pouco
+     para nao mandar um pedido por cada clique. */
+  if(naNuvem() && Nuvem.perfil){
+    clearTimeout(guardarFormacao._espera);
+    guardarFormacao._espera = setTimeout(() => {
+      Nuvem.guardarEquipa({ ...equipa,
+        trancada: equipaTrancada(),
+        pontos: pontosDoOnze(),
+        jogadores: meuOnze.filter(Boolean).length
+      }).then(pintarRanking);
+    }, 700);
+  }
 }
 
-function carregarFormacaoGuardada(){
+/* pontos totais do onze, com o capitao a valer mais */
+function pontosDoOnze(){
+  return meuOnze.reduce((soma, nome, i) => {
+    const p = nome ? acharJogador(nome) : null;
+    if(!p) return soma;
+    const pts = pontosJogador(p).total;
+    return soma + Math.round(pts * (i === capitaoIdx ? FANTASY.capitao : 1));
+  }, 0);
+}
+
+async function carregarFormacaoGuardada(){
   let guardada = null;
-  try{ guardada = JSON.parse(localStorage.getItem(chaveFormacao()) || 'null'); }
-  catch(e){}
+  /* o que esta na nuvem manda: e o mesmo em qualquer aparelho */
+  if(naNuvem() && Nuvem.perfil){
+    try{ guardada = await Nuvem.lerEquipa(); }catch(e){}
+  }
+  if(!guardada){
+    try{ guardada = JSON.parse(localStorage.getItem(chaveFormacao()) || 'null'); }
+    catch(e){}
+  }
 
   if(guardada && FORMACOES[guardada.desenho]){
     desenhoAtual = guardada.desenho;
@@ -2028,7 +2127,7 @@ function ligarChat(){
         if(r.erro){ erro.textContent = r.erro; return; }
         url = r.url;
       }
-      const jogoAtual = proximoJogo();
+      const jogoAtual = porJogar()[0];
       const r = await Nuvem.enviarMensagem(campo.value, url,
         jogoAtual ? `${jogoAtual.casa} — ${jogoAtual.fora}` : null);
       if(r.erro){ erro.textContent = r.erro; return; }
@@ -2036,6 +2135,10 @@ function ligarChat(){
       campo.value = ''; campo.style.height = 'auto';
       $('#chat-tirar-foto').click();
       pintarChat();
+    }catch(falha){
+      /* sem isto um erro aqui dentro desaparecia sem deixar rasto */
+      erro.textContent = 'Não consegui enviar: ' + (falha?.message || falha);
+      console.error('chat:', falha);
     }finally{
       botao.disabled = false;
       botao.textContent = 'Enviar';
@@ -2468,8 +2571,8 @@ async function arranque(){
   $('#btn-conta').addEventListener('click', () => irPara('clube'));
 
   $('#btn-sair').addEventListener('click', () => {
-    Contas.sair();
-    location.reload();
+    Promise.resolve(naNuvem() ? Nuvem.sair() : null)
+      .finally(() => { Contas.sair(); location.reload(); });
   });
 
   addEventListener('keydown', e => {

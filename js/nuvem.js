@@ -44,6 +44,20 @@ const Nuvem = (() => {
     }
   }
 
+  /* Com "manter a sessão iniciada" desligado, a sessão fica só na memória
+     do separador: fecha o separador, acabou. */
+  let sessaoPersistente = true;
+  function guardarSessaoLocal(lembrar){
+    sessaoPersistente = lembrar !== false;
+    if(!sessaoPersistente){
+      addEventListener('beforeunload', () => {
+        try{ Object.keys(localStorage)
+          .filter(k => k.startsWith('sb-') && k.includes('auth-token'))
+          .forEach(k => localStorage.removeItem(k)); }catch(e){}
+      });
+    }
+  }
+
   async function carregarPerfil(id){
     const { data } = await cliente.from('perfis').select('*').eq('id', id).maybeSingle();
     perfil = data || null;
@@ -63,6 +77,14 @@ const Nuvem = (() => {
     if(!palavra) return 'Escreve uma palavra-passe.';
     if(palavra.length < 6) return 'A palavra-passe tem de ter pelo menos 6 caracteres.';
     return null;
+  }
+
+  /* o nome está livre? usado enquanto se escreve no registo */
+  async function nomeLivre(utilizador){
+    if(!ligado) return true;
+    const { data } = await cliente.from('perfis')
+      .select('utilizador').eq('utilizador', (utilizador||'').trim().toLowerCase()).maybeSingle();
+    return !data;
   }
 
   async function registar(utilizador, palavra){
@@ -98,8 +120,9 @@ const Nuvem = (() => {
     return { ok: true, nome };
   }
 
-  async function entrar(utilizador, palavra){
+  async function entrar(utilizador, palavra, lembrar = true){
     if(!ligado) return { erro: 'Sem ligação ao servidor.' };
+    guardarSessaoLocal(lembrar);
     const u = (utilizador || '').trim().toLowerCase();
     if(!u || !palavra) return { erro: 'Preenche os dois campos.' };
 
@@ -235,7 +258,7 @@ const Nuvem = (() => {
   }
 
   return {
-    iniciar, registar, entrar, sair, validar,
+    iniciar, registar, entrar, sair, validar, nomeLivre,
     guardarEquipa, lerEquipa, ranking,
     lerMensagens, enviarMensagem, apagarMensagem, enviarFoto, ouvirChat,
     get ligado(){ return ligado; },
