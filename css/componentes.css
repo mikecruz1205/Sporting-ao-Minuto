@@ -164,19 +164,23 @@
   align-items: start;
 }
 .pagina__principal{ display: flex; flex-direction: column; gap: var(--e-6); min-width: 0; }
+/* A barra lateral acompanha a pagina, sem altura limitada.
+   Antes tinha max-height + overflow e, como os cartoes sao itens flex com
+   flex-shrink por omissao, todos encolhiam para caber: cada um mostrava um
+   quarto do conteudo, cortado a meio. O flex:0 0 auto garante que ninguem
+   volta a ser esmagado. */
 .pagina__lado{
   display: flex; flex-direction: column; gap: var(--e-4);
-  position: sticky; top: calc(var(--altura-navbar, 116px) + var(--e-4));
-  max-height: calc(100vh - var(--altura-navbar, 116px) - var(--e-6));
-  overflow-y: auto; overscroll-behavior: contain;
-  padding-right: var(--e-1);
+  min-width: 0;
 }
-.pagina__lado::-webkit-scrollbar{ width: 5px; }
+.pagina__lado > *{ flex: 0 0 auto; }
 
 @media (max-width: 1100px){
   .pagina{ grid-template-columns: 1fr; }
-  .pagina__lado{ position: static; max-height: none; overflow: visible;
-                 display: grid; grid-template-columns: repeat(auto-fit,minmax(300px,1fr)); }
+  .pagina__lado{
+    display: grid; grid-template-columns: repeat(auto-fit,minmax(300px,1fr));
+    align-items: start;
+  }
 }
 
 /* =========================================================================
@@ -479,3 +483,12 @@
   transition: opacity var(--rapido);
 }
 .topo__marca:hover{ opacity: .82; }
+
+/* Os cartoes da barra lateral nao devem ficar enormes: o que for lista
+   longa ganha o seu proprio limite, em vez de esticar a coluna toda. */
+.pagina__lado .linha-tempo{ max-height: 300px; }
+.pagina__lado .lista-rumores,
+.pagina__lado .lista-compacta,
+.pagina__lado .calendario,
+.pagina__lado .resultados,
+.pagina__lado .marcadores{ max-height: 340px; overflow-y: auto; }
