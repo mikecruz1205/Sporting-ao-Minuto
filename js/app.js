@@ -527,14 +527,9 @@ function registarLeitura(link, titulo, fonte){
 function pintarHome(){
   const lista = noticiasFiltradas();
 
-  /* ---- hero ---- */
-  const alvoHero = $('#hero');
+  /* ---- hero rotativo ---- */
   const principal = escolherPrincipal(lista);
-  if(alvoHero){
-    alvoHero.innerHTML = NOTICIAS.length
-      ? Componentes.hero(principal, procuraTexto)
-      : Componentes.esqueletoHero();
-  }
+  montarHero(lista, principal);
 
   /* ---- filtros de categoria ---- */
   pintarFiltrosCategoria();
@@ -578,6 +573,92 @@ function pintarHome(){
 
   /* ---- mais lidas ---- */
   pintarMaisLidas();
+}
+
+/* =========================================================================
+   HERO ROTATIVO — as notícias de destaque vão mudando sozinhas
+   ========================================================================= */
+let heroLista = [];
+let heroIdx = 0;
+let heroRelogio = null;
+const HERO_QUANTAS = 5;
+const HERO_SEGUNDOS = 7;
+
+function montarHero(lista, principal){
+  const alvo = $('#hero');
+  if(!alvo) return;
+
+  if(!NOTICIAS.length){
+    alvo.innerHTML = Componentes.esqueletoHero();
+    $('#hero-pontos').innerHTML = '';
+    return;
+  }
+
+  /* a principal à frente, depois as outras com fotografia */
+  const nova = [principal, ...lista.filter(n => n !== principal && n.imagem)]
+                 .filter(Boolean).slice(0, HERO_QUANTAS);
+
+  /* nada mudou? não se repinta, senão a rotação saltava */
+  const chave = nova.map(n => n.link).join('|');
+  if(alvo.dataset.chave === chave){ return; }
+  alvo.dataset.chave = chave;
+
+  heroLista = nova;
+  heroIdx = 0;
+
+  alvo.innerHTML = heroLista
+    .map((n,i) => `<div class="hero-slide ${i===0?'is-on':''}" data-i="${i}">
+        ${Componentes.hero(n, procuraTexto)}</div>`).join('');
+
+  $('#hero-pontos').innerHTML = heroLista.map((n,i) => `
+    <button class="hero-ponto ${i===0?'is-on':''}" data-i="${i}" role="tab"
+            aria-selected="${i===0}" aria-label="Destaque ${i+1}"></button>`).join('');
+
+  $$('#hero-pontos .hero-ponto').forEach(b =>
+    b.addEventListener('click', () => mostrarHero(+b.dataset.i, true)));
+
+  arrancarHero();
+}
+
+function mostrarHero(i, manual){
+  if(!heroLista.length) return;
+  heroIdx = ((i % heroLista.length) + heroLista.length) % heroLista.length;
+
+  $$('#hero .hero-slide').forEach((s,k) => s.classList.toggle('is-on', k === heroIdx));
+  $$('#hero-pontos .hero-ponto').forEach((p,k) => {
+    p.classList.toggle('is-on', k === heroIdx);
+    p.setAttribute('aria-selected', k === heroIdx);
+  });
+
+  if(manual) arrancarHero();      // mexer reinicia a contagem
+}
+
+function arrancarHero(){
+  clearInterval(heroRelogio);
+  if(heroLista.length < 2) return;
+  heroRelogio = setInterval(() => mostrarHero(heroIdx + 1), HERO_SEGUNDOS * 1000);
+}
+
+function ligarHero(){
+  $('#hero-ant')?.addEventListener('click', () => mostrarHero(heroIdx - 1, true));
+  $('#hero-seg')?.addEventListener('click', () => mostrarHero(heroIdx + 1, true));
+
+  /* com o rato em cima ou com o separador escondido, pára */
+  const caixa = $('.hero-caixa');
+  caixa?.addEventListener('mouseenter', () => clearInterval(heroRelogio));
+  caixa?.addEventListener('mouseleave', arrancarHero);
+  document.addEventListener('visibilitychange', () =>
+    document.hidden ? clearInterval(heroRelogio) : arrancarHero());
+
+  /* deslizar com o dedo */
+  let x0 = null;
+  caixa?.addEventListener('pointerdown', e => { x0 = e.clientX; });
+  caixa?.addEventListener('pointerup', e => {
+    if(x0 === null) return;
+    const dx = e.clientX - x0;
+    x0 = null;
+    if(Math.abs(dx) > 45) mostrarHero(heroIdx + (dx < 0 ? 1 : -1), true);
+  });
 }
 
 /* Qual é a notícia principal.
@@ -690,6 +771,9 @@ function pintarNoticias(){
   pintarDestaque();
   pintarLinhaTempo();
   pintarHome();
+  pintarDiaDeJogo();
+  /* a faixa entra e sai sozinha conforme a hora do jogo */
+  setInterval(pintarDiaDeJogo, 30000);
 }
 
 function pintarFontes(){
@@ -1787,8 +1871,8 @@ function pintarFormacao(){
       </button>`;
     }).join('')}`;
 
-  $$('#campo .posicao').forEach(el =>
-    el.addEventListener('click', () => abrirEscolha(+el.dataset.i)));
+  /* o toque nas posicoes e tratado no pointerup do arrastar (ligarArrastar),
+     para funcionar tambem com o dedo */
 
   /* listas à direita */
   $('#lista-titulares').innerHTML = slots.map((slot, i) => {
@@ -1811,16 +1895,19 @@ function pintarFormacao(){
       <span class="onze__papel">${p.pos}</span>
     </li>`).join('') || '<li class="onze--vazio"><span class="onze__nome">ninguém de fora</span></li>';
 
-  $$('#lista-suplentes li[data-nome]').forEach(li =>
-    li.addEventListener('click', () => {
-      const p = PLANTEL.find(x => x.nome === li.dataset.nome);
-      if(!p) return;
-      irPara('equipa');
-      mostrarFicha(p);
-      $$('.jog').forEach(b => b.classList.toggle('is-on', b.dataset.nome === p.nome));
-    }));
+  /* idem para a lista do plantel: o toque abre a ficha, o arrasto leva
+     o jogador para o campo */
 
   pintarFantasy();
+}
+
+/* abre a ficha de um jogador a partir do nome */
+function abrirFichaDoNome(nome){
+  const p = PLANTEL.find(x => x.nome === nome);
+  if(!p) return;
+  irPara('equipa');
+  mostrarFicha(p);
+  $$('.jog').forEach(b => b.classList.toggle('is-on', b.dataset.nome === p.nome));
 }
 
 /* aviso curto no topo do campo */
@@ -1846,6 +1933,14 @@ function ligarArrastar(){
 
   let origem = null, fantasma = null, aArrastar = false, inicio = null;
   let nomeArrastado = null;      // quando vem da lista do plantel
+  let armado = false;            // com o dedo, só se arrasta depois de segurar
+  let relogioArmar = null;
+
+  /* Com o dedo, um toque normal mexe sempre uns pixéis — se bastassem 8px
+     para começar a arrastar, o toque virava arrastar e a lista nunca abria.
+     Por isso no telemóvel exige-se segurar primeiro, e uma distância maior. */
+  const ESPERA_ARMAR = 220;      // ms a segurar antes de poder arrastar
+  const limiarDe = e => e.pointerType === 'touch' ? 18 : 6;
 
   const posicaoSob = (x, y) =>
     document.elementFromPoint(x, y)?.closest('.posicao');
@@ -1873,9 +1968,13 @@ function ligarArrastar(){
   vistaFormacao.addEventListener('pointermove', e => {
     if(!origem || !inicio) return;
 
-    /* só começa a arrastar depois de uns pixéis — senão estraga o clique */
+    /* Só começa a arrastar depois de uns pixéis, senão estraga o toque.
+       Com o dedo é preciso muito mais folga: um toque normal mexe sempre
+       uns pixéis, e com 8px quase todos os toques viravam arrasto — era
+       por isso que a lista não abria no telemóvel. */
     if(!aArrastar){
-      if(Math.hypot(e.clientX - inicio.x, e.clientY - inicio.y) < 8) return;
+      const folga = e.pointerType === 'mouse' ? 8 : 18;
+      if(Math.hypot(e.clientX - inicio.x, e.clientY - inicio.y) < folga) return;
       aArrastar = true;
       origem.setPointerCapture?.(e.pointerId);
       origem.classList.add('a-arrastar');
@@ -1905,7 +2004,19 @@ function ligarArrastar(){
 
   const largar = e => {
     if(!origem) return;
-    if(!aArrastar){ limpar(); return; }
+
+    /* Não chegou a arrastar: foi um toque. Abre-se a lista aqui em vez de
+       esperar pelo evento click — depois de setPointerCapture o click pode
+       nunca chegar, e no telemóvel era isso que acontecia. */
+    if(!aArrastar){
+      const naPosicao = origem.closest('#campo .posicao');
+      const i = naPosicao ? +naPosicao.dataset.i : -1;
+      const jogadorDaLista = nomeArrastado;
+      limpar();
+      if(i >= 0) abrirEscolha(i);
+      else if(jogadorDaLista) abrirFichaDoNome(jogadorDaLista);
+      return;
+    }
 
     const destino = posicaoSob(e.clientX, e.clientY);
     const vindoDaLista = nomeArrastado;
@@ -2044,6 +2155,216 @@ function ligarEscolha(){
     pintarFormacao();
   });
 }
+/* =========================================================================
+   7c-bis. DIA DE JOGO — faixa, placar, onze e lances
+   ========================================================================= */
+let onzeOficial = null;      // { titulares, suplentes, fonte, link, data }
+let relogioJogo = null;
+
+function pintarDiaDeJogo(){
+  const e = Jogo.estado(JOGOS);
+  const faixa = $('#faixa-jogo');
+  const noMenu = $('#menu-aovivo');
+  if(!faixa || !noMenu) return;
+
+  /* longe de jogo: faixa e aba escondidas */
+  if(!e || e.fase === 'longe'){
+    faixa.hidden = true;
+    noMenu.hidden = true;
+    document.body.classList.remove('dia-de-jogo');
+    clearInterval(relogioJogo); relogioJogo = null;
+    return;
+  }
+
+  faixa.hidden = false;
+  noMenu.hidden = false;
+  document.body.classList.add('dia-de-jogo');
+  document.body.classList.toggle('a-jogar', Jogo.emJogo(e));
+
+  const j = e.jogo;
+  $('#faixa-casa').textContent = j.casa;
+  $('#faixa-fora').textContent = j.fora;
+  $('#faixa-casa-img').src = emblemaEquipa(j.casa);
+  $('#faixa-fora-img').src = emblemaEquipa(j.fora);
+
+  const golos = jogado(j) ? `${j.golosCasa} - ${j.golosFora}` : 'vs';
+  $('#faixa-resultado').textContent = golos;
+
+  if(Jogo.emJogo(e)){
+    $('#faixa-fase').textContent = Jogo.rotuloMinuto(e);
+    faixa.classList.add('faixa-jogo--vivo');
+  }else if(e.fase === 'fim'){
+    $('#faixa-fase').textContent = 'TERMINADO';
+    faixa.classList.remove('faixa-jogo--vivo');
+  }else{
+    const h = Math.floor(e.faltam / 3600000);
+    const m = Math.floor(e.faltam % 3600000 / 60000);
+    $('#faixa-fase').textContent = h > 0 ? `FALTAM ${h}H${String(m).padStart(2,'0')}` : `FALTAM ${m} MIN`;
+    faixa.classList.remove('faixa-jogo--vivo');
+  }
+
+  pintarPlacar(e);
+  pintarOnzeOficial(e);
+  pintarLances(e);
+
+  /* durante o jogo o minuto anda sozinho */
+  if(Jogo.emJogo(e) && !relogioJogo){
+    relogioJogo = setInterval(() => pintarDiaDeJogo(), 20000);
+  }
+}
+
+function pintarPlacar(e){
+  const alvo = $('#placar');
+  if(!alvo) return;
+  const j = e.jogo;
+  const d = new Date(j.data);
+
+  alvo.innerHTML = `
+    <div class="placar ${Jogo.emJogo(e) ? 'placar--vivo' : ''}">
+      <div class="placar__comp">${Componentes.seguro(j.comp)}</div>
+      <div class="placar__equipas">
+        <div class="placar__eq">
+          <img src="${emblemaEquipa(j.casa)}" alt="">
+          <b>${Componentes.seguro(j.casa)}</b>
+        </div>
+        <div class="placar__meio">
+          <div class="placar__golos">${jogado(j) ? `${j.golosCasa} - ${j.golosFora}` : '—'}</div>
+          <div class="placar__minuto">${Jogo.rotuloMinuto(e) ||
+            d.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'})}</div>
+        </div>
+        <div class="placar__eq">
+          <img src="${emblemaEquipa(j.fora)}" alt="">
+          <b>${Componentes.seguro(j.fora)}</b>
+        </div>
+      </div>
+      <div class="placar__onde">${Componentes.seguro(j.local || '')}</div>
+      ${Jogo.emJogo(e) ? `<p class="placar__aviso">
+        O minuto é calculado pelo relógio, a partir da hora de início — não
+        conta descontos nem paragens. O resultado e os lances vêm das
+        notícias dos jornais, por isso chegam com algum atraso.</p>` : ''}
+    </div>`;
+}
+
+/* procura nas notícias a que anuncia o onze e tira de lá os nomes */
+function procurarOnzeOficial(e){
+  const inicio = new Date(e.jogo.data).getTime();
+  const candidata = NOTICIAS
+    .filter(n => CONFIG.filtroOnze.test(n.titulo))
+    .filter(n => Math.abs(n.data.getTime() - inicio) < 5 * 3600000)
+    .sort((a,b) => b.data - a.data)[0];
+  if(!candidata) return null;
+
+  /* o título raramente chega; vale a pena ler o artigo */
+  return candidata;
+}
+
+async function pintarOnzeOficial(e){
+  const alvo = $('#onze-oficial');
+  const banco = $('#banco-oficial');
+  if(!alvo) return;
+
+  const noticia = procurarOnzeOficial(e);
+  if(!noticia){
+    $('#onze-origem').textContent = 'ainda não saiu';
+    alvo.innerHTML = `<li class="onze--vazio"><span class="onze__nome">
+      O onze costuma ser conhecido cerca de uma hora antes. Assim que algum
+      jornal o publicar, aparece aqui.</span></li>`;
+    banco.innerHTML = '';
+    return;
+  }
+
+  /* já foi lido? */
+  if(onzeOficial?.link === noticia.link){
+    desenharOnze(onzeOficial);
+    return;
+  }
+
+  $('#onze-origem').textContent = 'a ler…';
+
+  /* primeiro tenta-se com o resumo; se não chegar, vai-se ao artigo */
+  let texto = noticia.titulo + ' ' + (noticia.resumo || '');
+  let reparticao = Jogo.repartirOnze(texto, PLANTEL);
+
+  if(reparticao.titulares.length < 9){
+    try{
+      const r = await fetch('/ler?url=' + encodeURIComponent(noticia.link));
+      if(r.ok){
+        const html = await r.text();
+        const corpo = html.replace(/<script[\s\S]*?<\/script>/gi,'')
+                          .replace(/<style[\s\S]*?<\/style>/gi,'')
+                          .replace(/<[^>]+>/g,' ');
+        reparticao = Jogo.repartirOnze(corpo, PLANTEL);
+      }
+    }catch(err){ /* fica o que se conseguiu do resumo */ }
+  }
+
+  onzeOficial = { ...reparticao, fonte: noticia.fonte, link: noticia.link, data: noticia.data };
+  desenharOnze(onzeOficial);
+}
+
+function desenharOnze(o){
+  const alvo = $('#onze-oficial');
+  const banco = $('#banco-oficial');
+
+  if(!o.titulares.length){
+    $('#onze-origem').textContent = 'não consegui ler';
+    alvo.innerHTML = `<li class="onze--vazio"><span class="onze__nome">
+      Encontrei a notícia do onze mas não consegui tirar de lá os nomes.
+      <a href="${Componentes.seguro(o.link)}" target="_blank" rel="noopener">Abrir no jornal ↗</a>
+    </span></li>`;
+    banco.innerHTML = '';
+    return;
+  }
+
+  $('#onze-origem').textContent = o.fonte;
+  const linha = p => `
+    <li data-nome="${Componentes.seguro(p.nome)}">
+      <span class="onze__n">${p.n ?? '–'}</span>
+      <span class="onze__nome">${Componentes.seguro(ALCUNHAS[p.nome] || p.nome)}</span>
+      <span class="onze__papel">${Componentes.seguro(p.pos)}</span>
+    </li>`;
+
+  alvo.innerHTML = o.titulares.map(linha).join('');
+  banco.innerHTML = o.suplentes.length
+    ? o.suplentes.map(linha).join('')
+    : '<li class="onze--vazio"><span class="onze__nome">banco por confirmar</span></li>';
+
+  $$('#onze-oficial li[data-nome], #banco-oficial li[data-nome]').forEach(li =>
+    li.addEventListener('click', () => abrirFichaDoNome(li.dataset.nome)));
+}
+
+function pintarLances(e){
+  const alvo = $('#lances');
+  if(!alvo) return;
+
+  const lista = Jogo.lances(NOTICIAS, e, PLANTEL);
+  $('#lances-nota').textContent = Jogo.emJogo(e)
+    ? `${lista.length} lances · das notícias`
+    : 'o jogo ainda não começou';
+
+  if(!lista.length){
+    alvo.innerHTML = `<li>${Componentes.vazio(
+      Jogo.emJogo(e) ? 'Ainda sem lances' : 'À espera do apito inicial',
+      Jogo.emJogo(e)
+        ? 'Assim que os jornais publicarem golos, cartões ou substituições, aparecem aqui.'
+        : 'Quando o jogo começar, os lances vão aparecendo aqui.',
+      tacaSVG('liga','var(--texto-3)'))}</li>`;
+    return;
+  }
+
+  alvo.innerHTML = lista.map(l => `
+    <li class="lance lance--${l.tipo}">
+      <span class="lance__minuto">${l.minuto}'</span>
+      <span class="lance__icone" aria-hidden="true">${l.icone}</span>
+      <span class="lance__txt">
+        <a href="${Componentes.seguro(l.link)}" target="_blank" rel="noopener">
+          ${Componentes.seguro(l.titulo)}</a>
+        <span>${Componentes.seguro(l.fonte)}${l.jogador
+          ? ' · ' + Componentes.seguro(ALCUNHAS[l.jogador.nome] || l.jogador.nome) : ''}</span>
+      </span>
+    </li>`).join('');
+}
+
 /* =========================================================================
    7d. CHAT — comentários sobre os jogos, com fotografias
    Precisa de ligação: as mensagens são as mesmas para toda a gente.
@@ -2368,7 +2689,7 @@ async function sincronizar(){
     }
 
     pintarProximoJogo(); pintarCalendario(); pintarResultados();
-    pintarJogosTodos(); pintarEstatisticas();
+    pintarJogosTodos(); pintarEstatisticas(); pintarDiaDeJogo();
   }catch(e){ falhas.push('plantel/jogos'); }
 
   const hora = new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
@@ -2512,6 +2833,7 @@ function ligarLegais(){
 function irPara(vista){
   vistaAtual = vista;
   if(vista === 'chat') pintarChat();
+  if(vista === 'aovivo') pintarDiaDeJogo();
   $$('.vista').forEach(v => v.classList.toggle('is-on', v.id === 'vista-' + vista));
   $$('.menu__item').forEach(b => b.classList.toggle('is-on', b.dataset.vista === vista));
   scrollTo({top:0, behavior:'smooth'});
@@ -2529,6 +2851,7 @@ async function arranque(){
   ligarLeitor();
   ligarMenuMobile();
   ligarAoTopo();
+  ligarHero();
   ligarLegais();
   const elAno = $('#ano'); if(elAno) elAno.textContent = new Date().getFullYear();
   const tacaMenu = $('.menu__taca');
@@ -2560,6 +2883,9 @@ async function arranque(){
 
   /* skeletons já visíveis enquanto os feeds não respondem */
   pintarHome();
+  pintarDiaDeJogo();
+  /* a faixa entra e sai sozinha conforme a hora do jogo */
+  setInterval(pintarDiaDeJogo, 30000);
 
   /* mostra já o arquivo guardado, enquanto os feeds respondem */
   if(lerArquivo()) pintarNoticias();

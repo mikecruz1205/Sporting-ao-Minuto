@@ -22,9 +22,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/base.css?v=34">
-<link rel="stylesheet" href="css/componentes.css?v=34">
-<link rel="stylesheet" href="css/style.css?v=34">
+<link rel="stylesheet" href="css/base.css?v=36">
+<link rel="stylesheet" href="css/componentes.css?v=36">
+<link rel="stylesheet" href="css/style.css?v=36">
 </head>
 <body class="trancado">
 
@@ -109,13 +109,13 @@
 
 <!-- ============================ CABEÇALHO ============================ -->
 <header class="topo">
-  <div class="topo__marca">
+  <button class="topo__marca" data-ir="inicio" aria-label="Ir para o início">
     <div class="emblema" id="emblema"></div>
     <div class="marca-txt">
       <h1>SPORTING CP</h1>
       <span id="lema">—</span>
     </div>
-  </div>
+  </button>
 
   <div class="topo__acoes">
     <div class="procura" id="procura-caixa">
@@ -146,10 +146,28 @@
   <button class="menu__item" data-vista="aominuto">AO MINUTO</button>
   <button class="menu__item" data-vista="estatisticas">ESTATÍSTICAS</button>
   <button class="menu__item" data-vista="formacao">FORMAÇÃO</button>
+  <button class="menu__item menu__item--vivo" data-vista="aovivo" id="menu-aovivo" hidden><span class="ponto-vivo" aria-hidden="true"></span>AO VIVO</button>
   <button class="menu__item" data-vista="chat">CHAT</button>
   <button class="menu__item menu__item--taca" data-vista="clube"><span class="menu__taca" aria-hidden="true"></span>CLUBE</button>
   <span class="menu__estado" id="estado-dados">a ligar…</span>
 </nav>
+
+
+<!-- ==================== DIA DE JOGO ==================== -->
+<section class="faixa-jogo" id="faixa-jogo" hidden aria-live="polite">
+  <div class="faixa-jogo__interior">
+    <div class="faixa-jogo__estado">
+      <span class="faixa-jogo__pulso" aria-hidden="true"></span>
+      <b id="faixa-fase">—</b>
+    </div>
+    <div class="faixa-jogo__placar">
+      <span class="faixa-jogo__eq"><img id="faixa-casa-img" alt=""><span id="faixa-casa">—</span></span>
+      <b id="faixa-resultado">vs</b>
+      <span class="faixa-jogo__eq"><span id="faixa-fora">—</span><img id="faixa-fora-img" alt=""></span>
+    </div>
+    <button class="faixa-jogo__ir" data-ir="aovivo">ACOMPANHAR <i aria-hidden="true">→</i></button>
+  </div>
+</section>
 
 <!-- ============================ INÍCIO ============================ -->
 <main class="vista is-on" id="vista-inicio">
@@ -160,8 +178,13 @@
 
       <!-- HERO -->
       <section class="seccao seccao--hero" aria-labelledby="tit-hero">
-        <h2 class="so-leitor" id="tit-hero">Notícia principal</h2>
-        <div id="hero"></div>
+        <h2 class="so-leitor" id="tit-hero">Notícias em destaque</h2>
+        <div class="hero-caixa">
+          <div id="hero"></div>
+          <button class="hero-seta hero-seta--ant" id="hero-ant" aria-label="Destaque anterior">‹</button>
+          <button class="hero-seta hero-seta--seg" id="hero-seg" aria-label="Destaque seguinte">›</button>
+          <div class="hero-pontos" id="hero-pontos" role="tablist" aria-label="Escolher destaque"></div>
+        </div>
       </section>
 
       <!-- ÚLTIMAS NOTÍCIAS -->
@@ -453,6 +476,39 @@
   </section>
 </main>
 
+<main class="vista" id="vista-aovivo">
+  <div class="pagina">
+    <div class="pagina__principal">
+
+      <section class="cartao cartao--placar">
+        <div class="cartao__corpo" id="placar"></div>
+      </section>
+
+      <section class="seccao">
+        <div class="seccao__topo">
+          <h2 class="seccao__titulo">Lances</h2>
+          <span class="sub-inline" id="lances-nota">—</span>
+        </div>
+        <ol class="lances" id="lances"></ol>
+      </section>
+    </div>
+
+    <aside class="pagina__lado">
+      <section class="cartao">
+        <div class="cartao__topo">
+          <h2>ONZE INICIAL</h2>
+          <span class="tag" id="onze-origem">—</span>
+        </div>
+        <div class="cartao__corpo">
+          <ol class="onze" id="onze-oficial"></ol>
+          <div class="sub sub--banco">BANCO</div>
+          <ol class="onze onze--banco" id="banco-oficial"></ol>
+        </div>
+      </section>
+    </aside>
+  </div>
+</main>
+
 <main class="vista" id="vista-chat">
   <section class="cartao">
     <div class="cartao__topo">
@@ -601,12 +657,13 @@
 </dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.min.js" defer></script>
-<script src="js/nuvem.js?v=34"></script>
-<script src="js/componentes.js?v=34"></script>
-<script src="js/contas.js?v=34"></script>
-<script src="js/arte.js?v=34"></script>
-<script src="js/data.js?v=34"></script>
-<script src="js/wiki.js?v=34"></script>
-<script src="js/app.js?v=34"></script>
+<script src="js/nuvem.js?v=36"></script>
+<script src="js/jogo.js?v=36"></script>
+<script src="js/componentes.js?v=36"></script>
+<script src="js/contas.js?v=36"></script>
+<script src="js/arte.js?v=36"></script>
+<script src="js/data.js?v=36"></script>
+<script src="js/wiki.js?v=36"></script>
+<script src="js/app.js?v=36"></script>
 </body>
 </html>

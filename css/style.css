@@ -1345,3 +1345,122 @@ body.a-arrastar-jogador *{ cursor: grabbing !important; }
   .topo__acoes .ico{ width: 36px; height: 36px; min-width: 36px; }
 }
 
+
+/* =========================================================================
+   DIA DE JOGO — faixa, placar e lances
+   ========================================================================= */
+.faixa-jogo{
+  position: sticky; top: var(--altura-topo, 92px); z-index: calc(var(--z-navbar) - 1);
+  background: linear-gradient(90deg, var(--verde-escuro), var(--fundo-2) 60%);
+  border-bottom: 1px solid var(--linha);
+}
+.faixa-jogo[hidden]{ display: none; }
+.faixa-jogo--vivo{
+  background: linear-gradient(90deg, #7a1f1f, var(--fundo-2) 60%);
+  border-bottom-color: rgba(224,82,82,.4);
+}
+.faixa-jogo__interior{
+  max-width: 1400px; margin: 0 auto;
+  display: flex; align-items: center; gap: var(--e-4);
+  padding: var(--e-2) var(--e-5);
+}
+.faixa-jogo__estado{ display: flex; align-items: center; gap: var(--e-2); flex: none; }
+.faixa-jogo__estado b{
+  font-family: var(--f-tit); font-size: var(--t-md); letter-spacing: .06em;
+}
+.faixa-jogo__pulso{
+  width: 8px; height: 8px; border-radius: 50%; background: var(--texto-3);
+}
+.faixa-jogo--vivo .faixa-jogo__pulso{
+  background: #ff5d5d; animation: pulsa 1.6s infinite;
+}
+.faixa-jogo__placar{
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: var(--e-4);
+  min-width: 0;
+}
+.faixa-jogo__eq{ display: flex; align-items: center; gap: var(--e-2); min-width: 0; }
+.faixa-jogo__eq img{ width: 24px; height: 24px; object-fit: contain; flex: none; }
+.faixa-jogo__eq span{
+  font-size: var(--t-sm); font-weight: var(--peso-forte);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.faixa-jogo__placar b{ font-family: var(--f-tit); font-size: var(--t-lg); flex: none; }
+.faixa-jogo__ir{
+  flex: none; display: inline-flex; align-items: center; gap: var(--e-1);
+  font-size: var(--t-xs); font-weight: var(--peso-max); letter-spacing: .06em;
+  color: var(--verde-claro); padding: var(--e-2) var(--e-3); border-radius: var(--raio);
+  border: 1px solid var(--linha); transition: all var(--rapido);
+}
+.faixa-jogo__ir:hover{ border-color: var(--verde); background: var(--verde-vidro); }
+.faixa-jogo__ir i{ font-style: normal; }
+
+@media (max-width: 760px){
+  .faixa-jogo__interior{ padding: var(--e-2) var(--e-3); gap: var(--e-2); }
+  .faixa-jogo__eq img{ width: 20px; height: 20px; }
+  .faixa-jogo__eq span{ display: none; }        /* só os emblemas cabem */
+  .faixa-jogo__ir{ padding: var(--e-2); }
+  .faixa-jogo__ir i{ display: none; }
+}
+
+/* item AO VIVO no menu */
+.menu__item--vivo{ display: inline-flex; align-items: center; gap: 6px; }
+.menu__item--vivo[hidden]{ display: none; }
+body.a-jogar .menu__item--vivo{ color: #ff8080; }
+
+/* ---------- placar grande ---------- */
+.cartao--placar{ overflow: visible; }
+.placar{ text-align: center; }
+.placar__comp{
+  font-size: var(--t-xs); font-weight: var(--peso-max); letter-spacing: .12em;
+  color: var(--texto-3); margin-bottom: var(--e-4);
+}
+.placar__equipas{
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--e-4);
+}
+.placar__eq{ display: flex; flex-direction: column; align-items: center; gap: var(--e-2); }
+.placar__eq img{ width: 68px; height: 68px; object-fit: contain; }
+.placar__eq b{ font-size: var(--t-base); font-weight: var(--peso-forte); }
+.placar__golos{
+  font-family: var(--f-tit); font-size: var(--t-4xl); font-weight: var(--peso-max);
+  line-height: 1;
+}
+.placar__minuto{
+  font-size: var(--t-sm); font-weight: var(--peso-max); color: var(--texto-3);
+  margin-top: var(--e-1);
+}
+.placar--vivo .placar__minuto{ color: #ff8080; }
+.placar__onde{ font-size: var(--t-xs); color: var(--texto-3); margin-top: var(--e-4); }
+.placar__aviso{
+  margin-top: var(--e-4); padding-top: var(--e-3); border-top: 1px solid var(--linha);
+  font-size: var(--t-xs); color: var(--texto-3); line-height: var(--linha-larga);
+  max-width: 60ch; margin-inline: auto;
+}
+@media (max-width: 560px){
+  .placar__eq img{ width: 48px; height: 48px; }
+  .placar__golos{ font-size: var(--t-2xl); }
+}
+
+/* ---------- lances ---------- */
+.lances{ list-style: none; display: flex; flex-direction: column; }
+.lance{
+  display: grid; grid-template-columns: 44px 28px 1fr; gap: var(--e-3);
+  align-items: start; padding: var(--e-3) var(--e-2);
+  border-bottom: 1px solid var(--linha);
+  animation: entraMsg .3s ease;
+}
+.lance:last-child{ border-bottom: none; }
+.lance__minuto{
+  font-family: var(--f-tit); font-size: var(--t-md); font-weight: var(--peso-max);
+  color: var(--texto-3); text-align: right;
+}
+.lance__icone{ font-size: 18px; line-height: 1.2; }
+.lance__txt{ min-width: 0; }
+.lance__txt a{
+  display: block; font-size: var(--t-sm); font-weight: var(--peso-forte);
+  color: var(--texto); line-height: var(--linha-normal);
+}
+.lance__txt a:hover{ color: var(--verde-claro); }
+.lance__txt span{ display: block; font-size: var(--t-xs); color: var(--texto-3); margin-top: 2px; }
+.lance--golo{ background: linear-gradient(90deg, var(--verde-vidro), transparent); }
+.lance--golo .lance__minuto{ color: var(--verde-claro); }
+.lance--vermelho{ background: linear-gradient(90deg, rgba(224,82,82,.12), transparent); }

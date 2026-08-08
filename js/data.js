@@ -66,6 +66,22 @@ const CONFIG = {
   filtroModalidades: /futsal|andebol|atletismo|voleibol|h[óo]quei|nata[çc][ãa]o|basquetebol|r[ûu]gbi|ciclismo|t[ée]nis|judo|xadrez|modalidades/i,
   filtroVideo: /v[íi]deo|assiste|em imagens|highlights|resumo do jogo|declara[çc][õo]es em v/i,
 
+  /* ---------------------------------------------------------------------
+     DIA DE JOGO
+     O onze sai cerca de uma hora antes, sempre por notícia. Estes padrões
+     servem para a apanhar no meio do resto.
+     --------------------------------------------------------------------- */
+  filtroOnze: /onze (oficial|inicial|escolhido)|eis o onze|equipa inicial|\bonze do sporting\b|escalaç(ão|oes)|as escolhas de rui borges|comunicado o onze/i,
+
+  /* notícias que descrevem o que se passa no jogo */
+  filtroLance: /golo|golaço|marca(?:ou)?|expuls|cart(?:ão|ao) (?:amarelo|vermelho)|substitui|penált|penalt|autogolo|assist[êe]ncia|intervalo|apito final|começ(?:a|ou) o jogo|arranca o jogo|ao intervalo|fim do jogo/i,
+
+  /* de quanto em quanto tempo se atualiza durante o jogo (segundos) */
+  refreshJogoSegundos: 30,
+
+  /* quanto tempo antes do apontapé o site entra em modo de jogo (minutos) */
+  antecedenciaJogo: 90,
+
   wiki: {
     api:      "https://en.wikipedia.org/w/api.php",
     epocaSCP: "2026–27 Sporting CP season",
