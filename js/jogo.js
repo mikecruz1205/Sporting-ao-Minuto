@@ -72,30 +72,47 @@ const Jogo = (() => {
   /* A notícia do onze costuma listar os nomes por ordem, do guarda-redes
      para a frente. Procuram-se os nomes do plantel dentro do texto e
      ficam pela ordem em que aparecem. */
+  const semAcentos = s => (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+
+  /* Por que nome se pode procurar cada jogador.
+     O apelido sozinho só serve se for único no plantel: com dois Silva e
+     dois Gonçalves, "Silva" apanhava o jogador errado. Nesses casos exige-se
+     o nome completo. */
+  function chavesDe(plantel){
+    const contagem = new Map();
+    for(const p of plantel){
+      const partes = p.nome.split(' ').filter(Boolean);
+      const ap = semAcentos(partes[partes.length-1]);
+      contagem.set(ap, (contagem.get(ap) || 0) + 1);
+    }
+    return plantel.map(p => {
+      const partes = p.nome.split(' ').filter(Boolean);
+      const ap = semAcentos(partes[partes.length-1]);
+      const chaves = [semAcentos(p.nome)];
+      if(ALCUNHAS[p.nome]) chaves.push(semAcentos(ALCUNHAS[p.nome]));
+      if(contagem.get(ap) === 1) chaves.push(ap);
+      /* do mais longo para o mais curto: prefere-se a correspondência exata */
+      return { jogador: p, chaves: chaves.filter(c => c.length >= 4)
+                                        .sort((a,b) => b.length - a.length) };
+    });
+  }
+
   function extrairOnze(texto, plantel){
     if(!texto || !plantel?.length) return [];
 
     const limpo = ' ' + texto
       .replace(/<[^>]*>/g, ' ')
       .replace(/\s+/g, ' ') + ' ';
-    const semAcentos = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
     const alvo = semAcentos(limpo);
 
     const achados = [];
-    for(const p of plantel){
-      /* tenta o nome completo e depois só o apelido */
-      const partes = p.nome.split(' ').filter(Boolean);
-      const tentativas = [p.nome, ALCUNHAS[p.nome], partes[partes.length-1]]
-        .filter(Boolean);
-
+    for(const { jogador, chaves } of chavesDe(plantel)){
       let posicao = -1;
-      for(const t of tentativas){
-        const chave = semAcentos(t);
-        if(chave.length < 4) continue;                 // apelidos curtos dão falsos
+      for(const chave of chaves){
         const i = alvo.indexOf(' ' + chave);
         if(i >= 0){ posicao = i; break; }
       }
-      if(posicao >= 0) achados.push({ jogador: p, posicao });
+      if(posicao >= 0) achados.push({ jogador, posicao });
     }
 
     achados.sort((a,b) => a.posicao - b.posicao);
@@ -123,13 +140,15 @@ const Jogo = (() => {
   /* ---------------------------------------------------------------------
      Lances, a partir das notícias
      --------------------------------------------------------------------- */
+  /* A ordem conta: o primeiro que bater ganha. O golo vem à frente porque
+     um golo de penálti é sobretudo um golo. */
   const TIPOS = [
-    { tipo: 'golo',      rx: /gola[çc]o|\bgolo\b|marcou|amplia|empata|reduz/i,        icone: '⚽' },
-    { tipo: 'vermelho',  rx: /cart[ãa]o vermelho|expuls/i,                            icone: '🟥' },
-    { tipo: 'amarelo',   rx: /cart[ãa]o amarelo|amarelo para/i,                       icone: '🟨' },
-    { tipo: 'troca',     rx: /substitui|entra .* sai|rende/i,                         icone: '🔄' },
+    { tipo: 'golo',      rx: /gola[çc]o|\bgolo\b|autogolo|marcou|marca o|bisa|hat.?trick|amplia|aumenta a vantagem|empata|reduz|inaugura o marcador|faz o \d\s*[-–x]\s*\d|coloca o sporting/i, icone: '⚽' },
+    { tipo: 'vermelho',  rx: /cart[ãa]o vermelho|vermelho direto|expuls/i,            icone: '🟥' },
+    { tipo: 'amarelo',   rx: /cart[ãa]o amarelo|amarelo para|ve o amarelo|v[êe] o amarelo/i, icone: '🟨' },
+    { tipo: 'troca',     rx: /substitui|entra .{0,30}sai |sai .{0,30}entra |rende/i,  icone: '🔄' },
     { tipo: 'penalti',   rx: /pen[áa]lti|grande penalidade/i,                         icone: '◎' },
-    { tipo: 'apito',     rx: /apito final|fim do jogo|intervalo|come[çc]a o jogo/i,   icone: '⏱' }
+    { tipo: 'apito',     rx: /apito final|fim do jogo|intervalo|come[çc]a o jogo|rola a bola/i, icone: '⏱' }
   ];
 
   function classificarLance(titulo){
@@ -137,18 +156,21 @@ const Jogo = (() => {
     return null;
   }
 
-  /* quem marcou, se o título disser */
+  /* quem marcou, se o título disser — mesma regra de apelidos únicos */
   function quemMarcou(titulo, plantel){
-    const semAcentos = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    if(!plantel?.length) return null;
     const alvo = semAcentos(titulo);
-    for(const p of plantel || []){
-      const partes = p.nome.split(' ').filter(Boolean);
-      for(const t of [ALCUNHAS[p.nome], partes[partes.length-1], p.nome].filter(Boolean)){
-        const chave = semAcentos(t);
-        if(chave.length >= 4 && alvo.includes(chave)) return p;
+    let melhor = null;
+    for(const { jogador, chaves } of chavesDe(plantel)){
+      for(const chave of chaves){
+        if(!alvo.includes(chave)) continue;
+        /* entre vários que batam, fica o nome mais longo: é o mais preciso */
+        if(!melhor || chave.length > melhor.tamanho)
+          melhor = { jogador, tamanho: chave.length };
+        break;
       }
     }
-    return null;
+    return melhor?.jogador || null;
   }
 
   /* Filtra as notícias que falam do jogo em curso e transforma-as em

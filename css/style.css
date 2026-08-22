@@ -1464,3 +1464,13 @@ body.a-jogar .menu__item--vivo{ color: #ff8080; }
 .lance--golo{ background: linear-gradient(90deg, var(--verde-vidro), transparent); }
 .lance--golo .lance__minuto{ color: var(--verde-claro); }
 .lance--vermelho{ background: linear-gradient(90deg, rgba(224,82,82,.12), transparent); }
+
+/* Onze ainda por confirmar: fica mais apagado do que o oficial, para
+   não se confundir um palpite de jornal com a folha de jogo. */
+.onze--provavel li{ opacity: .82; }
+.onze--provavel li::after{
+  content: '?';
+  margin-left: auto;
+  font-size: .7rem;
+  opacity: .45;
+}

@@ -492,3 +492,15 @@
 .pagina__lado .calendario,
 .pagina__lado .resultados,
 .pagina__lado .marcadores{ max-height: 340px; overflow-y: auto; }
+
+/* As fotos de jornal tem quase sempre a cara na metade de cima. Ancorar
+   em 30% evita cortar cabecas, que era o que acontecia com o centro. */
+.hero__foto img{ object-position: center 30%; }
+.ncartao__foto img{ object-position: center 32%; }
+
+/* imagem que nao carregou: fica o emblema em vez de um buraco */
+.hero__foto.sem-foto img{ display: none; }
+.hero__foto.sem-foto{
+  background:
+    radial-gradient(circle at 50% 40%, var(--verde-escuro), var(--fundo-2) 70%);
+}

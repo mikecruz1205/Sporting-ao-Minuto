@@ -199,7 +199,7 @@ const Nuvem = (() => {
   async function lerMensagens(quantas = 60){
     if(!ligado) return [];
     const { data } = await cliente.from('chat_mensagens')
-      .select('id, texto, foto_url, jogo, criado_em, perfil_id, perfis(utilizador, nome_mostrado)')
+      .select('id, texto, foto_url, jogo, criado_em, perfil_id, autor, perfis(utilizador, nome_mostrado)')
       .order('criado_em', { ascending: false })
       .limit(quantas);
     return (data || []).reverse();
@@ -211,8 +211,10 @@ const Nuvem = (() => {
     if(!t && !fotoUrl) return { erro: 'Escreve alguma coisa ou junta uma fotografia.' };
     if(t.length > 1000) return { erro: 'Mensagem demasiado longa (máximo 1000 caracteres).' };
 
+    /* o nome fica gravado na própria mensagem: se um dia a conta
+       desaparecer, o que foi escrito continua a ter dono */
     const { error } = await cliente.from('chat_mensagens').insert({
-      perfil_id: perfil.id, texto: t || null,
+      perfil_id: perfil.id, autor: perfil.utilizador, texto: t || null,
       foto_url: fotoUrl || null, jogo: jogo || null
     });
     if(error){

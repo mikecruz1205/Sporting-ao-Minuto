@@ -437,8 +437,12 @@ function lerArquivo(){
     const c = JSON.parse(localStorage.getItem(ARQUIVO) || 'null');
     if(!c) return false;
     const limite = Date.now() - DIAS_ARQUIVO*24*3600*1000;
+    /* o arquivo é antigo e os filtros mudam com o tempo — volta-se a
+       passar tudo pelo crivo, senão lixo apanhado ontem fica cá para sempre */
     NOTICIAS = c.itens.map(n => ({...n, data:new Date(n.data)}))
-                      .filter(n => n.data.getTime() > limite);
+                      .filter(n => n.data.getTime() > limite)
+                      .filter(n => CONFIG.filtroSporting.test(n.titulo))
+                      .filter(n => !CONFIG.excluir.some(rx => rx.test(n.titulo)));
     return NOTICIAS.length > 0;
   }catch(e){ return false; }
 }
@@ -2245,17 +2249,30 @@ function pintarPlacar(e){
     </div>`;
 }
 
+/* O onze oficial sai perto do jogo, mas de manhã já saem os prováveis.
+   Vale a pena mostrar os dois — desde que se diga qual é qual. */
+const ONZE_OFICIAL = /onze oficial|eis o onze|j[áa] h[áa] onze|onze escolhido|comunicado o onze|equipa inicial|onze do sporting para|escala[çc][ãa]o oficial/i;
+
 /* procura nas notícias a que anuncia o onze e tira de lá os nomes */
 function procurarOnzeOficial(e){
   const inicio = new Date(e.jogo.data).getTime();
-  const candidata = NOTICIAS
-    .filter(n => CONFIG.filtroOnze.test(n.titulo))
-    .filter(n => Math.abs(n.data.getTime() - inicio) < 5 * 3600000)
-    .sort((a,b) => b.data - a.data)[0];
-  if(!candidata) return null;
 
-  /* o título raramente chega; vale a pena ler o artigo */
-  return candidata;
+  const candidatas = NOTICIAS
+    .filter(n => CONFIG.filtroOnze.test(n.titulo))
+    /* desde a manhã do jogo até um pouco depois do apito inicial */
+    .filter(n => {
+      const dt = n.data.getTime() - inicio;
+      return dt > -14 * 3600000 && dt < 3 * 3600000;
+    })
+    .map(n => ({
+      ...n,
+      /* oficial se o disser, ou se saiu já perto do apontapé */
+      oficial: ONZE_OFICIAL.test(n.titulo) || (n.data.getTime() - inicio) > -2.5 * 3600000
+    }))
+    /* o oficial ganha sempre ao provável; entre iguais, o mais recente */
+    .sort((a,b) => (b.oficial - a.oficial) || (b.data - a.data));
+
+  return candidatas[0] || null;
 }
 
 async function pintarOnzeOficial(e){
@@ -2298,7 +2315,8 @@ async function pintarOnzeOficial(e){
     }catch(err){ /* fica o que se conseguiu do resumo */ }
   }
 
-  onzeOficial = { ...reparticao, fonte: noticia.fonte, link: noticia.link, data: noticia.data };
+  onzeOficial = { ...reparticao, fonte: noticia.fonte, link: noticia.link,
+                  data: noticia.data, oficial: noticia.oficial };
   desenharOnze(onzeOficial);
 }
 
@@ -2316,7 +2334,13 @@ function desenharOnze(o){
     return;
   }
 
-  $('#onze-origem').textContent = o.fonte;
+  /* de manhã só há prováveis: mais vale dizê-lo do que dar a entender
+     que é o onze a sério */
+  $('#onze-origem').textContent = o.oficial
+    ? `oficial · ${o.fonte}`
+    : `provável · ${o.fonte}`;
+  $('#onze-oficial').classList.toggle('onze--provavel', !o.oficial);
+
   const linha = p => `
     <li data-nome="${Componentes.seguro(p.nome)}">
       <span class="onze__n">${p.n ?? '–'}</span>
@@ -2324,9 +2348,17 @@ function desenharOnze(o){
       <span class="onze__papel">${Componentes.seguro(p.pos)}</span>
     </li>`;
 
-  alvo.innerHTML = o.titulares.map(linha).join('');
+  /* Os nomes saem pela ordem da prosa do jornal, que não é a do campo.
+     Põe-se guarda-redes primeiro e avançados no fim, como numa ficha. */
+  const ORDEM = { GR:0, DEF:1, MED:2, AVA:3 };
+  /* o plantel já guarda o grupo em .pos; PAPEL_GRUPO só serve se algum dia
+     lá vier o papel miúdo (DC, MC, PL…) */
+  const grau = p => ORDEM[p.pos] ?? ORDEM[PAPEL_GRUPO[p.pos]] ?? 9;
+  const porCampo = (a,b) => grau(a) - grau(b);
+
+  alvo.innerHTML = [...o.titulares].sort(porCampo).map(linha).join('');
   banco.innerHTML = o.suplentes.length
-    ? o.suplentes.map(linha).join('')
+    ? [...o.suplentes].sort(porCampo).map(linha).join('')
     : '<li class="onze--vazio"><span class="onze__nome">banco por confirmar</span></li>';
 
   $$('#onze-oficial li[data-nome], #banco-oficial li[data-nome]').forEach(li =>
@@ -2406,7 +2438,9 @@ async function pintarChat(){
 
   lista.innerHTML = mensagens.map(m => {
     const meu = eu && m.perfil_id === eu.id;
-    const nome = m.perfis?.nome_mostrado || m.perfis?.utilizador || 'alguém';
+    /* m.autor é o nome gravado na mensagem — só entra em campo
+       se a conta já não existir */
+    const nome = m.perfis?.nome_mostrado || m.perfis?.utilizador || m.autor || 'alguém';
     const quando = new Date(m.criado_em);
     return `
     <li class="msg ${meu ? 'msg--minha' : ''}">
@@ -2508,16 +2542,108 @@ function ligarChat(){
 /* =========================================================================
    8. MERCADO E CLUBE
    ========================================================================= */
+/* =========================================================================
+   MOVIMENTOS AUTOMÁTICOS
+   -------------------------------------------------------------------------
+   Não há fonte automática com os valores: as tabelas de transferências do
+   Wikipédia para 2026/27 estão vazias, o Transfermarkt bloqueia leitura por
+   programa e a conta da API-Football está suspensa.
+
+   O que dá para fazer sozinho é reparar em quem ENTRA e SAI do plantel: a
+   cada sincronização guarda-se a lista de nomes e compara-se com a anterior.
+   Quem aparecer é reforço, quem desaparecer é saída. O valor, quando existe,
+   vem do que está escrito à mão em data.js ou de um título de notícia.
+   ========================================================================= */
+const RETRATO_PLANTEL = 'scp-plantel-retrato-v1';
+let MOVIMENTOS_AUTO = { entradas: [], saidas: [] };
+
+function lerRetrato(){
+  try{ return JSON.parse(localStorage.getItem(RETRATO_PLANTEL) || 'null'); }
+  catch(e){ return null; }
+}
+
+function guardarRetrato(nomes){
+  try{
+    localStorage.setItem(RETRATO_PLANTEL,
+      JSON.stringify({ quando: Date.now(), nomes }));
+  }catch(e){}
+}
+
+/* procura "20 milhões", "€18M", "18 M€" num título sobre o jogador */
+function valorNasNoticias(nome){
+  const apelidoDo = apelido(nome);
+  for(const n of NOTICIAS){
+    if(!semAcentos(n.titulo).includes(semAcentos(apelidoDo))) continue;
+    const m = n.titulo.match(/(\d+[.,]?\d*)\s*(?:milh[õo]es|M\s*€|€\s*M|M€)/i);
+    if(m) return parseFloat(m[1].replace(',', '.'));
+  }
+  return null;
+}
+
+function detetarMovimentos(){
+  const nomes = PLANTEL.map(p => p.nome).sort();
+  const retrato = lerRetrato();
+
+  /* primeira vez: só se guarda, não se inventa nada */
+  if(!retrato?.nomes?.length){
+    guardarRetrato(nomes);
+    return;
+  }
+
+  const antes = new Set(retrato.nomes);
+  const agora = new Set(nomes);
+
+  const chegaram = nomes.filter(n => !antes.has(n));
+  const sairam = retrato.nomes.filter(n => !agora.has(n));
+
+  if(chegaram.length || sairam.length){
+    const hoje = new Date().toISOString().slice(0,10);
+    MOVIMENTOS_AUTO.entradas.push(...chegaram.map(nome => ({
+      nome, origem: 'detetado no plantel', valor: valorNasNoticias(nome), data: hoje, auto: true
+    })));
+    MOVIMENTOS_AUTO.saidas.push(...sairam.map(nome => ({
+      nome, destino: 'saiu do plantel', valor: valorNasNoticias(nome), data: hoje, auto: true
+    })));
+    guardarRetrato(nomes);
+    pintarMercado();
+  }
+}
+
+/* junta o que está escrito à mão com o que foi detetado, sem repetir */
+function movimentosCompletos(){
+  const juntar = (mao, auto, campo) => {
+    const porNome = new Map(mao.map(x => [chaveNome(x.nome), {...x}]));
+    auto.forEach(a => {
+      const k = chaveNome(a.nome);
+      if(porNome.has(k)){
+        /* já existe à mão: só se preenche o que falta */
+        const e = porNome.get(k);
+        if(e.valor == null && a.valor != null) e.valor = a.valor;
+      }else{
+        porNome.set(k, { ...a, [campo]: a[campo] || 'sem detalhes' });
+      }
+    });
+    return [...porNome.values()].sort((a,b) => (b.valor||0) - (a.valor||0));
+  };
+  return {
+    entradas: juntar(ENTRADAS, MOVIMENTOS_AUTO.entradas, 'origem'),
+    saidas:   juntar(SAIDAS,   MOVIMENTOS_AUTO.saidas,   'destino')
+  };
+}
+
 function pintarMercado(){
+  /* lista à mão + o que foi detetado sozinho pela diferença de plantel */
+  const { entradas: ENTS, saidas: SAIS } = movimentosCompletos();
+
   const soma  = l => l.reduce((t,x) => t + (x.valor || 0), 0);
   const bonus = l => l.reduce((t,x) => t + (x.bonus || 0), 0);
 
-  const gasto  = soma(ENTRADAS),  gastoB  = bonus(ENTRADAS);
-  const encaixe= soma(SAIDAS),    encaixeB= bonus(SAIDAS);
+  const gasto  = soma(ENTS),  gastoB  = bonus(ENTS);
+  const encaixe= soma(SAIS),  encaixeB= bonus(SAIS);
   const saldo  = encaixe - gasto;
 
   /* barra proporcional: o maior negócio enche a barra toda */
-  const maior = Math.max(...[...ENTRADAS, ...SAIDAS].map(x => x.valor || 0), 1);
+  const maior = Math.max(...[...ENTS, ...SAIS].map(x => x.valor || 0), 1);
 
   const cartao = (x, campo, sentido) => {
     const p = acharJogador(x.nome);
@@ -2550,15 +2676,15 @@ function pintarMercado(){
 
   $('#mercado').innerHTML = `
     <div class="mv mv--in">
-      <h4><span class="mv__seta">▼</span> CHEGARAM <em>${ENTRADAS.length}</em></h4>
-      <ul>${ENTRADAS.map(e => cartao(e,'origem','in')).join('')}</ul>
+      <h4><span class="mv__seta">▼</span> CHEGARAM <em>${ENTS.length}</em></h4>
+      <ul>${ENTS.map(e => cartao(e,'origem','in')).join('')}</ul>
       <div class="mv__soma"><span>INVESTIDO</span><b>${milhoes(gasto)}</b></div>
       ${gastoB ? `<div class="mv__extra">mais ${milhoes(gastoB)} por objetivos</div>` : ''}
     </div>
 
     <div class="mv mv--out">
-      <h4><span class="mv__seta">▲</span> SAÍRAM <em>${SAIDAS.length}</em></h4>
-      <ul>${SAIDAS.map(s => cartao(s,'destino','out')).join('')}</ul>
+      <h4><span class="mv__seta">▲</span> SAÍRAM <em>${SAIS.length}</em></h4>
+      <ul>${SAIS.map(s => cartao(s,'destino','out')).join('')}</ul>
       <div class="mv__soma"><span>ENCAIXADO</span><b>${milhoes(encaixe)}</b></div>
       ${encaixeB ? `<div class="mv__extra">mais ${milhoes(encaixeB)} por objetivos</div>` : ''}
     </div>
@@ -2672,6 +2798,7 @@ async function sincronizar(){
         return {...p, stats: stats[chave] || {jogos:0, golos:0, provas:{}}, idade:null};
       });
       ligarFotos();
+      detetarMovimentos();
       pintarPlantel();
       /* só agora há plantel a sério para pôr no campo */
       carregarFormacaoGuardada();

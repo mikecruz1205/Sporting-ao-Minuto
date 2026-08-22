@@ -48,10 +48,12 @@ const CONFIG = {
      «leão» no singular está atrás de um travão: senão apanhava o Rafael Leão */
   filtroSporting: /sporting|leões|leonin|alvalade|verde e branco|(?<!rafael\s)\bleão\b/i,
 
-  /* … e não pode ser outro "Sporting", nem o Leão do Milan */
+  /* … e nao pode ser outro "Sporting", nem o Leao do Milan, nem o Papa */
   excluir: [/sporting\s+(de\s+)?braga/i, /sporting\s+gij/i, /sporting\s+kansas/i,
             /sporting\s+cristal/i, /sporting\s+charleroi/i, /sporting\s+covilh/i,
-            /sporting\s+lokeren/i, /rafael\s+leão/i],
+            /sporting\s+lokeren/i, /rafael\s+le[ãa]o/i,
+            /le[ãa]o\s+(xiv|xiii|xii|papa)/i, /papa\s+le[ãa]o/i,
+            /vaticano|pontif[íi]ce|santa s[ée]/i],
 
   /* separa os rumores das notícias normais */
   filtroRumores: /transfer|mercado|refor[çc]o|rumor|contrata[çc]|proposta|negoci|assinar|renova|sai(?:da)?\b|alvo|interess/i,
@@ -71,16 +73,39 @@ const CONFIG = {
      O onze sai cerca de uma hora antes, sempre por notícia. Estes padrões
      servem para a apanhar no meio do resto.
      --------------------------------------------------------------------- */
-  filtroOnze: /onze (oficial|inicial|escolhido)|eis o onze|equipa inicial|\bonze do sporting\b|escalaç(ão|oes)|as escolhas de rui borges|comunicado o onze/i,
+  /* Apanhar a notícia do onze é o que dá mais trabalho: cada jornal
+     escreve à sua maneira. A lista foi crescendo com o que aparece mesmo. */
+  filtroOnze: new RegExp([
+    'onze (oficial|inicial|escolhido|provável|de rui borges)',
+    'eis o onze', 'já há onze', 'onze do sporting', 'o onze leonino',
+    'equipa inicial', 'escalaç(ão|ões)', 'as escolhas de rui borges',
+    'comunicado o onze', 'sporting joga com', 'alinha com',
+    'sporting alinha', 'titulares do sporting', 'com estes onze',
+    'onze do le[ãa]o', 'rui borges (aposta|escolhe|opta) (em|por)'
+  ].join('|'), 'i'),
 
-  /* notícias que descrevem o que se passa no jogo */
-  filtroLance: /golo|golaço|marca(?:ou)?|expuls|cart(?:ão|ao) (?:amarelo|vermelho)|substitui|penált|penalt|autogolo|assist[êe]ncia|intervalo|apito final|começ(?:a|ou) o jogo|arranca o jogo|ao intervalo|fim do jogo/i,
+  /* Notícias que descrevem o que se passa no jogo. Inclui o resultado
+     escrito por extenso ("faz o 2-0"), que é a forma mais comum de
+     anunciar um golo sem usar a palavra golo. */
+  filtroLance: new RegExp([
+    'golo|golaço|autogolo|marca(?:ou)?|bisa|hat.?trick',
+    '\\d\\s*[-–x]\\s*\\d',
+    'amplia|aumenta a vantagem|reduz|empata|inaugura o marcador',
+    'de cabe[çc]a|de livre|de grande penalidade',
+    'expuls|cart(?:ão|ao) (?:amarelo|vermelho)|vermelho direto',
+    'substitui|rende|entra .{0,30}sai |sai .{0,30}entra ',
+    'pen[áa]lt|assist[êe]ncia',
+    'intervalo|ao intervalo|apito final|fim do jogo',
+    'come[çc](?:a|ou) o jogo|arranca o jogo|rola a bola'
+  ].join('|'), 'i'),
 
   /* de quanto em quanto tempo se atualiza durante o jogo (segundos) */
   refreshJogoSegundos: 30,
 
-  /* quanto tempo antes do apontapé o site entra em modo de jogo (minutos) */
-  antecedenciaJogo: 90,
+  /* Quanto tempo antes do apontapé o site entra em modo de jogo (minutos).
+     São 4 horas e não 90 minutos: assim a aba já está lá quando começam a
+     sair as antevisões, e não só quando o onze é conhecido. */
+  antecedenciaJogo: 240,
 
   wiki: {
     api:      "https://en.wikipedia.org/w/api.php",

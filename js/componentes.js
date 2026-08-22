@@ -55,6 +55,33 @@ const Componentes = (() => {
   const horaCurta = d =>
     d.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
 
+  /* Muitos feeds dão a miniatura em vez da imagem grande. Vários jornais
+     guardam o tamanho no próprio endereço, por isso vale a pena pedir a
+     versão maior — se não existir, o onerror do <img> trata do resto. */
+  function imagemGrande(url){
+    if(!url) return url;
+
+    /* Casas que põem a largura no próprio caminho. São regras à medida
+       porque trocar um número qualquer do endereço parte imagens boas. */
+    if(/img\.iol\.pt/i.test(url))                       // .../id/abc123/250
+      return url.replace(/\/\d{2,4}(\/?)$/, '/1200$1');
+    if(/noticiasaominuto\.com/i.test(url))              // .../640/naom_x.webp
+      return url.replace(/\/\d{3,4}\/(naom_)/i, '/1200/$1');
+    if(/(sicnoticias|expresso)\.pt/i.test(url))
+      return url.replace(/\/\d{3,4}x\d{3,4}\//, '/1200x675/');
+
+    return url
+      /* .../imagem-300x200.jpg → .../imagem.jpg */
+      .replace(/-\d{2,4}x\d{2,4}(\.[a-z]{3,4})(\?|$)/i, '$1$2')
+      /* ?w=300&h=200 ou ?width=300 → pede-se maior */
+      .replace(/([?&])(w|width)=\d+/i, '$1$2=1200')
+      .replace(/([?&])(h|height)=\d+/i, '$1$2=675')
+      /* /thumbs/ ou /thumb/ → /  */
+      .replace(/\/thumb(s)?\//i, '/')
+      /* resize=300x200 */
+      .replace(/resize=\d+x\d+/i, 'resize=1200x675');
+  }
+
   /* resumo cortado a meio de uma palavra fica feio */
   function resumir(texto, maximo = 150){
     const t = String(texto || '').trim();
@@ -114,7 +141,10 @@ const Componentes = (() => {
     <article class="hero">
       <a class="hero__ligacao" href="#noticia/${encodeURIComponent(n.link)}" data-link="${seguro(n.link)}">
         <div class="hero__foto">
-          ${n.imagem ? `<img src="${seguro(n.imagem)}" alt="" fetchpriority="high" decoding="async">` : ''}
+          ${n.imagem ? `<img src="${seguro(imagemGrande(n.imagem))}" alt=""
+                 fetchpriority="high" decoding="async"
+                 onerror="if(this.src!=='${seguro(n.imagem)}'){this.src='${seguro(n.imagem)}'}else{this.closest('.hero__foto').classList.add('sem-foto')}"
+                 onload="if(this.naturalWidth<520)this.closest('.hero__foto').classList.add('sem-foto')">` : ''}
         </div>
         <div class="hero__veu"></div>
         <div class="hero__txt">
@@ -187,7 +217,7 @@ const Componentes = (() => {
 
   return {
     seguro, destacar, haQuanto, dataCurta, horaCurta, resumir,
-    cartaoNoticia, hero, itemCompacto, categoriaClasse,
+    cartaoNoticia, hero, itemCompacto, categoriaClasse, imagemGrande,
     esqueletoCartao, esqueletoHero, esqueletoCompacto, vazio
   };
 })();
