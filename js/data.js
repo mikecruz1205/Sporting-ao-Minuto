@@ -172,24 +172,51 @@ const PERFIL_BASE = {
    bonus  = objetivos/variáveis por cima do fixo
    Fontes: comunicados do clube e imprensa (julho de 2026).
    ========================================================================= */
+/* =========================================================================
+   MERCADO 2026/27
+   -------------------------------------------------------------------------
+   Recolhido do zerozero.pt, que mantem a lista completa e com valores —
+   o Wikipedia so tinha uma das quinze entradas. Os bonus por objetivos
+   nao vem de la: esses ficam escritos a mao quando se souberem.
+   Ultima recolha: 12 de setembro de 2026
+   ========================================================================= */
 const ENTRADAS = [
-  { nome:"Rodrigo Zalazar", origem:"SC Braga",     valor:30,   bonus:0 },
-  { nome:"Issa Doumbia",    origem:"Venezia",      valor:20,   bonus:0 },
-  { nome:"Ibrahima Ba",     origem:"Famalicão",    valor:20,   bonus:0 },
-  { nome:"Sergi Altimira",  origem:"Real Betis",   valor:18,   bonus:2 },
-  { nome:"Silas Andersen",  origem:"BK Häcken",    valor:7.25, bonus:0 },
-  { nome:"Pedro Lima",      origem:"AVS",          valor:4,    bonus:0 },
-  { nome:"Jesse Derry",     origem:"Chelsea",      valor:0,    bonus:0, nota:"empréstimo" }
+  { nome:"Rodrigo Zalazar",         origem:"SC Braga",           valor:30,    bonus:0 },
+  { nome:"Ibrahima Ba",             origem:"Famalicão",          valor:21.25, bonus:0 },
+  { nome:"Issa Doumbia",            origem:"Venezia",            valor:20.53, bonus:0 },
+  { nome:"Sergi Altimira",          origem:"Real Betis",         valor:18.25, bonus:2 },
+  { nome:"Nestory Irankunda",       origem:"Watford",            valor:15,    bonus:0 },
+  { nome:"Silas Andersen",          origem:"BK Häcken",          valor:7.25,  bonus:0 },
+  { nome:"Pedro Lima",              origem:"AVS",                valor:4,     bonus:0 },
+  { nome:"Kaique Pereira",          origem:"Palmeiras",          valor:4,     bonus:0 },
+  { nome:"Moncef Zekri",            origem:"KV Mechelen",        valor:3,     bonus:0 },
+  { nome:"Bruno Ramos",             origem:"Académico de Viseu", valor:2,     bonus:0 },
+  { nome:"Sebastián Osorio",        origem:"Universitario",      valor:0.75,  bonus:0 },
+  { nome:"Catarino Pascoal",        origem:"Atlético CP",        valor:0.45,  bonus:0 },
+  { nome:"Bidu",                    origem:"Criciúma",           valor:0.38,  bonus:0 },
+  { nome:"Sotiris Alexandropoulos", origem:"Fortuna Düsseldorf", valor:null,  bonus:0, nota:"regresso de empréstimo" },
+  { nome:"Jesse Derry",             origem:"Chelsea",            valor:0,     bonus:0, nota:"empréstimo" }
 ];
 
 const SAIDAS = [
-  { nome:"Geovany Quenda",    destino:"Chelsea",             valor:50,    bonus:0 },
-  { nome:"Morten Hjulmand",   destino:"Atlético de Madrid",  valor:40,    bonus:5 },
-  { nome:"Francisco Trincão", destino:"Al-Ahli",             valor:39.34, bonus:4.37 },
-  { nome:"Alisson Santos",    destino:"Nápoles",             valor:16.5,  bonus:0 },
-  { nome:"Diogo Travassos",   destino:"SC Braga",            valor:5.5,   bonus:0 },
-  { nome:"Rodrigo Ribeiro",   destino:"FC Augsburg",         valor:5,     bonus:0 },
-  { nome:"Hidemasa Morita",   destino:"fim de contrato",     valor:0,     bonus:0, nota:"livre" }
+  { nome:"Ousmane Diomande",     destino:"Nottingham Forest",    valor:40,    bonus:0 },
+  { nome:"Morten Hjulmand",      destino:"Atlético de Madrid",   valor:40,    bonus:5 },
+  { nome:"Francisco Trincão",    destino:"Al-Ahli",              valor:39.35, bonus:4.37 },
+  { nome:"Alisson Santos",       destino:"Nápoles",              valor:16.5,  bonus:0 },
+  { nome:"Diogo Travassos",      destino:"SC Braga",             valor:5.5,   bonus:0 },
+  { nome:"Rodrigo Ribeiro",      destino:"FC Augsburg",          valor:5,     bonus:0 },
+  { nome:"Giorgi Kochorashvili", destino:"Sevilha",              valor:4.5,   bonus:0 },
+  { nome:"Pedro Gonçalves",      destino:"Fiorentina",           valor:2.5,   bonus:0, nota:"empréstimo" },
+  { nome:"João Virgínia",        destino:"Wolverhampton",        valor:1.5,   bonus:0 },
+  { nome:"Daniel Bragança",      destino:"Torino",               valor:1,     bonus:0, nota:"empréstimo" },
+  { nome:"Alexandre Brito",      destino:"Pafos",                valor:0.1,   bonus:0 },
+  { nome:"Koba Koindredi",       destino:"Lausanne-Sport",       valor:null,  bonus:0 },
+  { nome:"Biel Teixeira",        destino:"Pafos",                valor:null,  bonus:0, nota:"empréstimo" },
+  { nome:"Rafael Pontelo",       destino:"Radnik Surdulica",     valor:0,     bonus:0 },
+  { nome:"Souleymane Faye",      destino:"FC Lorient",           valor:0,     bonus:0, nota:"empréstimo" },
+  { nome:"Hidemasa Morita",      destino:"Hull City",            valor:0,     bonus:0 },
+  { nome:"Ricardo Mangas",       destino:"Monza",                valor:0,     bonus:0, nota:"empréstimo" },
+  { nome:"David Moreira",        destino:"Gil Vicente",          valor:0,     bonus:0 }
 ];
 
 /* =========================================================================

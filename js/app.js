@@ -19,6 +19,7 @@ let TABELA   = [...TABLE];
 let TABELA_CL = [...TABLE_CL];   // fase de liga da Champions
 let FOTOS    = { jogadores: [], equipas: {} };
 let EMBLEMAS = {};          // nome da equipa -> ficheiro (dados/emblemas.json)
+let PLANTEL_ZZ = { jogadores: [] };  // plantel do zerozero (atualizar_plantel.py)
 let escolhido = null;
 let vistaAtual = 'inicio';
 let filtroFonte = 'todas';
@@ -2665,7 +2666,39 @@ function ligarChat(){
    Quem aparecer é reforço, quem desaparecer é saída. O valor, quando existe,
    vem do que está escrito à mão em data.js ou de um título de notícia.
    ========================================================================= */
+/* Quem está mesmo no plantel.
+   O Wikipédia é mantido por voluntários e chega a andar semanas atrás do
+   mercado — em setembro de 2026 ainda lá estavam quatro jogadores já
+   vendidos e faltavam três contratações. Quem manda na lista é o ficheiro
+   do zerozero (atualizar_plantel.py); do Wikipédia aproveitam-se os jogos
+   e golos por prova, que o zerozero não dá nesta página. */
+function juntarComZerozero(doWiki){
+  const zz = PLANTEL_ZZ.jogadores;
+  if(!zz?.length) return doWiki;
+
+  const porChave = new Map(doWiki.map(p => [chaveNome(p.nome), p]));
+
+  return zz.map(z => {
+    const w = porChave.get(chaveNome(z.nome))
+           || doWiki.find(p => apelido(p.nome) === apelido(z.nome));
+    return {
+      ...(w || {}),
+      nome: w?.nome || z.nome,      // o Wikipédia escreve os nomes por extenso
+      n:    z.n ?? w?.n ?? null,
+      pos:  z.pos, posGrupo: z.posGrupo,
+      nac:  z.nac || w?.nac || '',
+      idade: z.idade ?? null,
+      valorZZ: z.valor,
+      fotoZZ: z.foto || null,
+      nota: w?.nota || ''
+    };
+  });
+}
+
 const RETRATO_PLANTEL = 'scp-plantel-retrato-v1';
+/* de onde veio a lista. Muda quando se troca de fonte, para o retrato
+   guardado não ser comparado com outro que foi feito de outra maneira. */
+const FONTE_PLANTEL = 'zerozero';
 let MOVIMENTOS_AUTO = { entradas: [], saidas: [] };
 
 function lerRetrato(){
@@ -2676,7 +2709,7 @@ function lerRetrato(){
 function guardarRetrato(nomes){
   try{
     localStorage.setItem(RETRATO_PLANTEL,
-      JSON.stringify({ quando: Date.now(), nomes }));
+      JSON.stringify({ quando: Date.now(), fonte: FONTE_PLANTEL, nomes }));
   }catch(e){}
 }
 
@@ -2697,6 +2730,15 @@ function detetarMovimentos(){
 
   /* primeira vez: só se guarda, não se inventa nada */
   if(!retrato?.nomes?.length){
+    guardarRetrato(nomes);
+    return;
+  }
+
+  /* O retrato anterior foi tirado quando o plantel ainda vinha do
+     Wikipédia. Comparar os dois dava movimentos que nunca existiram —
+     jogadores que o Wikipédia não tinha, e miúdos subidos da formação,
+     que não são transferências. Quando a fonte muda, recomeça-se. */
+  if(retrato.fonte !== FONTE_PLANTEL){
     guardarRetrato(nomes);
     return;
   }
@@ -2909,9 +2951,9 @@ async function sincronizar(){
     if(provas?.length) PROVAS_DISPONIVEIS = provas;
 
     if(plantel.length){
-      PLANTEL = plantel.map(p => {
+      PLANTEL = juntarComZerozero(plantel).map(p => {
         const chave = Object.keys(stats).find(k => chaveNome(k) === chaveNome(p.nome));
-        return {...p, stats: stats[chave] || {jogos:0, golos:0, provas:{}}, idade:null};
+        return {...p, stats: stats[chave] || {jogos:0, golos:0, provas:{}}, idade: p.idade ?? null};
       });
       ligarFotos();
       detetarMovimentos();
@@ -3110,6 +3152,9 @@ async function arranque(){
   try{
     EMBLEMAS = await (await fetch('dados/emblemas.json', {cache:'no-store'})).json();
   }catch(e){ /* segue com as iniciais desenhadas */ }
+  try{
+    PLANTEL_ZZ = await (await fetch('dados/plantel_zz.json', {cache:'no-store'})).json();
+  }catch(e){ /* sem ele, o plantel fica o do Wikipédia */ }
 
   /* plantel de arranque: só nomes dos perfis, até o Wikipédia responder */
   PLANTEL = Object.keys(PERFIS).map(nome => ({
