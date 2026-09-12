@@ -29,6 +29,7 @@ PORTA = int(sys.argv[1]) if len(sys.argv) > 1 else 8123
 RAIZ = os.path.dirname(os.path.abspath(__file__))
 PASTA_CACHE = os.path.join(RAIZ, "cache")
 FICHEIRO_CHAVE = os.path.join(RAIZ, "chave-api.txt")
+FICHEIRO_CHAVE_FD = os.path.join(RAIZ, "chave-football-data.txt")
 
 # de onde se deixa ir buscar feeds e artigos
 DOMINIOS_PERMITIDOS = (
@@ -75,6 +76,8 @@ class Manipulador(SimpleHTTPRequestHandler):
             self.servir_rss()
         elif self.path.startswith("/ler") or self.path.startswith("/api/ler"):
             self.servir_artigo()
+        elif self.path.startswith("/api/fd"):
+            self.servir_football_data()
         elif self.path.startswith("/api/api") or self.path.startswith("/api?"):
             # /api/api e o caminho que o Vercel cria a partir de api/api.py;
             # aceita-se tambem /api? para nao partir versoes antigas
@@ -229,6 +232,56 @@ class Manipulador(SimpleHTTPRequestHandler):
         except Exception:
             pass
 
+        self.responder(corpo, "application/json; charset=utf-8")
+
+    # ------------------------------------------------------------------
+    def servir_football_data(self):
+        """Proxy para o football-data.org.
+
+        O token vai aqui e nao no browser: a API deles nao manda cabecalhos
+        de CORS, e mesmo que mandasse nao se poe uma chave num ficheiro que
+        qualquer pessoa pode abrir.
+
+        Uso: /api/fd?p=competitions/PPL/standings
+        """
+        caminho = self.parametro("p").lstrip("/")
+        if not caminho:
+            return self.erro(400, "falta o parametro p")
+
+        # so se deixa chegar ao que o site precisa
+        if not re.match(r"^(competitions|teams|matches|persons)/[\w/?&=.,-]*$", caminho):
+            return self.erro(400, "caminho nao permitido")
+
+        nome = "fd-" + re.sub(r"[^\w.-]", "_", caminho) + ".json"
+        ficheiro = os.path.join(PASTA_CACHE, nome)
+
+        # o plano gratuito da 10 pedidos por minuto: guarda-se o que chega
+        if os.path.exists(ficheiro) and time.time() - os.path.getmtime(ficheiro) < TTL_API:
+            with open(ficheiro, "rb") as f:
+                return self.responder(f.read(), "application/json; charset=utf-8")
+
+        if not os.path.exists(FICHEIRO_CHAVE_FD):
+            return self.erro(503, "sem token: cria chave-football-data.txt "
+                                  "com o token de football-data.org/client/register")
+        with open(FICHEIRO_CHAVE_FD, encoding="utf-8") as f:
+            token = f.read().strip()
+        if not token:
+            return self.erro(503, "o chave-football-data.txt esta vazio")
+
+        url = "https://api.football-data.org/v4/" + caminho
+        try:
+            pedido = urllib.request.Request(url, headers={"X-Auth-Token": token})
+            with urllib.request.urlopen(pedido, timeout=25) as r:
+                corpo = r.read()
+        except urllib.error.HTTPError as e:
+            detalhe = e.read()[:300].decode("utf-8", "replace")
+            return self.erro(e.code, "football-data respondeu %s: %s" % (e.code, detalhe))
+        except Exception as e:
+            return self.erro(502, "football-data nao respondeu: %s" % e)
+
+        os.makedirs(PASTA_CACHE, exist_ok=True)
+        with open(ficheiro, "wb") as f:
+            f.write(corpo)
         self.responder(corpo, "application/json; charset=utf-8")
 
     # ------------------------------------------------------------------

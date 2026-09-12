@@ -10,3 +10,6 @@ chave-api.txt
 
 # respostas da API guardadas em disco pelo servidor
 cache/
+
+# token do football-data.org — nao vai para o repositorio
+chave-football-data.txt

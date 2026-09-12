@@ -1598,3 +1598,15 @@ body.a-jogar .menu__item--vivo{ color: #ff8080; }
   .troca-prova__b{ flex: 1; }
   .cl-adv__pote{ display: none; }
 }
+
+/* lances vindos da ficha oficial: a assistência e o resultado ao lado */
+.lance__assist{ color: var(--t-fraco, #9aa); font-weight: 400; font-size: .82em; }
+.lance__res{
+  margin-left: auto;
+  padding: .1rem .45rem;
+  border-radius: 6px;
+  background: rgba(255,255,255,.07);
+  font: 600 .74rem/1.4 'Barlow Condensed', system-ui, sans-serif;
+}
+.lance--deles{ opacity: .72; }
+.lance--nosso .lance__min{ color: var(--verde-claro, #3ddc84); font-weight: 700; }

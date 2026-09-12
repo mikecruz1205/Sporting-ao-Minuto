@@ -2320,13 +2320,97 @@ function pintarDiaDeJogo(){
   }
 
   pintarPlacar(e);
-  pintarOnzeOficial(e);
-  pintarLances(e);
+
+  /* Havendo token do football-data, o onze e os lances vêm de lá: são
+     dados da ficha de jogo, não títulos de jornal lidos à força. Se não
+     houver, ou se a ficha ainda não estiver preenchida, fica o que
+     sempre houve — a leitura das notícias. */
+  usarFichaOficial(e).then(usou => {
+    if(!usou){ pintarOnzeOficial(e); pintarLances(e); }
+  });
 
   /* durante o jogo o minuto anda sozinho */
   if(Jogo.emJogo(e) && !relogioJogo){
     relogioJogo = setInterval(() => pintarDiaDeJogo(), 20000);
   }
+}
+
+/* ---------------------------------------------------------------------
+   Ficha oficial do jogo (football-data.org)
+   Devolve true se conseguiu desenhar alguma coisa, para quem chama saber
+   se ainda precisa de recorrer às notícias.
+   --------------------------------------------------------------------- */
+let fichaFD = null;
+
+async function usarFichaOficial(e){
+  let ficha = null;
+  try{
+    const agora = await FD.jogoAgora();
+    if(agora?.id) ficha = await FD.ficha(agora.id);
+  }catch(err){ return false; }
+
+  if(!ficha) return false;
+  fichaFD = ficha;
+
+  const temOnze   = ficha.titulares.length >= 10;
+  const temLances = ficha.lances.length > 0;
+  if(!temOnze && !temLances) return false;
+
+  if(temOnze) desenharOnzeFD(ficha);
+  if(temLances) desenharLancesFD(ficha);
+
+  /* o que a ficha ainda não tem, vai buscar-se às notícias */
+  if(!temOnze) pintarOnzeOficial(e);
+  if(!temLances) pintarLances(e);
+  return true;
+}
+
+function desenharOnzeFD(f){
+  $('#onze-origem').textContent =
+    'oficial · football-data' + (f.formacao ? ' · ' + f.formacao : '');
+  $('#onze-oficial').classList.remove('onze--provavel');
+
+  const linha = p => `
+    <li data-nome="${Componentes.seguro(p.nome)}">
+      <span class="onze__n">${p.n ?? '–'}</span>
+      <span class="onze__nome">${Componentes.seguro(p.nome)}</span>
+      <span class="onze__papel">${Componentes.seguro(p.pos)}</span>
+    </li>`;
+
+  $('#onze-oficial').innerHTML = f.titulares.map(linha).join('');
+  $('#banco-oficial').innerHTML = f.suplentes.length
+    ? f.suplentes.map(linha).join('')
+    : '<li class="onze--vazio"><span class="onze__nome">banco por confirmar</span></li>';
+
+  $$('#onze-oficial li[data-nome], #banco-oficial li[data-nome]').forEach(li =>
+    li.addEventListener('click', () => abrirFichaDoNome(li.dataset.nome)));
+}
+
+function desenharLancesFD(f){
+  const alvo = $('#lances');
+  if(!alvo) return;
+
+  $('#lances-nota').textContent = `${f.lances.length} lances · ficha oficial`;
+
+  alvo.innerHTML = f.lances.map(l => {
+    const minuto = l.minuto + (l.extra ? '+' + l.extra : '');
+    /* a assistência é a informação que nenhuma outra fonte nos dava */
+    const quem = l.tipo === 'golo'
+      ? `<b>${Componentes.seguro(l.quem || '—')}</b>${
+          l.assistiu ? ` <span class="lance__assist">assistência de ${Componentes.seguro(l.assistiu)}</span>` : ''}${
+          l.detalhe ? ` <i>${l.detalhe}</i>` : ''}`
+      : l.tipo === 'troca'
+        ? `<b>${Componentes.seguro(l.entrou || '—')}</b> <span class="lance__assist">por ${Componentes.seguro(l.saiu || '—')}</span>`
+        : `<b>${Componentes.seguro(l.quem || '—')}</b>`;
+
+    return `
+    <li class="lance lance--${l.tipo} ${l.nosso ? 'lance--nosso' : 'lance--deles'}">
+      <span class="lance__min">${minuto}'</span>
+      <span class="lance__ico" aria-hidden="true">${l.icone}</span>
+      <span class="lance__txt">${quem}</span>
+      ${l.resultado ? `<span class="lance__res">${l.resultado}</span>` : ''}
+    </li>`;
+  }).join('');
 }
 
 function pintarPlacar(e){
@@ -2936,7 +3020,9 @@ async function sincronizar(){
   const falhas = [];
 
   try{
-    TABELA = await Wiki.classificacao();
+    /* Havendo token, a classificação vem do football-data, que atualiza
+       logo a seguir aos jogos; senão vai ao Wikipédia como sempre foi. */
+    TABELA = (await FD.classificacao()) || (await Wiki.classificacao());
     /* a Champions é uma página à parte: se falhar, fica o retrato guardado
        e a Liga não deixa de atualizar por causa disso */
     try{
