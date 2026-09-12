@@ -22,9 +22,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/base.css?v=45">
-<link rel="stylesheet" href="css/componentes.css?v=45">
-<link rel="stylesheet" href="css/style.css?v=45">
+<link rel="stylesheet" href="css/base.css?v=48">
+<link rel="stylesheet" href="css/componentes.css?v=48">
+<link rel="stylesheet" href="css/style.css?v=48">
 </head>
 <body class="trancado">
 
@@ -397,13 +397,31 @@
 
 <main class="vista" id="vista-classificacao">
   <section class="cartao">
-    <div class="cartao__topo"><h2>CLASSIFICAÇÃO</h2><span class="sub-inline" id="tabela-nota"></span></div>
+    <div class="cartao__topo">
+      <h2>CLASSIFICAÇÃO</h2>
+      <div class="troca-prova" role="tablist" aria-label="Escolher a prova">
+        <button class="troca-prova__b is-on" data-prova="liga"      role="tab" aria-selected="true">LIGA</button>
+        <button class="troca-prova__b"       data-prova="champions" role="tab" aria-selected="false">CHAMPIONS</button>
+      </div>
+      <span class="sub-inline" id="tabela-nota"></span>
+    </div>
+
+    <!-- só aparece na Champions: como corre ao Sporting na prova -->
+    <div class="cl-resumo" id="cl-resumo" hidden></div>
+
     <div class="cartao__corpo">
       <table class="tabela tabela--completa" id="tabela-total">
         <thead><tr><th>#</th><th>EQUIPA</th><th>J</th><th>V</th><th>E</th><th>D</th><th>GM</th><th>GS</th><th>DG</th><th>PTS</th></tr></thead>
         <tbody></tbody>
       </table>
+      <p class="tabela__legenda" id="tabela-legenda"></p>
     </div>
+  </section>
+
+  <!-- os oito adversários do sorteio, só na Champions -->
+  <section class="cartao" id="cl-adversarios-cartao" hidden>
+    <div class="cartao__topo"><h2>OS ADVERSÁRIOS</h2><span class="sub-inline">sorteio de 27 de agosto</span></div>
+    <div class="cartao__corpo"><ul class="cl-advs" id="cl-advs"></ul></div>
   </section>
 </main>
 
@@ -657,13 +675,13 @@
 </dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.min.js" defer></script>
-<script src="js/nuvem.js?v=45"></script>
-<script src="js/jogo.js?v=45"></script>
-<script src="js/componentes.js?v=45"></script>
-<script src="js/contas.js?v=45"></script>
-<script src="js/arte.js?v=45"></script>
-<script src="js/data.js?v=45"></script>
-<script src="js/wiki.js?v=45"></script>
-<script src="js/app.js?v=45"></script>
+<script src="js/nuvem.js?v=48"></script>
+<script src="js/jogo.js?v=48"></script>
+<script src="js/componentes.js?v=48"></script>
+<script src="js/contas.js?v=48"></script>
+<script src="js/arte.js?v=48"></script>
+<script src="js/data.js?v=48"></script>
+<script src="js/wiki.js?v=48"></script>
+<script src="js/app.js?v=48"></script>
 </body>
 </html>

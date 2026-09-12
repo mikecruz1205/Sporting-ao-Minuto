@@ -1474,3 +1474,127 @@ body.a-jogar .menu__item--vivo{ color: #ff8080; }
   font-size: .7rem;
   opacity: .45;
 }
+
+/* =========================================================================
+   CLASSIFICAÇÃO — trocar entre a Liga e a Champions
+   ========================================================================= */
+.troca-prova{
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  margin-left: auto;
+  border-radius: 999px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.10);
+}
+.troca-prova__b{
+  padding: .38rem .95rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--t-fraco, #9aa);
+  font: 600 .72rem/1 'Barlow Condensed', system-ui, sans-serif;
+  letter-spacing: .08em;
+  cursor: pointer;
+  transition: background .18s ease, color .18s ease;
+}
+.troca-prova__b:hover{ color: #fff; }
+.troca-prova__b.is-on{
+  background: var(--verde, #0a7d3e);
+  color: #fff;
+}
+.troca-prova__b:focus-visible{ outline: 2px solid var(--verde, #0a7d3e); outline-offset: 2px; }
+
+/* faixas de apuramento na tabela da Champions */
+.tabela--completa tr.q-direto  td:first-child{ box-shadow: inset 3px 0 0 #2ecc71; }
+.tabela--completa tr.q-playoff td:first-child{ box-shadow: inset 3px 0 0 #e0a020; }
+.tabela--completa tr.q-fora    td:first-child{ box-shadow: inset 3px 0 0 rgba(255,255,255,.10); }
+
+.tabela__legenda{
+  margin: .8rem 0 0;
+  font-size: .74rem;
+  color: var(--t-fraco, #9aa);
+  line-height: 1.7;
+}
+.tabela__legenda:empty{ display: none; }
+.leg{
+  display: inline-block;
+  width: 9px; height: 9px;
+  border-radius: 2px;
+  vertical-align: baseline;
+}
+.leg--direto { background: #2ecc71; }
+.leg--playoff{ background: #e0a020; }
+
+/* resumo do Sporting na prova */
+.cl-resumo{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 1px;
+  margin: 0 0 .2rem;
+  background: rgba(255,255,255,.07);
+  border-block: 1px solid rgba(255,255,255,.08);
+}
+.cl-resumo__c{
+  padding: .85rem .6rem;
+  text-align: center;
+  background: var(--fundo-cartao, #0e1512);
+}
+.cl-resumo__c b{
+  display: block;
+  font: 700 1.45rem/1 'Barlow Condensed', system-ui, sans-serif;
+  color: #fff;
+}
+.cl-resumo__c--forte b{ color: var(--verde-claro, #3ddc84); }
+.cl-resumo__c span{
+  display: block;
+  margin-top: .3rem;
+  font-size: .64rem;
+  letter-spacing: .1em;
+  color: var(--t-fraco, #9aa);
+}
+.cl-resumo__vazio{ padding: 1rem; margin: 0; color: var(--t-fraco, #9aa); }
+
+/* os oito adversários do sorteio */
+.cl-advs{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: .5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.cl-adv{
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  padding: .6rem .75rem;
+  border-radius: 10px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.07);
+}
+.cl-adv img{ width: 30px; height: 30px; object-fit: contain; flex: 0 0 auto; }
+.cl-adv__nome{
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  font-size: .86rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cl-adv__onde{
+  padding: .2rem .5rem;
+  border-radius: 999px;
+  font: 600 .6rem/1 'Barlow Condensed', system-ui, sans-serif;
+  letter-spacing: .08em;
+}
+.cl-adv__onde.e-casa{ background: rgba(46,204,113,.16); color: #3ddc84; }
+.cl-adv__onde.e-fora{ background: rgba(255,255,255,.08); color: var(--t-fraco, #9aa); }
+.cl-adv__pote{ font-size: .66rem; color: var(--t-fraco, #9aa); }
+
+@media (max-width: 600px){
+  .troca-prova{ margin-left: 0; width: 100%; justify-content: stretch; }
+  .troca-prova__b{ flex: 1; }
+  .cl-adv__pote{ display: none; }
+}

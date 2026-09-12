@@ -35,10 +35,12 @@ const Wiki = (() => {
   const arrumaNome = n => NOMES[n] || n;
 
   /* =====================================================================
-     1. CLASSIFICAÇÃO
+     1. CLASSIFICAÇÕES
+     A Liga e a fase de liga da Champions assentam na mesma tabela:
+     Pos | Equipa | J | V | E | D | GM | GS | DG | Pts. Só muda a página e
+     quantas linhas se exigem para dar a leitura por boa.
      ===================================================================== */
-  async function classificacao(){
-    const doc = await pagina(CONFIG.wiki.liga);
+  function lerTabela(doc, minimo){
     const tabela = [...doc.querySelectorAll('table')].find(t =>
       /\bPld\b/.test(t.textContent) && /\bPts\b/.test(t.textContent) && /\bPos\b/.test(t.textContent));
     if(!tabela) throw new Error('tabela não encontrada');
@@ -58,8 +60,17 @@ const Wiki = (() => {
         gm:numero(c[6]), gs:numero(c[7]), p:numero(c[9])
       });
     }
-    if(saida.length < 10) throw new Error('classificação incompleta');
+    if(saida.length < minimo) throw new Error('classificação incompleta');
     return saida;
+  }
+
+  async function classificacao(){
+    return lerTabela(await pagina(CONFIG.wiki.liga), 10);
+  }
+
+  /* fase de liga da Champions: as 36 equipas numa tabela só */
+  async function classificacaoChampions(){
+    return lerTabela(await pagina(CONFIG.wiki.champions), 24);
   }
 
   /* =====================================================================
@@ -237,9 +248,13 @@ const Wiki = (() => {
       const mes = MESES[mData[2].toLowerCase()];
       if(mes === undefined) continue;
 
-      /* hora vem na 2.ª linha: "20:30 WEST (UTC+01:00)" */
+      /* A hora vem na 2.ª linha como "20:30 WEST (UTC+01:00)". O fuso entre
+         parênteses tem o mesmo aspeto de uma hora, e nos jogos ainda sem
+         hora marcada era o único a aparecer — daí saírem todos à 01:00.
+         Tira-se o parêntesis antes de procurar. */
       const linha2 = [...(linhas[1]?.children || [])].map(texto);
-      const mHora = (linha2[0] || '').match(/(\d{2}):(\d{2})/);
+      const semFuso = (linha2[0] || '').replace(/\(.*?\)/g, '');
+      const mHora = semFuso.match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/);
       const data = new Date(+mData[3], mes, +mData[1],
                             mHora ? +mHora[1] : 18, mHora ? +mHora[2] : 0);
 
@@ -256,6 +271,9 @@ const Wiki = (() => {
         /* data local, sem passar por toISOString: isso convertia para UTC
            e depois era relida como hora local, perdendo uma hora */
         data: dataLocalISO(data),
+        /* o Wikipédia só publica a hora depois de a Liga a marcar; até lá
+           a data está certa mas a hora é um palpite, e diz-se isso */
+        semHora: !mHora,
         comp: rotuloCompeticao(mData[4], t),
         casa, fora,
         golosCasa: mGolos ? +mGolos[1] : undefined,
@@ -270,14 +288,52 @@ const Wiki = (() => {
     return jogos;
   }
 
+  /* Que prova é esta? O número ao lado da data só diz a jornada — quem diz
+     a prova é o título da secção onde a tabela está. Sem isto, a jornada 1
+     da Champions era anunciada como jornada 1 da Liga. */
+  const SECCOES = {
+    primeira_liga:   'LIGA',
+    uefa_champions_league: 'CHAMPIONS',
+    uefa_europa_league:    'LIGA EUROPA',
+    taca_de_portugal: 'TAÇA DE PORTUGAL',
+    taca_da_liga:     'TAÇA DA LIGA',
+    supertaca:        'SUPERTAÇA',
+    friendlies:       'PRÉ-ÉPOCA',
+    pre_season:       'PRÉ-ÉPOCA'
+  };
+
+  function provaDaTabela(tabela){
+    /* sobe no documento à procura do título de secção mais próximo */
+    let no = tabela;
+    while(no){
+      let irmao = no.previousElementSibling;
+      while(irmao){
+        const cab = irmao.matches?.('h2,h3,h4') ? irmao : irmao.querySelector?.('h2,h3,h4');
+        if(cab){
+          const chave = (cab.id || cab.textContent || '')
+            .toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
+            .replace(/[^a-z]+/g,'_').replace(/^_|_$/g,'');
+          for(const [k, v] of Object.entries(SECCOES)) if(chave.includes(k)) return v;
+        }
+        irmao = irmao.previousElementSibling;
+      }
+      no = no.parentElement;
+    }
+    return null;
+  }
+
   function rotuloCompeticao(sufixo, tabela){
     const s = (sufixo || '').trim();
-    if(/^\d+$/.test(s)) return 'LIGA — J' + s;
-    if(/quarter/i.test(s)) return 'TAÇA DA LIGA — QF';
-    if(/semi/i.test(s))    return 'MEIA-FINAL';
-    if(/final/i.test(s))   return 'FINAL';
+    const prova = provaDaTabela(tabela);
+
+    /* número solto ao lado da data = jornada da prova onde a tabela está */
+    if(/^\d+$/.test(s)) return (prova || 'LIGA') + ' — J' + s;
+
+    if(/quarter/i.test(s)) return (prova || 'TAÇA DA LIGA') + ' — QF';
+    if(/semi/i.test(s))    return (prova || '') + ' — MEIA-FINAL';
+    if(/final/i.test(s))   return (prova || '') + ' — FINAL';
     if(s) return s.toUpperCase();
-    return 'JOGO';
+    return prova || 'JOGO';
   }
 
   /* =====================================================================
@@ -294,5 +350,5 @@ const Wiki = (() => {
     };
   }
 
-  return { classificacao, sincronizarSporting };
+  return { classificacao, classificacaoChampions, sincronizarSporting };
 })();

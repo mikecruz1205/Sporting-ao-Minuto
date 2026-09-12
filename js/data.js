@@ -109,8 +109,9 @@ const CONFIG = {
 
   wiki: {
     api:      "https://en.wikipedia.org/w/api.php",
-    epocaSCP: "2026–27 Sporting CP season",
-    liga:     "2026–27 Primeira Liga"
+    epocaSCP:  "2026–27 Sporting CP season",
+    liga:      "2026–27 Primeira Liga",
+    champions: "2026–27 UEFA Champions League league phase"
   },
 
   lojaUrl: "https://store.sporting.pt/"
@@ -407,3 +408,62 @@ const CLUBE = {
     { nome:"João Simões",          titulos:"Campeonato" }
   ]
 };
+
+/* =========================================================================
+   CLASSIFICACAO DA CHAMPIONS — fase de liga
+   Retrato guardado do Wikipedia, so para o site ter o que mostrar enquanto
+   o pedido nao volta. O que manda e o que o Wiki.classificacaoChampions()
+   trouxer; isto e a rede de seguranca.
+   Ultima recolha: 12 de setembro de 2026 (jornada 1)
+   ========================================================================= */
+const TABLE_CL = [
+  {pos: 1, equipa:"Paris Saint-Germain",   j:1, v:1, e:0, d:0, gm: 6, gs: 1, p:3},
+  {pos: 2, equipa:"Bayern Munich",         j:1, v:1, e:0, d:0, gm: 5, gs: 0, p:3},
+  {pos: 3, equipa:"Barcelona",             j:1, v:1, e:0, d:0, gm: 5, gs: 1, p:3},
+  {pos: 4, equipa:"Manchester United",     j:1, v:1, e:0, d:0, gm: 4, gs: 0, p:3},
+  {pos: 5, equipa:"Como",                  j:1, v:1, e:0, d:0, gm: 4, gs: 1, p:3},
+  {pos: 6, equipa:"Sporting CP",           j:1, v:1, e:0, d:0, gm: 3, gs: 1, p:3},
+  {pos: 6, equipa:"VfB Stuttgart",         j:1, v:1, e:0, d:0, gm: 3, gs: 1, p:3},
+  {pos: 8, equipa:"Manchester City",       j:1, v:1, e:0, d:0, gm: 2, gs: 0, p:3},
+  {pos: 9, equipa:"Aston Villa",           j:1, v:1, e:0, d:0, gm: 3, gs: 2, p:3},
+  {pos: 9, equipa:"Lens",                  j:1, v:1, e:0, d:0, gm: 3, gs: 2, p:3},
+  {pos: 9, equipa:"Real Betis",            j:1, v:1, e:0, d:0, gm: 3, gs: 2, p:3},
+  {pos:12, equipa:"Borussia Dortmund",     j:1, v:1, e:0, d:0, gm: 3, gs: 2, p:3},
+  {pos:13, equipa:"Liverpool",             j:1, v:1, e:0, d:0, gm: 2, gs: 1, p:3},
+  {pos:13, equipa:"Real Madrid",           j:1, v:1, e:0, d:0, gm: 2, gs: 1, p:3},
+  {pos:15, equipa:"Arsenal",               j:1, v:1, e:0, d:0, gm: 1, gs: 0, p:3},
+  {pos:16, equipa:"AEK Athens",            j:1, v:1, e:0, d:0, gm: 1, gs: 0, p:3},
+  {pos:17, equipa:"Roma",                  j:1, v:0, e:1, d:0, gm: 1, gs: 1, p:1},
+  {pos:17, equipa:"Shakhtar Donetsk",      j:1, v:0, e:1, d:0, gm: 1, gs: 1, p:1},
+  {pos:19, equipa:"Fenerbahçe",            j:1, v:0, e:1, d:0, gm: 1, gs: 1, p:1},
+  {pos:19, equipa:"PSV Eindhoven",         j:1, v:0, e:1, d:0, gm: 1, gs: 1, p:1},
+  {pos:21, equipa:"Villarreal",            j:1, v:0, e:0, d:1, gm: 2, gs: 3, p:0},
+  {pos:22, equipa:"Club Brugge",           j:1, v:0, e:0, d:1, gm: 2, gs: 3, p:0},
+  {pos:22, equipa:"Lille",                 j:1, v:0, e:0, d:1, gm: 2, gs: 3, p:0},
+  {pos:22, equipa:"Slavia Prague",         j:1, v:0, e:0, d:1, gm: 2, gs: 3, p:0},
+  {pos:25, equipa:"Atlético Madrid",       j:1, v:0, e:0, d:1, gm: 1, gs: 2, p:0},
+  {pos:25, equipa:"Inter Milan",           j:1, v:0, e:0, d:1, gm: 1, gs: 2, p:0},
+  {pos:27, equipa:"LASK",                  j:1, v:0, e:0, d:1, gm: 0, gs: 1, p:0},
+  {pos:27, equipa:"Napoli",                j:1, v:0, e:0, d:1, gm: 0, gs: 1, p:0},
+  {pos:29, equipa:"Galatasaray",           j:1, v:0, e:0, d:1, gm: 1, gs: 3, p:0},
+  {pos:29, equipa:"Viking",                j:1, v:0, e:0, d:1, gm: 1, gs: 3, p:0},
+  {pos:31, equipa:"Porto",                 j:1, v:0, e:0, d:1, gm: 0, gs: 2, p:0},
+  {pos:32, equipa:"RB Leipzig",            j:1, v:0, e:0, d:1, gm: 1, gs: 4, p:0},
+  {pos:33, equipa:"Feyenoord",             j:1, v:0, e:0, d:1, gm: 1, gs: 5, p:0},
+  {pos:34, equipa:"Sabah",                 j:1, v:0, e:0, d:1, gm: 0, gs: 4, p:0},
+  {pos:35, equipa:"Slovan Bratislava",     j:1, v:0, e:0, d:1, gm: 1, gs: 6, p:0},
+  {pos:36, equipa:"Bodø/Glimt",            j:1, v:0, e:0, d:1, gm: 0, gs: 5, p:0},
+];
+
+/* Os oito adversarios do Sporting na fase de liga, do sorteio de 27 de
+   agosto de 2026. Quatro em Alvalade, quatro fora. */
+const CL_ADVERSARIOS = [
+  {equipa:"Barcelona",        casa:true,  pote:1},
+  {equipa:"Manchester City",  casa:false, pote:1},
+  {equipa:"Manchester United",casa:true,  pote:2},
+  {equipa:"Roma",             casa:false, pote:2},
+  {equipa:"Galatasaray",      casa:true,  pote:3},
+  {equipa:"Shakhtar Donetsk", casa:false, pote:3},
+  {equipa:"LASK",             casa:true,  pote:4},
+  {equipa:"Lens",             casa:false, pote:4}
+];

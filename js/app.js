@@ -16,7 +16,9 @@ let NOTICIAS = [];          // tudo o que vem dos RSS
 let PLANTEL  = [];          // jogadores (Wikipédia + fotos da API)
 let JOGOS    = [...FIXTURES];
 let TABELA   = [...TABLE];
+let TABELA_CL = [...TABLE_CL];   // fase de liga da Champions
 let FOTOS    = { jogadores: [], equipas: {} };
+let EMBLEMAS = {};          // nome da equipa -> ficheiro (dados/emblemas.json)
 let escolhido = null;
 let vistaAtual = 'inicio';
 let filtroFonte = 'todas';
@@ -278,13 +280,46 @@ const NOMES_API = {
   'pacos de ferreira':'Pacos Ferreira', 'feirense':'Feirense', 'tondela':'Tondela'
 };
 
-function emblemaEquipa(nome){
-  const alvo = NOMES_API[chaveNome(nome)];
-  const caminho = alvo && FOTOS.equipas[alvo];
-  return caminho || escudoIniciais(nome);
+/* O mapa de emblemas usa os nomes tal como o Wikipedia os escreve. Como o
+   site usa formas mais curtas ("V. Guimaraes", "Sp. Braga"), compara-se sem
+   acentos nem pontuacao antes de desistir. */
+let EMBLEMAS_CHAVE = null;
+function emblemaPorChave(nome){
+  if(!EMBLEMAS_CHAVE){
+    EMBLEMAS_CHAVE = new Map();
+    for(const [k, v] of Object.entries(EMBLEMAS)) EMBLEMAS_CHAVE.set(chaveNome(k), v);
+  }
+  return EMBLEMAS_CHAVE.get(chaveNome(nome));
 }
 
+function emblemaEquipa(nome){
+  /* 1. mapa do atualizar_emblemas.py (Liga + Champions) */
+  const doMapa = EMBLEMAS[nome] || emblemaPorChave(nome) || emblemaPorChave(APELIDOS_EQUIPA[chaveNome(nome)] || '');
+  if(doMapa) return doMapa;
+  /* 2. o que ficou da API-Football, enquanto durar */
+  const alvo = NOMES_API[chaveNome(nome)];
+  return (alvo && FOTOS.equipas[alvo]) || escudoIniciais(nome);
+}
+
+/* formas curtas que o site usa -> nome no mapa de emblemas */
+const APELIDOS_EQUIPA = {
+  'v guimaraes':'Vitória de Guimarães', 'vitoria sc':'Vitória de Guimarães',
+  'sp braga':'Braga', 'sc braga':'Braga',
+  'fc porto':'Porto', 'sl benfica':'Benfica',
+  'ac viseu':'Académico de Viseu', 'estrela':'Estrela da Amadora',
+  'paris sg':'Paris Saint-Germain', 'psg':'Paris Saint-Germain',
+  'internazionale':'Inter Milan', 'inter':'Inter Milan',
+  'man city':'Manchester City', 'man united':'Manchester United',
+  'sporting':'Sporting CP', 'nacional da madeira':'Nacional'
+};
+
 const eSporting = n => /sporting cp/i.test(n||'');
+
+/* Hora do jogo. Enquanto a Liga não a marcar, o Wikipédia não a tem —
+   mais vale dizê-lo do que mostrar uma hora que ninguém garantiu. */
+const horaJogo = (j, d) => j.semHora
+  ? 'hora a marcar'
+  : d.toLocaleTimeString('pt-PT', {hour:'2-digit', minute:'2-digit'});
 
 /* =========================================================================
    2. LEITURA DOS RSS  (feeds portugueses, links diretos)
@@ -928,7 +963,7 @@ function pintarProximoJogo(){
       <div class="jogo__x">X</div>
       <div class="jogo__eq"><img src="${emblemaEquipa(j.fora)}" alt=""><span>${j.fora.toUpperCase()}</span></div>
     </div>
-    <div class="jogo__quando">${d.toLocaleDateString('pt-PT',{day:'2-digit',month:'long',year:'numeric'}).toUpperCase()} · ${d.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'})}</div>
+    <div class="jogo__quando">${d.toLocaleDateString('pt-PT',{day:'2-digit',month:'long',year:'numeric'}).toUpperCase()} · ${horaJogo(j, d)}</div>
     <div class="jogo__onde">${(j.local||'').toUpperCase()}</div>
     <div class="jogo__conta">
       <div><b id="c-d">00</b><i>DIAS</i></div>
@@ -961,7 +996,7 @@ function pintarCalendario(){
         <div class="comp">${j.comp}</div>
         <div class="eqs">${j.casa} x ${j.fora}</div>
       </div>
-      <div class="cal-hora">${d.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'})}</div>
+      <div class="cal-hora">${horaJogo(j, d)}</div>
     </li>`;
   }).join('') || `<li class="vazio">sem jogos</li>`;
 }
@@ -1046,7 +1081,7 @@ function pintarJogosTodos(){
       <span class="jl-comp">${j.comp}</span>
       <span class="res-eq"><img src="${emblemaEquipa(j.casa)}" alt=""><span>${j.casa}</span></span>
       <span class="jl-res ${cor}">${jogado(j) ? j.golosCasa+' - '+j.golosFora
-        : d.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'})}</span>
+        : horaJogo(j, d)}</span>
       <span class="res-eq"><img src="${emblemaEquipa(j.fora)}" alt=""><span>${j.fora}</span></span>
       <span class="jl-por">${res ? '<i class="jl-abre">ver ficha ▾</i>' : (j.local||'').split(',')[0]}</span>
     </li>`;
@@ -1067,26 +1102,102 @@ function pintarJogosTodos(){
 /* =========================================================================
    5. CLASSIFICAÇÃO
    ========================================================================= */
-function pintarTabela(){
-  const comecou = TABELA.some(t => t.j > 0);
-  $('#tabela-nota').textContent = comecou
-    ? 'Liga Portugal Betclic ' + CONFIG.epoca
-    : 'ordem alfabética — a época começa a 7 de agosto';
+/* qual das duas tabelas está a ser vista */
+let provaTabela = 'liga';
 
-  $('#tabela-curta tbody').innerHTML = TABELA.slice(0,5).map(t => `
+/* Na Champions as 36 equipas jogam todas na mesma tabela: os 8 primeiros
+   seguem direto para os oitavos, do 9.º ao 24.º há play-off, e daí para
+   baixo está tudo acabado. */
+function zonaChampions(pos){
+  if(pos <= 8)  return 'q-direto';
+  if(pos <= 24) return 'q-playoff';
+  return 'q-fora';
+}
+
+function pintarTabela(){
+  const naChampions = provaTabela === 'champions';
+  const dados = naChampions ? TABELA_CL : TABELA;
+  const comecou = dados.some(t => t.j > 0);
+
+  $('#tabela-nota').textContent = naChampions
+    ? `Liga dos Campeões ${CONFIG.epoca} · fase de liga`
+    : (comecou ? 'Liga Portugal Betclic ' + CONFIG.epoca
+               : 'ordem alfabética — a época ainda não começou');
+
+  /* a tabela curta da página inicial é sempre a da Liga */
+  const curta = $('#tabela-curta tbody');
+  if(curta) curta.innerHTML = TABELA.slice(0,5).map(t => `
     <tr class="${eSporting(t.equipa)?'eu':''}">
       <td class="np">${t.pos}</td>
       <td><span class="eq"><img src="${emblemaEquipa(t.equipa)}" alt="">${t.equipa}</span></td>
       <td>${t.j}</td><td>${t.gm - t.gs}</td><td class="pts">${t.p}</td>
     </tr>`).join('');
 
-  $('#tabela-total tbody').innerHTML = TABELA.map(t => `
-    <tr class="${eSporting(t.equipa)?'eu':''}">
+  $('#tabela-total tbody').innerHTML = dados.map(t => `
+    <tr class="${eSporting(t.equipa)?'eu':''} ${naChampions ? zonaChampions(t.pos) : ''}">
       <td class="np">${t.pos}</td>
-      <td><span class="eq"><img src="${emblemaEquipa(t.equipa)}" alt="">${t.equipa}</span></td>
+      <td><span class="eq"><img src="${emblemaEquipa(t.equipa)}" alt="" loading="lazy">${t.equipa}</span></td>
       <td>${t.j}</td><td>${t.v}</td><td>${t.e}</td><td>${t.d}</td>
       <td>${t.gm}</td><td>${t.gs}</td><td>${t.gm - t.gs}</td><td class="pts">${t.p}</td>
     </tr>`).join('');
+
+  $('#tabela-legenda').innerHTML = naChampions
+    ? `<i class="leg leg--direto"></i> 1.º a 8.º passam aos oitavos ·
+       <i class="leg leg--playoff"></i> 9.º a 24.º disputam play-off ·
+       do 25.º para baixo estão eliminados`
+    : '';
+
+  pintarChampions(naChampions);
+}
+
+/* O cartão de cima na Champions: como está a correr ao Sporting */
+function pintarChampions(mostrar){
+  const resumo = $('#cl-resumo');
+  const cartao = $('#cl-adversarios-cartao');
+  if(!resumo || !cartao) return;
+
+  resumo.hidden = !mostrar;
+  cartao.hidden  = !mostrar;
+  if(!mostrar) return;
+
+  const nos = TABELA_CL.find(t => eSporting(t.equipa));
+  if(nos){
+    const caixa = (rotulo, valor, destaque) => `
+      <div class="cl-resumo__c ${destaque ? 'cl-resumo__c--forte' : ''}">
+        <b>${valor}</b><span>${rotulo}</span>
+      </div>`;
+    resumo.innerHTML =
+      caixa('POSIÇÃO', `${nos.pos}.º`, true) +
+      caixa('PONTOS', nos.p, true) +
+      caixa('JOGOS', nos.j) +
+      caixa('V–E–D', `${nos.v}–${nos.e}–${nos.d}`) +
+      caixa('GOLOS', `${nos.gm}–${nos.gs}`) +
+      caixa('DIFERENÇA', (nos.gm - nos.gs >= 0 ? '+' : '−') + Math.abs(nos.gm - nos.gs));
+  }else{
+    resumo.innerHTML = '<p class="cl-resumo__vazio">O Sporting ainda não aparece na tabela.</p>';
+  }
+
+  $('#cl-advs').innerHTML = CL_ADVERSARIOS.map(a => `
+    <li class="cl-adv">
+      <img src="${emblemaEquipa(a.equipa)}" alt="" loading="lazy">
+      <span class="cl-adv__nome">${Componentes.seguro(a.equipa)}</span>
+      <span class="cl-adv__onde ${a.casa ? 'e-casa' : 'e-fora'}">
+        ${a.casa ? 'ALVALADE' : 'FORA'}
+      </span>
+      <span class="cl-adv__pote">pote ${a.pote}</span>
+    </li>`).join('');
+}
+
+function ligarTrocaProva(){
+  $$('.troca-prova__b').forEach(b => b.addEventListener('click', () => {
+    provaTabela = b.dataset.prova;
+    $$('.troca-prova__b').forEach(o => {
+      const activo = o === b;
+      o.classList.toggle('is-on', activo);
+      o.setAttribute('aria-selected', activo);
+    });
+    pintarTabela();
+  }));
 }
 
 /* =========================================================================
@@ -2784,6 +2895,11 @@ async function sincronizar(){
 
   try{
     TABELA = await Wiki.classificacao();
+    /* a Champions é uma página à parte: se falhar, fica o retrato guardado
+       e a Liga não deixa de atualizar por causa disso */
+    try{
+      TABELA_CL = await Wiki.classificacaoChampions();
+    }catch(e){ /* segue com TABLE_CL */ }
     pintarTabela();
   }catch(e){ falhas.push('classificação'); }
 
@@ -2979,6 +3095,7 @@ async function arranque(){
   ligarMenuMobile();
   ligarAoTopo();
   ligarHero();
+  ligarTrocaProva();
   ligarLegais();
   const elAno = $('#ano'); if(elAno) elAno.textContent = new Date().getFullYear();
   const tacaMenu = $('.menu__taca');
@@ -2986,10 +3103,13 @@ async function arranque(){
   $('#lema').textContent = CONFIG.lema;
   CLUBE.treinador = CONFIG.treinador;
 
-  /* fotos e emblemas descarregados por atualizar_fotos.py */
+  /* fotos dos jogadores (atualizar_fotos.py) e emblemas (atualizar_emblemas.py) */
   try{
     FOTOS = await (await fetch('dados/plantel.json', {cache:'no-store'})).json();
   }catch(e){ /* segue com avatares desenhados */ }
+  try{
+    EMBLEMAS = await (await fetch('dados/emblemas.json', {cache:'no-store'})).json();
+  }catch(e){ /* segue com as iniciais desenhadas */ }
 
   /* plantel de arranque: só nomes dos perfis, até o Wikipédia responder */
   PLANTEL = Object.keys(PERFIS).map(nome => ({
