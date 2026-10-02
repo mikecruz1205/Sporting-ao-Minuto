@@ -26,7 +26,7 @@
 
   --texto:        #e6ece9;
   --texto-2:      #9aa8a1;
-  --texto-3:      #64726b;
+  --texto-3:      #7a8881;   /* 4.6:1 sobre cartão, 5.1:1 sobre fundo (AA) */
 
   --amarelo:      #f2c14e;
   --vermelho:     #e05252;
@@ -225,8 +225,8 @@ p{ text-wrap: pretty; }
    ========================================================================= */
 @media (max-width: 820px){
   /* alvos de toque com pelo menos 44px, como manda a regra */
-  button, .pilula, .filtro-cat, .menu__item, .ico, .seta{ min-height: 40px; }
-  .ico, .seta{ min-width: 40px; }
+  button:not(.hero-ponto), .pilula, .filtro-cat, .menu__item, .ico, .seta{ min-height: 44px; }
+  .ico, .seta{ min-width: 44px; }
 
   /* tabelas largas deslizam em vez de rebentar a página */
   .cartao__corpo:has(> .tabela),

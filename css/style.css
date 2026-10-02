@@ -268,8 +268,8 @@ body.trancado .topo, body.trancado .menu, body.trancado .vista{ filter:blur(6px)
 .procura input:focus{ outline:none; border-color:var(--verde); }
 
 .ico{
-  width:38px; height:38px; border-radius:50%;
-  display:grid; place-items:center; font-size:17px; color:var(--texto-2);
+  width:40px; height:40px; border-radius:50%;
+  display:grid; place-items:center; color:var(--texto-2);
   position:relative; transition:.2s;
 }
 .ico:hover{ background:var(--cartao); color:var(--verde-claro); }
@@ -333,7 +333,7 @@ body.trancado .topo, body.trancado .menu, body.trancado .vista{ filter:blur(6px)
 @media (max-width:820px){
   .vista{ padding:12px; }
   .linha--topo, .linha--meio, .linha--fundo{ grid-template-columns:1fr; }
-  .topo{ flex-wrap:wrap; padding:12px 14px; }
+  .topo{ padding:12px 14px; }
   .menu{ padding:0 12px; }
 }
 
@@ -363,6 +363,7 @@ body.trancado .topo, body.trancado .menu, body.trancado .vista{ filter:blur(6px)
   transition:.2s;
 }
 .ver-todos:hover{ color:#fff; }
+.ver-todos{ padding:10px 6px; margin:-10px -6px; border-radius:var(--raio-sm); }
 .sub{
   font-size:10.5px; font-weight:700; letter-spacing:1.4px; color:var(--verde-claro);
   margin-bottom:9px;
@@ -396,7 +397,7 @@ body.trancado .topo, body.trancado .menu, body.trancado .vista{ filter:blur(6px)
 
 .setas{ display:flex; gap:4px; }
 .seta{
-  width:26px; height:26px; border:1px solid var(--linha); border-radius:4px;
+  width:32px; height:32px; border:1px solid var(--linha); border-radius:6px;
   color:var(--texto-2); font-size:15px; line-height:1; transition:.2s;
 }
 .seta:hover{ border-color:var(--verde); color:var(--verde-claro); }
@@ -1339,10 +1340,18 @@ body.a-arrastar-jogador *{ cursor: grabbing !important; }
   body.menu-aberto{ overflow: hidden; }
 }
 
-@media (max-width: 400px){
-  .marca-txt h1{ font-size: var(--t-md); }
+/* Em telemóvel o cabeçalho tem de caber numa linha só. A conta leva ao
+   separador CLUBE, que já está na gaveta, por isso sai daqui primeiro. */
+@media (max-width: 480px){
+  .topo{ flex-wrap: nowrap; }
+  .topo__marca{ min-width: 0; }
+  .marca-txt{ min-width: 0; }
+  .marca-txt h1{ font-size: var(--t-md); white-space: nowrap; }
   .emblema{ width: 38px; height: 38px; }
-  .topo__acoes .ico{ width: 36px; height: 36px; min-width: 36px; }
+  #btn-conta{ display: none; }
+  .topo__acoes .ico{ width: 40px; height: 40px; min-width: 40px; min-height: 40px; }
+  .botao-login{ padding: var(--e-2) var(--e-3); }
+  .procura.is-aberta input{ position: absolute; left: var(--e-3); right: var(--e-3); top: calc(100% + var(--e-1)); width: auto; z-index: 2; }
 }
 
 
@@ -1610,3 +1619,6 @@ body.a-jogar .menu__item--vivo{ color: #ff8080; }
 }
 .lance--deles{ opacity: .72; }
 .lance--nosso .lance__min{ color: var(--verde-claro, #3ddc84); font-weight: 700; }
+
+/* ícones SVG do cabeçalho e do chat: herdam a cor do botão */
+.icone{ width: 20px; height: 20px; flex: none; display: block; }

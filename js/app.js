@@ -358,8 +358,24 @@ function imagemDoItem(it){
   return m ? m[1] : null;
 }
 
+/* entidades como &eacute; passam a "é" — antes eram trocadas por um
+   espaço e as notícias ficavam com "m dio" e "Atl tico" */
+const descodificador = document.createElement('textarea');
+function descodificar(t){
+  descodificador.innerHTML = t;
+  return descodificador.value;
+}
+
+/* o zerozero mete ligações internas como {TEAM_LINK|16|Sporting}:
+   fica só o nome */
+const tirarLigacoesZZ = t => (t || '').replace(/\{[A-Z_]+_LINK\|[^|}]*\|([^}]*)\}/g, '$1');
+
+/* Atenção: isto vai parar a innerHTML. Depois de descodificar, um
+   "&lt;img onerror=…&gt;" vindo de um feed seria HTML vivo — por isso
+   os < e > que sobrarem saem. */
 function limparTexto(html){
-  return (html || '').replace(/<[^>]*>/g,' ').replace(/&[a-z]+;/gi,' ')
+  return descodificar(tirarLigacoesZZ(html).replace(/<[^>]*>/g,' '))
+                     .replace(/[<>]/g,'')
                      .replace(/\s+/g,' ').trim();
 }
 
@@ -405,7 +421,9 @@ async function lerFeed(f){
   const mapa = new Map(NOTICIAS.map(n => [chaveNome(n.titulo).slice(0,60), n]));
   novos.forEach(n => {
     const k = chaveNome(n.titulo).slice(0,60);
+    /* se já estava no arquivo, o texto fresco ganha ao guardado */
     if(!mapa.has(k)) mapa.set(k, n);
+    else mapa.set(k, {...mapa.get(k), titulo:n.titulo, resumo:n.resumo});
   });
   const antes = NOTICIAS.length;
   NOTICIAS = [...mapa.values()].sort((a,b) => b.data - a.data).slice(0, LIMITE_ARQUIVO);
@@ -475,7 +493,7 @@ function lerArquivo(){
     const limite = Date.now() - DIAS_ARQUIVO*24*3600*1000;
     /* o arquivo é antigo e os filtros mudam com o tempo — volta-se a
        passar tudo pelo crivo, senão lixo apanhado ontem fica cá para sempre */
-    NOTICIAS = c.itens.map(n => ({...n, data:new Date(n.data)}))
+    NOTICIAS = c.itens.map(n => ({...n, data:new Date(n.data), resumo:tirarLigacoesZZ(n.resumo)}))
                       .filter(n => n.data.getTime() > limite)
                       .filter(n => CONFIG.filtroSporting.test(n.titulo))
                       .filter(n => !CONFIG.excluir.some(rx => rx.test(n.titulo)));

@@ -22,9 +22,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/base.css?v=51">
-<link rel="stylesheet" href="css/componentes.css?v=51">
-<link rel="stylesheet" href="css/style.css?v=51">
+<link rel="stylesheet" href="css/base.css?v=54">
+<link rel="stylesheet" href="css/componentes.css?v=54">
+<link rel="stylesheet" href="css/style.css?v=54">
 </head>
 <body class="trancado">
 
@@ -120,12 +120,12 @@
   <div class="topo__acoes">
     <div class="procura" id="procura-caixa">
       <input type="search" id="procura" placeholder="Procurar notícias, jogadores…" autocomplete="off">
-      <button class="ico" id="btn-procura" title="Procurar">⌕</button>
+      <button class="ico" id="btn-procura" title="Procurar" aria-label="Procurar"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
     </div>
-    <button class="ico" id="btn-alertas" title="Últimas">
-      <span class="sino">◔</span><i class="badge" id="badge-alertas">0</i>
+    <button class="ico" id="btn-alertas" title="Últimas" aria-label="Últimas notícias">
+      <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><i class="badge" id="badge-alertas">0</i>
     </button>
-    <button class="ico" id="btn-conta" title="Conta">☺</button>
+    <button class="ico" id="btn-conta" title="Conta" aria-label="Conta"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></button>
     <span class="quem" id="quem"></span>
     <button class="botao-login" id="btn-sair">SAIR</button>
   </div>
@@ -544,7 +544,7 @@
           </div>
           <div class="chat__linha">
             <label class="chat__foto" for="chat-ficheiro" title="Juntar fotografia">
-              <span aria-hidden="true">⛰</span>
+              <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>
               <span class="so-leitor">Juntar fotografia</span>
             </label>
             <input type="file" id="chat-ficheiro" accept="image/*" hidden>
@@ -675,14 +675,14 @@
 </dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.min.js" defer></script>
-<script src="js/nuvem.js?v=51"></script>
-<script src="js/jogo.js?v=51"></script>
-<script src="js/fd.js?v=51"></script>
-<script src="js/componentes.js?v=51"></script>
-<script src="js/contas.js?v=51"></script>
-<script src="js/arte.js?v=51"></script>
-<script src="js/data.js?v=51"></script>
-<script src="js/wiki.js?v=51"></script>
-<script src="js/app.js?v=51"></script>
+<script src="js/nuvem.js?v=54"></script>
+<script src="js/jogo.js?v=54"></script>
+<script src="js/fd.js?v=54"></script>
+<script src="js/componentes.js?v=54"></script>
+<script src="js/contas.js?v=54"></script>
+<script src="js/arte.js?v=54"></script>
+<script src="js/data.js?v=54"></script>
+<script src="js/wiki.js?v=54"></script>
+<script src="js/app.js?v=54"></script>
 </body>
 </html>
