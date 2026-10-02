@@ -1064,7 +1064,7 @@ function detalheJogo(j){
     ${(mc || mf) ? `
       <div class="golos">
         <div class="golos__lado"><b>${j.casa}</b><span>${mc || '—'}</span></div>
-        <div class="golos__bola">⚽</div>
+        <div class="golos__bola">${j.golosCasa} – ${j.golosFora}</div>
         <div class="golos__lado golos__lado--d"><b>${j.fora}</b><span>${mf || '—'}</span></div>
       </div>` : `<div class="jl-vazio">
         Sem marcadores para este jogo.<br>
@@ -1085,37 +1085,108 @@ function detalheJogo(j){
   </div>`;
 }
 
+/* "LIGA — J5" → "LIGA"; as taças juntam-se todas num filtro só */
+function provaDe(j){
+  const base = (j.comp || '').split(' — ')[0].trim();
+  return /^TAÇA/.test(base) ? 'TAÇAS' : base;
+}
+const ORDEM_PROVAS = ['LIGA', 'CHAMPIONS', 'TAÇAS', 'PRÉ-ÉPOCA'];
+const NOME_RES = { V:'Vitória', E:'Empate', D:'Derrota' };
+let filtroProva = 'TODOS';
+
 function pintarJogosTodos(){
   const feitos = JOGOS.filter(jogado);
   const r = feitos.map(resultadoSCP);
   $('#jogos-resumo').textContent =
     `${feitos.length} jogados · ${r.filter(x=>x.r==='V').length}V ${r.filter(x=>x.r==='E').length}E ${r.filter(x=>x.r==='D').length}D`;
 
-  $('#jogos-lista').innerHTML = JOGOS.map((j,i) => {
-    const d = new Date(j.data);
-    const res = resultadoSCP(j);
-    const cor = res ? (res.r==='V'?'res-v':res.r==='D'?'res-d':'') : '';
-    return `<li class="${res ? 'tem-detalhe' : ''}" data-jogo="${i}">
-      <span class="jl-data">${d.toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit',year:'2-digit'})}</span>
-      <span class="jl-comp">${j.comp}</span>
-      <span class="res-eq"><img src="${emblemaEquipa(j.casa)}" alt=""><span>${j.casa}</span></span>
-      <span class="jl-res ${cor}">${jogado(j) ? j.golosCasa+' - '+j.golosFora
-        : horaJogo(j, d)}</span>
-      <span class="res-eq"><img src="${emblemaEquipa(j.fora)}" alt=""><span>${j.fora}</span></span>
-      <span class="jl-por">${res ? '<i class="jl-abre">ver ficha ▾</i>' : (j.local||'').split(',')[0]}</span>
-    </li>`;
+  /* ---- filtros por competição, com contagem ---- */
+  const provas = ORDEM_PROVAS.filter(pv => JOGOS.some(j => provaDe(j) === pv));
+  JOGOS.forEach(j => { const pv = provaDe(j); if(pv && !provas.includes(pv)) provas.push(pv); });
+  $('#jogos-filtro').innerHTML = ['TODOS', ...provas].map(pv => {
+    const n = pv === 'TODOS' ? JOGOS.length : JOGOS.filter(j => provaDe(j) === pv).length;
+    const on = pv === filtroProva;
+    return `<button type="button" class="pilula ${on ? 'is-on' : ''}" data-prova="${pv}" aria-pressed="${on}">
+      ${pv} <span class="pilula__n">${n}</span></button>`;
   }).join('');
-
-  $$('#jogos-lista li.tem-detalhe').forEach(li => li.addEventListener('click', () => {
-    const j = JOGOS[+li.dataset.jogo];
-    const aberto = li.nextElementSibling?.classList.contains('jl-linha-detalhe');
-    $$('#jogos-lista .jl-linha-detalhe').forEach(x => x.remove());
-    $$('#jogos-lista li').forEach(x => x.classList.remove('aberta'));
-    if(aberto) return;
-    li.classList.add('aberta');
-    li.insertAdjacentHTML('afterend',
-      `<li class="jl-linha-detalhe">${detalheJogo(j)}</li>`);
+  $$('#jogos-filtro .pilula').forEach(b => b.addEventListener('click', () => {
+    filtroProva = b.dataset.prova;
+    pintarJogosTodos();
   }));
+
+  /* ---- o próximo jogo fica marcado e tem atalho ---- */
+  const proximo = porJogar()[0];
+
+  /* ---- lista, agrupada por mês ---- */
+  const lista = JOGOS.map((j, i) => ({ j, i }))
+                     .filter(({ j }) => filtroProva === 'TODOS' || provaDe(j) === filtroProva);
+  let mesAtual = '';
+  $('#jogos-lista').innerHTML = lista.map(({ j, i }) => {
+    const d = new Date(j.data);
+    const mes = d.toLocaleDateString('pt-PT', { month:'long', year:'numeric' }).toUpperCase();
+    const cabecalho = mes !== mesAtual ? `<li class="jl-mes"><span>${mes}</span></li>` : '';
+    mesAtual = mes;
+
+    const res = resultadoSCP(j);
+    const eProximo = j === proximo;
+    const quando = d.toLocaleDateString('pt-PT', { weekday:'short', day:'2-digit', month:'2-digit' })
+                    .replace('.', '');
+    const centro = jogado(j)
+      ? `<span class="jl-res">${j.golosCasa}<i>–</i>${j.golosFora}</span>`
+      : `<span class="jl-hora">${horaJogo(j, d)}</span>`;
+    const fim = res
+      ? `<span class="jl-ved jl-ved--${res.r}" title="${NOME_RES[res.r]}">${res.r}<span class="so-leitor"> — ${NOME_RES[res.r]}</span></span>
+         <svg class="icone jl-seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>`
+      : (eProximo ? `<span class="jl-etiqueta">PRÓXIMO</span>` : '');
+
+    const conteudo = `
+      <span class="jl-quando"><span class="jl-data">${quando}</span><span class="jl-comp">${j.comp}</span></span>
+      <span class="jl-placar">
+        <span class="res-eq res-eq--casa ${eSporting(j.casa) ? 'e-nos' : ''}"><span>${j.casa}</span><img src="${emblemaEquipa(j.casa)}" alt=""></span>
+        ${centro}
+        <span class="res-eq ${eSporting(j.fora) ? 'e-nos' : ''}"><img src="${emblemaEquipa(j.fora)}" alt=""><span>${j.fora}</span></span>
+      </span>
+      <span class="jl-fim">${fim}</span>`;
+
+    /* só os jogos com resultado abrem ficha — esses são botões a sério,
+       para se poderem abrir com o teclado */
+    const linha = res
+      ? `<button type="button" class="jl-linha" aria-expanded="false" aria-controls="jl-det-${i}">${conteudo}</button>
+         <div class="jl-detalhe-caixa" id="jl-det-${i}" hidden></div>`
+      : `<div class="jl-linha">${conteudo}</div>`;
+
+    return cabecalho + `<li class="jl ${res ? 'tem-detalhe' : 'por-jogar'} ${eProximo ? 'e-proximo' : ''}" data-jogo="${i}">${linha}</li>`;
+  }).join('') || '<li class="jl-vazio">Sem jogos nesta competição.</li>';
+
+  $$('#jogos-lista .jl-linha[aria-expanded]').forEach(bt => bt.addEventListener('click', () => {
+    const li = bt.closest('li');
+    const caixa = li.querySelector('.jl-detalhe-caixa');
+    const abrir = bt.getAttribute('aria-expanded') !== 'true';
+    $$('#jogos-lista .jl-linha[aria-expanded="true"]').forEach(x => {
+      x.setAttribute('aria-expanded', 'false');
+      x.closest('li').classList.remove('aberta');
+      x.nextElementSibling.hidden = true;
+    });
+    if(!abrir) return;
+    caixa.innerHTML = detalheJogo(JOGOS[+li.dataset.jogo]);
+    caixa.hidden = false;
+    bt.setAttribute('aria-expanded', 'true');
+    li.classList.add('aberta');
+  }));
+
+  const ir = $('#ir-proximo');
+  ir.hidden = !proximo;
+  ir.onclick = () => {
+    if(filtroProva !== 'TODOS' && proximo && provaDe(proximo) !== filtroProva){
+      filtroProva = 'TODOS';
+      pintarJogosTodos();
+    }
+    const alvo = $('#jogos-lista .e-proximo');
+    if(!alvo) return;
+    const calmo = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    alvo.scrollIntoView({ behavior: calmo ? 'auto' : 'smooth', block: 'center' });
+    alvo.classList.remove('pisca'); void alvo.offsetWidth; alvo.classList.add('pisca');
+  };
 }
 
 /* =========================================================================

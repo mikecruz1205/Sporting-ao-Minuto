@@ -630,17 +630,103 @@ body.trancado .topo, body.trancado .menu, body.trancado .vista{ filter:blur(6px)
    JOGOS (vista completa)
    ========================================================================= */
 .jogos-lista{ list-style:none; }
-.jogos-lista li{
-  display:grid; grid-template-columns:96px 130px 1fr auto 1fr 80px; gap:12px; align-items:center;
-  padding:12px 6px; border-bottom:1px solid #1b211d;
+
+.jogos-barra{
+  display:flex; align-items:center; justify-content:space-between; gap:var(--e-3);
+  margin-bottom:var(--e-3);
 }
-.jogos-lista li:hover{ background:#1a201d; }
-.jogos-lista .jl-data{ font-size:12px; color:var(--texto-2); }
-.jogos-lista .jl-comp{ font-size:10px; font-weight:700; letter-spacing:1px; color:var(--verde-claro); }
-.jogos-lista .jl-res{ font-family:var(--f-tit); font-size:19px; font-weight:700; min-width:56px; text-align:center; }
-.jogos-lista .jl-por{ font-size:11px; color:var(--texto-3); text-align:center; }
+.jogos-filtro .pilula{ min-height:36px; }
+.botao-proximo{
+  display:inline-flex; align-items:center; gap:var(--e-2); flex:none;
+  min-height:36px; padding:0 var(--e-4); border-radius:var(--raio-cheio);
+  border:1px solid var(--verde); color:var(--verde-claro);
+  font-size:var(--t-xs); font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+  transition:background var(--rapido), color var(--rapido);
+}
+.botao-proximo:hover{ background:var(--verde); color:#04150d; }
+.botao-proximo .icone{ width:16px; height:16px; }
+.botao-proximo[hidden]{ display:none; }
+
+/* cabeçalho de mês */
+.jl-mes{ padding:var(--e-5) 0 var(--e-2); }
+.jl-mes:first-child{ padding-top:0; }
+.jl-mes span{
+  font-family:var(--f-tit); font-size:var(--t-base); font-weight:700; letter-spacing:.08em;
+  color:var(--texto-2);
+}
+
+.jl{ border-bottom:1px solid var(--linha); }
+.jl-linha{
+  width:100%; text-align:left; color:inherit;
+  display:grid; grid-template-columns:150px 1fr 88px; gap:var(--e-4); align-items:center;
+  padding:var(--e-3) var(--e-2); border-radius:var(--raio-sm);
+  transition:background var(--rapido);
+}
+button.jl-linha:hover, .jl.aberta .jl-linha{ background:var(--cartao-alto); }
+
+.jl-quando{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+.jl-data{ font-size:var(--t-sm); color:var(--texto); font-weight:500; text-transform:capitalize; }
+.jl-comp{ font-size:var(--t-xs); font-weight:700; letter-spacing:.06em; color:var(--verde-claro); }
+
+/* casa encostada ao marcador, fora logo a seguir — como num placar */
+.jl-placar{ display:grid; grid-template-columns:1fr auto 1fr; gap:var(--e-3); align-items:center; min-width:0; }
+.jl-placar .res-eq{ display:flex; align-items:center; gap:var(--e-2); min-width:0; font-size:var(--t-sm); }
+.jl-placar .res-eq--casa{ justify-content:flex-end; text-align:right; }
+.jl-placar .res-eq span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.jl-placar .res-eq img{ width:22px; height:22px; object-fit:contain; flex:none; }
+.jl-placar .e-nos{ font-weight:700; }
+
+.jl-res, .jl-hora{
+  min-width:64px; text-align:center; font-family:var(--f-tit); font-weight:700;
+  padding:3px 8px; border-radius:var(--raio-sm); background:var(--fundo-2);
+}
+.jl-res{ font-size:20px; letter-spacing:.04em; }
+.jl-res i{ font-style:normal; margin:0 4px; color:var(--texto-3); }
+.jl-hora{ font-size:var(--t-base); color:var(--texto-2); }
+
+.jl-fim{ display:flex; align-items:center; justify-content:flex-end; gap:var(--e-2); }
+.jl-ved{
+  width:26px; height:26px; border-radius:var(--raio-sm); display:grid; place-items:center;
+  font-family:var(--f-tit); font-size:15px; font-weight:700;
+}
+.jl-ved--V{ background:var(--verde); color:#04150d; }
+.jl-ved--E{ background:#3a4440; color:var(--texto); }
+.jl-ved--D{ background:var(--vermelho); color:#fff; }
+.jl-seta{ width:18px; height:18px; color:var(--texto-3); transition:transform var(--normal); }
+.jl.aberta .jl-seta{ transform:rotate(180deg); }
+
+.jl-etiqueta{
+  font-size:var(--t-xs); font-weight:700; letter-spacing:.08em;
+  color:var(--verde-claro); border:1px solid var(--verde); border-radius:var(--raio-cheio);
+  padding:2px 8px;
+}
+.jl.e-proximo{ background:linear-gradient(90deg, var(--verde-vidro), transparent 70%); }
+.jl.e-proximo .jl-hora{ color:var(--verde-claro); }
+.jl.pisca{ animation:realca 1.6s ease; }
+@keyframes realca{ 0%,40%{ box-shadow:inset 0 0 0 2px var(--verde-claro); } 100%{ box-shadow:inset 0 0 0 2px transparent; } }
+@media (prefers-reduced-motion: reduce){ .jl.pisca{ animation:none; } }
+
+.jl-detalhe-caixa{ padding:0 var(--e-2) var(--e-3); }
+.jl-detalhe-caixa .jl-detalhe{ margin:0; }
+.jl-vazio{ padding:var(--e-5); text-align:center; color:var(--texto-3); font-size:var(--t-sm); }
+
 @media (max-width:820px){
-  .jogos-lista li{ grid-template-columns:1fr; gap:4px; }
+  .jogos-barra{ flex-direction:column; align-items:stretch; }
+  .jogos-filtro{ flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; }
+  .jogos-filtro::-webkit-scrollbar{ display:none; }
+  .jogos-filtro .pilula{ flex:none; white-space:nowrap; min-height:44px; }
+  .botao-proximo{ justify-content:center; min-height:44px; }
+
+  /* em telemóvel: data e prova numa linha, placar por baixo, V/E/D ao canto */
+  .jl-linha{
+    grid-template-columns:1fr auto; grid-template-areas:"quando fim" "placar placar";
+    gap:var(--e-2); padding:var(--e-3) var(--e-1);
+  }
+  .jl-quando{ grid-area:quando; flex-direction:row; align-items:baseline; gap:var(--e-2); }
+  .jl-fim{ grid-area:fim; }
+  .jl-placar{ grid-area:placar; gap:var(--e-2); }
+  .jl-placar .res-eq img{ width:20px; height:20px; }
+  .jl-res, .jl-hora{ min-width:56px; }
 }
 
 /* =========================================================================
@@ -774,12 +860,6 @@ body.trancado .topo, body.trancado .menu, body.trancado .vista{ filter:blur(6px)
 /* =========================================================================
    FICHA DE JOGO (vista JOGOS)
    ========================================================================= */
-.jogos-lista li.tem-detalhe{ cursor:pointer; }
-.jogos-lista li.aberta{ background:#1a201d; }
-.jl-abre{ font-style:normal; font-size:10px; letter-spacing:.8px; color:var(--verde-claro); }
-.jogos-lista li.aberta .jl-abre{ color:var(--texto-3); }
-
-.jl-linha-detalhe{ display:block !important; padding:0 !important; border:none !important; }
 .jl-detalhe{
   background:var(--fundo-2); border:1px solid var(--linha); border-radius:var(--raio);
   padding:15px; margin:0 6px 12px;
@@ -788,10 +868,10 @@ body.trancado .topo, body.trancado .menu, body.trancado .vista{ filter:blur(6px)
 @keyframes abre{ from{ opacity:0; transform:translateY(-6px); } }
 
 .golos{ display:grid; grid-template-columns:1fr auto 1fr; gap:14px; align-items:center; }
-.golos__lado b{ display:block; font-size:10px; letter-spacing:1.2px; color:var(--texto-3); margin-bottom:4px; }
+.golos__lado b{ display:block; font-size:11px; letter-spacing:1.2px; color:var(--texto-3); margin-bottom:4px; }
 .golos__lado span{ font-size:13.5px; font-weight:600; }
 .golos__lado--d{ text-align:right; }
-.golos__bola{ font-size:18px; opacity:.5; }
+.golos__bola{ font-family:var(--f-tit); font-size:24px; font-weight:700; white-space:nowrap; }
 
 .jl-numeros{
   display:grid; grid-template-columns:repeat(auto-fit,minmax(104px,1fr)); gap:8px;
@@ -801,9 +881,9 @@ body.trancado .topo, body.trancado .menu, body.trancado .vista{ filter:blur(6px)
   background:var(--cartao); border:1px solid var(--linha); border-radius:var(--raio);
   padding:9px 6px; text-align:center;
 }
-.jl-numeros label{ display:block; font-size:9px; font-weight:700; letter-spacing:.9px; color:var(--texto-3); }
+.jl-numeros label{ display:block; font-size:10.5px; font-weight:700; letter-spacing:.9px; color:var(--texto-3); }
 .jl-numeros b{ display:block; font-family:var(--f-tit); font-size:22px; margin-top:3px; }
-.jl-extra{ margin-top:11px; font-size:11px; color:var(--texto-3); text-align:center; }
+.jl-extra{ margin-top:11px; font-size:12px; color:var(--texto-3); text-align:center; }
 .jl-vazio{ font-size:12.5px; color:var(--texto-3); text-align:center; padding:6px; }
 
 .res-golead{
