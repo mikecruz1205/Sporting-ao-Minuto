@@ -30,53 +30,33 @@ const EMBLEMA_SVG = `
 
 /* -------------------------------------------------------------------------
    Retrato de reserva (só para quem não tiver fotografia da API)
+   Iniciais sobre as listas verdes da camisola. Antes era um boneco com
+   tom de pele tirado à sorte do nome — ficava errado mais vezes do que
+   certo, e um monograma não finge saber como a pessoa é.
    ------------------------------------------------------------------------- */
-const PELES   = ['#f2cba3','#e3ac7d','#c98a52','#9c6035','#6f4126','#4e2d1b'];
-const CABELOS = ['#12100e','#2b1d12','#4a2c14','#7a4a1c','#101010','#3b2314'];
-
-function somaNome(nome){
-  let h = 0;
-  for(const c of nome) h = (h*31 + c.charCodeAt(0)) >>> 0;
-  return h;
+function iniciais(nome){
+  const partes = (nome || '?').trim().split(/\s+/).filter(Boolean);
+  const pri = partes[0]?.[0] || '?';
+  const ult = partes.length > 1 ? partes[partes.length - 1][0] : '';
+  return (pri + ult).toUpperCase();
 }
 
 function avatarJogador(p){
-  const h = somaNome(p.nome || '?');
-  const t = Object.assign({
-    pele:   PELES[h % PELES.length],
-    cabelo: CABELOS[(h >> 3) % CABELOS.length],
-    estilo: (h >> 6) % 4,
-    barba:  ((h >> 9) % 3) === 0
-  }, p.visual || {});
-
   const gr = p.posGrupo === 'GR';
-  const kit   = gr ? '#1d4d6b' : '#0a7d4a';
-  const barra = gr ? '#3b8fbd' : '#ffffff';
-
-  const cabelo = {
-    0: `<path d="M74 46c0-16 12-26 26-26s26 10 26 26c-6-8-15-11-26-11s-20 3-26 11z" fill="${t.cabelo}"/>`,
-    1: `<g fill="${t.cabelo}"><circle cx="82" cy="42" r="11"/><circle cx="100" cy="35" r="12"/>
-        <circle cx="118" cy="42" r="11"/><circle cx="91" cy="32" r="9"/><circle cx="109" cy="32" r="9"/></g>`,
-    2: `<path d="M74 48c0-17 12-28 26-28s26 11 26 28c-5-9-15-12-26-12s-21 3-26 12z" fill="${t.cabelo}"/>
-        <circle cx="100" cy="22" r="10" fill="${t.cabelo}"/>`,
-    3: `<path d="M76 44c2-13 12-21 24-21s22 8 24 21c-7-5-15-7-24-7s-17 2-24 7z" fill="${t.cabelo}" opacity=".5"/>`
-  }[t.estilo];
-
-  const barba = t.barba
-    ? `<path d="M78 64c2 16 10 25 22 25s20-9 22-25c-4 10-12 15-22 15s-18-5-22-15z" fill="${t.cabelo}" opacity=".85"/>`
-    : '';
+  const fundo = gr ? '#14313f' : '#0b2a1d';
+  const lista = gr ? '#1d4d6b' : '#0f3a27';
+  const letra = gr ? '#9fd3ef' : '#9fe3bd';
 
   return `data:image/svg+xml;charset=utf-8,` + encodeURIComponent(`
 <svg viewBox="0 0 200 200" width="200" height="200" xmlns="http://www.w3.org/2000/svg">
-  <rect width="200" height="200" fill="#16181a"/>
-  <path d="M56 200c0-26 20-44 44-44s44 18 44 44z" fill="${kit}"/>
-  <rect x="56" y="168" width="88" height="10" fill="${barra}" opacity=".9"/>
-  <rect x="86" y="76" width="28" height="26" fill="${t.pele}"/>
-  <ellipse cx="100" cy="54" rx="27" ry="30" fill="${t.pele}"/>
-  <ellipse cx="91" cy="52" rx="2.6" ry="3" fill="#1a1a1a"/>
-  <ellipse cx="109" cy="52" rx="2.6" ry="3" fill="#1a1a1a"/>
-  <path d="M92 68c3 4 13 4 16 0" stroke="#1a1a1a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-  ${barba}${cabelo}
+  <rect width="200" height="200" fill="${fundo}"/>
+  <g fill="${lista}">
+    <rect y="28" width="200" height="22"/><rect y="78" width="200" height="22"/>
+    <rect y="128" width="200" height="22"/><rect y="178" width="200" height="22"/>
+  </g>
+  <text x="100" y="124" text-anchor="middle" fill="${letra}"
+        font-family="Barlow Condensed, Arial Narrow, sans-serif"
+        font-size="76" font-weight="700" letter-spacing="2">${iniciais(p.nome)}</text>
 </svg>`);
 }
 

@@ -1341,24 +1341,64 @@ function pintarCarreira(linhas){
     </table>`;
 }
 
-function pintarPlantel(){
-  const lista = filtroPos === 'todos' ? PLANTEL : PLANTEL.filter(p => p.posGrupo === filtroPos);
+/* As bandeiras em emoji no Windows aparecem como duas letras ("GR GRE"),
+   que repetem o código do país. Fica só o código. */
+const semBandeira = nac => (nac || '').replace(/[\u{1F1E6}-\u{1F1FF}]{2}|\u{1F3F3}\u{FE0F}?/gu, '').trim();
 
-  $('#plantel').innerHTML = lista.map(p => `
-    <button class="jog ${p.nome===escolhido?'is-on':''}" data-nome="${p.nome}">
+const GRUPOS_POS = [['GR','GUARDA-REDES'], ['DEF','DEFESAS'], ['MED','MÉDIOS'], ['AVA','AVANÇADOS']];
+
+function cartaoJogador(p){
+  return `
+    <button class="jog ${p.nome===escolhido?'is-on':''}" data-nome="${p.nome}" aria-pressed="${p.nome===escolhido}">
       <span class="jog__n">${p.n ?? '–'}</span>
-      <img src="${p.foto}" alt="${p.nome}" loading="lazy"
+      <img src="${p.foto}" alt="" loading="lazy"
            onerror="this.onerror=null;this.src='${avatarJogador(p)}'">
       <span class="jog__txt">
         <b>${ALCUNHAS[p.nome] || p.nome}</b>
-        <span>${p.pos} · ${p.nac}</span>
+        <span>${p.pos} · ${semBandeira(p.nac)}</span>
         <span class="jog__mini"><span>${p.stats.jogos} jogos</span><span>${p.stats.golos} golos</span></span>
       </span>
-    </button>`).join('');
+    </button>`;
+}
+
+function pintarPlantel(){
+  const porNumero = (a,b) => (a.n ?? 999) - (b.n ?? 999);
+
+  /* contagem em cada pílula, para se saber o que há antes de carregar */
+  $$('#pos-filtro .pilula').forEach(b => {
+    const pos = b.dataset.pos;
+    const n = pos === 'todos' ? PLANTEL.length : PLANTEL.filter(p => p.posGrupo === pos).length;
+    b.dataset.rotulo ||= b.textContent.trim();
+    b.innerHTML = `${b.dataset.rotulo} <span class="pilula__n">${n}</span>`;
+    b.classList.toggle('is-on', pos === filtroPos);
+    b.setAttribute('aria-pressed', pos === filtroPos);
+  });
+
+  /* em TODOS, o plantel vem arrumado por posição, como numa ficha de jogo */
+  const grupos = filtroPos === 'todos'
+    ? GRUPOS_POS.map(([pos, nome]) => [nome, PLANTEL.filter(p => p.posGrupo === pos)])
+    : [[null, PLANTEL.filter(p => p.posGrupo === filtroPos)]];
+
+  $('#plantel').innerHTML = grupos
+    .filter(([, l]) => l.length)
+    .map(([nome, l]) =>
+      (nome ? `<h3 class="plantel__grupo">${nome} <span>${l.length}</span></h3>` : '')
+      + [...l].sort(porNumero).map(cartaoJogador).join(''))
+    .join('');
 
   $$('.jog').forEach(b => b.addEventListener('click', () => {
     mostrarFicha(PLANTEL.find(p => p.nome === b.dataset.nome));
-    $$('.jog').forEach(x => x.classList.toggle('is-on', x === b));
+    $$('.jog').forEach(x => {
+      x.classList.toggle('is-on', x === b);
+      x.setAttribute('aria-pressed', x === b);
+    });
+    /* a ficha está no topo: em telemóvel, sem isto, tocar num jogador
+       lá em baixo parecia não fazer nada */
+    const ficha = $('#ficha');
+    if(ficha.getBoundingClientRect().top < 0){
+      const calmo = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      ficha.scrollIntoView({ behavior: calmo ? 'auto' : 'smooth', block: 'start' });
+    }
   }));
 }
 
@@ -1369,7 +1409,9 @@ function mostrarFicha(p){
   const s = p.stats;
   const kpis = [
     ['JOGOS', s.jogos], ['GOLOS', s.golos],
-    ['GOLOS/JOGO', s.jogos ? (s.golos/s.jogos).toFixed(2) : '0.00'],
+    /* golos por jogo não diz nada de um guarda-redes */
+    ...(p.posGrupo === 'GR' ? [] :
+      [['GOLOS/JOGO', s.jogos ? (s.golos/s.jogos).toFixed(2).replace('.',',') : '0,00']]),
     ['IDADE', p.idade ?? '—'], ['Nº', p.n ?? '–']
   ];
   const rotulos = {fin:'FINALIZAÇÃO',passe:'PASSE',drible:'DRIBLE',defesa:'DEFESA',fisico:'FÍSICO',vel:'VELOCIDADE'};
@@ -1377,11 +1419,11 @@ function mostrarFicha(p){
   $('#ficha').innerHTML = `
     <div class="ficha__foto">
       <img src="${p.foto}" alt="${p.nome}" onerror="this.onerror=null;this.src='${avatarJogador(p)}'">
-      <span class="ficha__num">${p.n ?? ''}</span>
+      ${p.n != null ? `<span class="ficha__num">${p.n}</span>` : ''}
     </div>
     <div class="ficha__dados">
       <h3>${ALCUNHAS[p.nome] ? p.nome + ' «' + ALCUNHAS[p.nome] + '»' : p.nome}</h3>
-      <div class="ficha__sub">${p.pos} · ${p.nac} · ${p.idade ?? '—'} anos
+      <div class="ficha__sub">${p.pos} · ${semBandeira(p.nac)} · ${p.idade ?? '—'} anos
         ${p.nota ? '<em>'+p.nota+'</em>' : ''}</div>
       <div class="valor-mercado">
         <b>${VALOR_MERCADO[p.nome] != null ? milhoes(VALOR_MERCADO[p.nome]) : 'n.d.'}</b>
@@ -1392,8 +1434,8 @@ function mostrarFicha(p){
       </div>
       <div class="ficha__baixo">
         <div class="ficha__radar">
-          <svg viewBox="0 0 200 200" id="radar"></svg>
-          <span class="leg">PERFIL · leitura própria, não é estatística</span>
+          <svg viewBox="0 0 200 200" id="radar" role="img" aria-label="Perfil do jogador em radar"></svg>
+          <span class="ficha__leg">PERFIL · leitura própria, não é estatística</span>
         </div>
         <div id="barras">
           ${Object.entries(perfil).map(([k,v]) => `
@@ -1451,7 +1493,7 @@ function desenharRadar(attrs){
   const curto = {fin:'FIN',passe:'PAS',drible:'DRB',defesa:'DEF',fisico:'FIS',vel:'VEL'};
   ks.forEach((k,i) => { const [x,y]=pt(i,R+16);
     svg += `<text x="${x.toFixed(1)}" y="${(y+3).toFixed(1)}" text-anchor="middle"
-             font-size="9" fill="#64726b" font-family="Inter,sans-serif">${curto[k]}</text>`; });
+             font-size="11" font-weight="600" fill="#9aa8a1" font-family="Inter,sans-serif">${curto[k]}</text>`; });
   const el = $('#radar');
   if(el) el.innerHTML = svg;
 }
@@ -3301,10 +3343,8 @@ async function arranque(){
   $('#minuto-filtro').addEventListener('change', pintarLinhaTempo);
 
   $$('#pos-filtro .pilula').forEach(b => b.addEventListener('click', () => {
-    $$('#pos-filtro .pilula').forEach(x => x.classList.remove('is-on'));
-    b.classList.add('is-on');
     filtroPos = b.dataset.pos;
-    pintarPlantel();
+    pintarPlantel();     // trata do is-on e do aria-pressed
   }));
 
   $('#jogo-ant').addEventListener('click', () => { jogoIdx--; pintarProximoJogo(); });
