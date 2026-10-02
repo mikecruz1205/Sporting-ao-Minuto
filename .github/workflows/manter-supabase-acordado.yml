@@ -1,0 +1,29 @@
+# O Supabase gratuito suspende o projeto ao fim de 7 dias sem actividade,
+# e com ele vao abaixo o login, o chat e a fantasy. Este toque semanal
+# faz uma leitura minima para o manter acordado.
+#
+# Para activar: cria em Settings > Secrets and variables > Actions um
+# segredo chamado SUPABASE_URL e outro SUPABASE_CHAVE.
+
+name: Manter o Supabase acordado
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'      # segundas-feiras, 09:00 UTC
+  workflow_dispatch:          # tambem se pode correr a mao
+
+jobs:
+  tocar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ler uma linha da base de dados
+        run: |
+          codigo=$(curl -s -o /dev/null -w '%{http_code}' \
+            -H "apikey: ${{ secrets.SUPABASE_CHAVE }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_CHAVE }}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/perfis?select=utilizador&limit=1")
+          echo "resposta: $codigo"
+          if [ "$codigo" != "200" ]; then
+            echo "::error::O Supabase respondeu $codigo — pode estar suspenso."
+            exit 1
+          fi
