@@ -762,6 +762,8 @@ function pintarHome(){
   }
 
   pintarModalidadesCasa();
+  pintarImportantes();
+  pintarAtalhos();
 
   /* ---- mais lidas ---- */
   pintarMaisLidas();
@@ -777,7 +779,7 @@ let homeRevelada = false;
 /* Filas que deslizam para o lado (temas, separadores): quando há mais do
    que cabe, a ponta desvanece — sem isso o último item parece cortado. */
 function marcarTransbordo(raiz = document){
-  raiz.querySelectorAll('.temas, .mod-separadores, .separadores, #pos-filtro, .jogos-filtro, .filtros-categoria').forEach(el => {
+  raiz.querySelectorAll('.temas, .mod-separadores, .separadores, #pos-filtro, .jogos-filtro, .filtros-categoria, .atalhos, .fontes--noticias, .filtro-linha--sub').forEach(el => {
     const mais = el.scrollWidth - el.clientWidth - el.scrollLeft > 4;
     el.classList.toggle('tem-mais', mais);
     if(!el.dataset.transbordo){
@@ -787,6 +789,64 @@ function marcarTransbordo(raiz = document){
   });
 }
 addEventListener('resize', () => marcarTransbordo());
+
+/* "Importantes · 24 h": as notícias importantes do último dia — oficiais e
+   destaques (palavras fortes no título) — sem repetir as do destaque.
+   Com menos de duas, a faixa não aparece: não se enche com notícias
+   banais só para ocupar o lugar. */
+function pintarImportantes(){
+  const seccao = $('#importantes');
+  const alvo = $('#importantes-lista');
+  if(!seccao || !alvo) return;
+  /* últimas 24 horas: "hoje" de calendário deixava a faixa vazia de madrugada */
+  const limite = Date.now() - 24 * 3600000;
+  const noPalco = new Set(heroLista.map(n => n.link));
+  const lista = NOTICIAS
+    .filter(n => n.data.getTime() > limite && !noPalco.has(n.link))
+    .filter(n => n.categoria === 'DESTAQUE' || /\boficial\b/i.test(n.titulo))
+    .slice(0, 4);
+  seccao.hidden = lista.length < 2;
+  if(seccao.hidden) return;
+  alvo.innerHTML = lista.map((n, i) => `
+    <li class="imp">
+      <a class="imp__ligacao" href="${/^https?:\/\//i.test(n.link || '') ? Componentes.seguro(n.link) : '#'}"
+         target="_blank" rel="noopener" data-link="${Componentes.seguro(n.link)}">
+        <span class="imp__n" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>
+        <span class="imp__corpo">
+          <span class="etiqueta etiqueta--${Componentes.categoriaClasse(n.categoria)}">${Componentes.seguro(n.categoria)}</span>
+          <span class="imp__titulo">${Componentes.seguro(n.titulo)}</span>
+          <span class="imp__meta"><span class="ed__fonte">${Componentes.seguro(n.fonte)}</span> · ${n.data.toLocaleTimeString('pt-PT', { hour:'2-digit', minute:'2-digit' })}</span>
+        </span>
+      </a>
+    </li>`).join('');
+}
+
+/* Acesso rápido: as categorias e modalidades principais, num toque.
+   Cada atalho leva à vista certa já filtrada. */
+const ATALHOS = [
+  ['Equipa principal', () => { temaNoticias = 'sporting'; subtemaNoticias = 'equipa'; irPara('noticias'); pintarNoticias(); }],
+  ['Mercado',          () => irPara('rumores')],
+  ['Ao minuto',        () => irPara('aominuto')],
+  ['Jogos',            () => irPara('jogos')],
+  ['Classificação',    () => irPara('classificacao')],
+  ['Futebol feminino', () => abrirModalidade('feminino')],
+  ['Formação',         () => abrirModalidade('formacao')],
+  ['Modalidades',      () => irPara('modalidades')]
+];
+function abrirModalidade(id){
+  modalidadeAtual = id;
+  history.pushState({ vista:'modalidades' }, '', '/modalidades#' + id);
+  irPara('modalidades', { historico:false });
+}
+function pintarAtalhos(){
+  const alvo = $('#atalhos');
+  if(!alvo || alvo.dataset.pronto) return;
+  alvo.dataset.pronto = '1';
+  alvo.innerHTML = `<span class="atalhos__rotulo">Acesso rápido</span>` +
+    ATALHOS.map(([nome], i) => `<button type="button" class="chip atalho" data-atalho="${i}">${nome}</button>`).join('');
+  alvo.querySelectorAll('[data-atalho]').forEach(b => b.addEventListener('click', () => ATALHOS[+b.dataset.atalho][1]()));
+  requestAnimationFrame(() => marcarTransbordo(alvo.parentElement));
+}
 
 /* notícias de uma modalidade, das mais recentes para trás */
 const noticiasDe = id => NOTICIAS.filter(n => temaDe(n) === id);
@@ -1299,8 +1359,8 @@ function ligarLeitor(){
     if(!a) return;
     ev.preventDefault();
     const link = a.dataset.link;
-    const cartao = a.closest('.nl, .ed, .manchete, .ncartao, .hero, .compacto, .ev');
-    const titulo = cartao?.querySelector('.nl__titulo, .ed__titulo, .ev__titulo, .ncartao__titulo, .hero__titulo, b')?.textContent?.trim() || link;
+    const cartao = a.closest('.nl, .ed, .imp, .manchete, .ncartao, .hero, .compacto, .ev');
+    const titulo = cartao?.querySelector('.nl__titulo, .ed__titulo, .ev__titulo, .imp__titulo, .ncartao__titulo, .hero__titulo, b')?.textContent?.trim() || link;
     const fonte  = cartao?.querySelector('.nl__fonte, .ed__fonte, .ncartao__fonte, .hero__fonte, .ev__fonte-nome, .compacto__txt span')?.textContent?.trim() || '';
     if(!/^https?:\/\//i.test(link)) return;
     registarLeitura(link, titulo, fonte);
