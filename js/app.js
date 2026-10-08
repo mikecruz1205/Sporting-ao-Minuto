@@ -40,6 +40,7 @@ let PROVAS_DISPONIVEIS = ['Total'];
    diretamente e fica-se pelo primeiro que carregar. Assim funciona nos dois.
    ------------------------------------------------------------------------- */
 const EMBLEMAS_SCP = [
+  'img/marca/emblema-256.webp', 'img/marca/emblema-512.png',
   'img/crest.png', 'img/crest.jpg', 'img/crest.jpeg', 'img/crest.webp',
   '/emblema', 'img/crest.svg', 'img/teams/228.png'
 ];
@@ -79,9 +80,6 @@ async function montarEmblema(){
     a.appendChild(img);
   });
 
-  /* o ícone do separador segue o mesmo ficheiro */
-  const icone = document.querySelector('link[rel="icon"]');
-  if(icone) icone.href = caminho;
 }
 
 async function montarFundoEntrada(){
@@ -3333,6 +3331,8 @@ function ligarMenuMobile(){
     document.body.classList.remove('menu-aberto');
     botao.setAttribute('aria-expanded','false');
     botao.setAttribute('aria-label','Abrir menu');
+    $('#barra-mais')?.setAttribute('aria-expanded','false');
+    $('#barra-mais')?.classList.remove('is-on');
   };
   const abrir = () => {
     menu.classList.add('aberto');
@@ -3341,6 +3341,7 @@ function ligarMenuMobile(){
     document.body.classList.add('menu-aberto');
     botao.setAttribute('aria-expanded','true');
     botao.setAttribute('aria-label','Fechar menu');
+    $('#barra-mais')?.classList.add('is-on');
     menu.querySelector('.menu__item')?.focus();
   };
 
@@ -3348,6 +3349,7 @@ function ligarMenuMobile(){
     menu.classList.contains('aberto') ? fechar() : abrir());
   veu.addEventListener('click', fechar);
   $$('.menu__item').forEach(b => b.addEventListener('click', fechar));
+  $$('.barra-inferior__item[data-vista]').forEach(b => b.addEventListener('click', fechar));
   addEventListener('keydown', e => {
     if(e.key === 'Escape' && menu.classList.contains('aberto')) { fechar(); botao.focus(); }
   });
@@ -3464,13 +3466,117 @@ function ligarLegais(){
   dlg.addEventListener('click', e => { if(e.target === dlg) dlg.close(); });
 }
 
-function irPara(vista){
+/* ---------------------------------------------------------------------
+   ROTAS — cada vista tem um endereço próprio (/jogos, /plantel, …).
+   Serve para partilhar, para os atalhos da aplicação instalada e para os
+   links abrirem direto na vista certa. Só um nível: os ficheiros do site
+   são pedidos com caminhos relativos, e /a/b partia-os.
+   --------------------------------------------------------------------- */
+const ROTAS = {
+  inicio:'/', noticias:'/noticias', aominuto:'/ao-minuto', rumores:'/mercado',
+  jogos:'/jogos', agenda:'/agenda', classificacao:'/classificacao', aovivo:'/ao-vivo',
+  equipa:'/plantel', estatisticas:'/estatisticas', modalidades:'/modalidades',
+  chat:'/chat', formacao:'/fantasy', clube:'/clube'
+};
+const TITULOS = {
+  inicio:'Sporting ao Minuto — notícias, jogos e ao minuto do Sporting CP',
+  noticias:'Notícias', aominuto:'Ao minuto', rumores:'Mercado', jogos:'Jogos',
+  agenda:'Agenda', classificacao:'Classificação', aovivo:'Ao vivo', equipa:'Plantel',
+  estatisticas:'Estatísticas', modalidades:'Modalidades', chat:'Chat',
+  formacao:'Fantasy', clube:'O clube'
+};
+
+function vistaDaRota(caminho){
+  const limpo = (caminho || '/').replace(/\/+$/, '') || '/';
+  return Object.keys(ROTAS).find(v => ROTAS[v] === limpo) || 'inicio';
+}
+
+function irPara(vista, opcoes = {}){
+  const { historico = true, rolar = true } = opcoes;
+  if(!$('#vista-' + vista)) vista = 'inicio';
   vistaAtual = vista;
   if(vista === 'chat') pintarChat();
   if(vista === 'aovivo') pintarDiaDeJogo();
+  if(vista === 'agenda') pintarAgenda();
+  if(vista === 'modalidades') pintarModalidades();
+
   $$('.vista').forEach(v => v.classList.toggle('is-on', v.id === 'vista-' + vista));
-  $$('.menu__item').forEach(b => b.classList.toggle('is-on', b.dataset.vista === vista));
-  scrollTo({top:0, behavior:'smooth'});
+  $$('[data-vista]').forEach(b => {
+    const ativo = b.dataset.vista === vista;
+    b.classList.toggle('is-on', ativo);
+    if(ativo) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+  });
+  /* o grupo do submenu acende quando uma das suas vistas está aberta */
+  $$('.menu__grupo').forEach(g =>
+    g.querySelector('.menu__pai').classList.toggle('is-on', !!g.querySelector(`[data-vista="${vista}"]`)));
+  fecharSubmenus();
+
+  document.title = vista === 'inicio' ? TITULOS.inicio : `${TITULOS[vista]} · Sporting ao Minuto`;
+  if(historico && location.pathname !== ROTAS[vista]){
+    history.pushState({ vista }, '', ROTAS[vista] + (vista === 'modalidades' ? location.hash : ''));
+  }
+  if(rolar) scrollTo({ top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+}
+
+/* preenchidas mais abaixo (AGENDA e MODALIDADES) */
+function pintarAgenda(){}
+function pintarModalidades(){}
+
+/* voltar e avançar do browser */
+addEventListener('popstate', () => irPara(vistaDaRota(location.pathname), { historico:false }));
+
+/* ---------------------------------------------------------------------
+   SUBMENUS (ecrãs largos). Abrem com clique ou com o rato por cima,
+   fecham com Esc, com um clique fora ou ao escolher uma vista.
+   --------------------------------------------------------------------- */
+function fecharSubmenus(exceto){
+  $$('.menu__grupo').forEach(g => {
+    if(g === exceto) return;
+    g.classList.remove('aberto');
+    g.querySelector('.menu__pai')?.setAttribute('aria-expanded', 'false');
+  });
+}
+
+function ligarSubmenus(){
+  const largo = () => matchMedia('(min-width: 901px)').matches;
+  $$('.menu__grupo').forEach(g => {
+    const pai = g.querySelector('.menu__pai');
+    const abrir = () => { fecharSubmenus(g); g.classList.add('aberto'); pai.setAttribute('aria-expanded', 'true'); };
+    pai.addEventListener('click', () => {
+      if(!largo()) return;                         // na gaveta os grupos estão sempre abertos
+      g.classList.contains('aberto') ? fecharSubmenus() : abrir();
+    });
+    pai.addEventListener('keydown', e => {
+      if(e.key === 'ArrowDown' && largo()){ e.preventDefault(); abrir(); g.querySelector('.menu__item')?.focus(); }
+    });
+    let espera = null;
+    g.addEventListener('mouseenter', () => { if(largo() && matchMedia('(hover: hover)').matches){ clearTimeout(espera); abrir(); } });
+    g.addEventListener('mouseleave', () => { if(largo()){ espera = setTimeout(() => fecharSubmenus(), 160); } });
+    /* setas dentro do submenu */
+    g.querySelector('.menu__sub')?.addEventListener('keydown', e => {
+      const itens = [...g.querySelectorAll('.menu__item:not([hidden])')];
+      const i = itens.indexOf(document.activeElement);
+      if(e.key === 'ArrowDown'){ e.preventDefault(); itens[(i + 1) % itens.length]?.focus(); }
+      if(e.key === 'ArrowUp'){ e.preventDefault(); itens[(i - 1 + itens.length) % itens.length]?.focus(); }
+    });
+  });
+  document.addEventListener('click', e => { if(!e.target.closest('.menu__grupo')) fecharSubmenus(); });
+  addEventListener('keydown', e => {
+    if(e.key !== 'Escape') return;
+    const aberto = $('.menu__grupo.aberto');
+    if(aberto){ fecharSubmenus(); aberto.querySelector('.menu__pai').focus(); }
+  });
+}
+
+/* ---------------------------------------------------------------------
+   BARRA INFERIOR (telemóvel). O "Mais" abre a gaveta com tudo o resto.
+   --------------------------------------------------------------------- */
+function ligarBarraInferior(){
+  const mais = $('#barra-mais');
+  mais?.addEventListener('click', () => {
+    $('#menu-abrir')?.click();
+    mais.setAttribute('aria-expanded', $('#menu').classList.contains('aberto'));
+  });
 }
 
 /* =========================================================================
@@ -3538,8 +3644,17 @@ async function arranque(){
   setInterval(carregarNoticias, CONFIG.refreshSegundos * 1000);
 
   /* ---- eventos ---- */
-  $$('.menu__item[data-vista]').forEach(b =>
+  /* o dataset é lido no clique: o botão "ao minuto" da barra inferior
+     passa a "ao vivo" durante os jogos */
+  $$('.menu__item[data-vista], .barra-inferior__item[data-vista]').forEach(b =>
     b.addEventListener('click', () => irPara(b.dataset.vista)));
+  ligarSubmenus();
+  ligarBarraInferior();
+  {
+    const inicial = vistaDaRota(location.pathname);
+    history.replaceState({ vista: inicial }, '', ROTAS[inicial] + location.search + location.hash);
+    if(inicial !== 'inicio') irPara(inicial, { historico:false, rolar:false });
+  }
   $$('[data-ir]').forEach(b =>
     b.addEventListener('click', () => irPara(b.dataset.ir)));
 

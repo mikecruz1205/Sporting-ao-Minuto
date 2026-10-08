@@ -59,6 +59,13 @@ CABECALHO_NAVEGADOR = {
     "Accept-Language": "pt-PT,pt;q=0.9",
 }
 
+# vistas do site com endereco proprio (manter igual a ROTAS no app.js
+# e aos rewrites do vercel.json)
+ROTAS_DO_SITE = {
+    "/noticias", "/ao-minuto", "/mercado", "/jogos", "/agenda", "/classificacao",
+    "/ao-vivo", "/plantel", "/estatisticas", "/modalidades", "/chat", "/fantasy", "/clube",
+}
+
 # quanto tempo vale cada resposta da API antes de se ir buscar outra vez
 TTL_API = 30 * 24 * 3600     # estatisticas de epocas passadas nao mudam
 
@@ -86,6 +93,11 @@ class Manipulador(SimpleHTTPRequestHandler):
             self.servir_imagem("entrada")
         elif self.path.startswith("/emblema"):
             self.servir_imagem("crest")
+        elif urllib.parse.urlparse(self.path).path.rstrip("/") in ROTAS_DO_SITE:
+            # /jogos, /plantel, … sao vistas do site: devolve-se a pagina,
+            # e o app.js abre a vista certa (no Vercel faz-o o vercel.json)
+            self.path = "/index.html"
+            super().do_GET()
         else:
             super().do_GET()
 

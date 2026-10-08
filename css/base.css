@@ -10,27 +10,40 @@
    ========================================================================= */
 
 :root{
-  /* ---------- cores (as de sempre, agora com degraus) ---------- */
-  --fundo:        #0b0d0c;
-  --fundo-2:      #101312;
-  --cartao:       #141817;
-  --cartao-alto:  #182220;   /* cartão em destaque / hover */
-  --cartao-topo:  #171d1a;
-  --linha:        #232a26;
-  --linha-forte:  #2f3a34;
+  /* ---------- cores ----------
+     Verde Sporting como acento — CTA, estados ativos, ao vivo, vitórias.
+     A profundidade vem dos degraus de carvão, não de cor. */
+  --fundo:        #0a0c0b;   /* carvão: o fundo da página */
+  --fundo-2:      #0f1211;
+  --cartao:       #121514;   /* superfície 1 */
+  --cartao-alto:  #181c1a;   /* superfície 2 / hover */
+  --cartao-topo:  #121514;
+  --linha:        #1f2422;   /* borda subtil */
+  --linha-forte:  #2c3330;
 
-  --verde:        #0a9d5f;
-  --verde-claro:  #2fd98a;
+  --verde:        #0a9d5f;   /* CTA e ativos */
+  --verde-claro:  #2fd98a;   /* texto verde sobre escuro, ao vivo */
   --verde-escuro: #063d26;
   --verde-vidro:  rgba(10,157,95,.12);
 
-  --texto:        #e6ece9;
-  --texto-2:      #9aa8a1;
+  --texto:        #f2f5f3;
+  --texto-2:      #a9b5af;
   --texto-3:      #7a8881;   /* 4.6:1 sobre cartão, 5.1:1 sobre fundo (AA) */
 
   --amarelo:      #f2c14e;
   --vermelho:     #e05252;
   --ouro:         #e8c56a;
+
+  /* cores de cada modalidade — só em pormenores (fios, pontos, etiquetas) */
+  --m-futebol:     #2fd98a;
+  --m-feminino:    #e29ade;
+  --m-futsal:      #4fd1c5;
+  --m-andebol:     #f2c14e;
+  --m-basquetebol: #f0904b;
+  --m-hoquei:      #7cc0f0;
+  --m-voleibol:    #b9a2ff;
+  --m-atletismo:   #ff8a80;
+  --m-formacao:    #a6e35a;
 
   /* ---------- escala tipográfica (1.200 — terça menor) ---------- */
   --t-xs:   0.694rem;   /* 11px  — etiquetas, metadados */
@@ -82,9 +95,25 @@
   --z-dialogo:150;
   --z-acesso: 200;
 
-  /* ---------- tipos de letra ---------- */
+  /* ---------- tipos de letra ----------
+     Barlow Condensed: títulos e números (resultados, contagens, tabelas),
+     sempre em algarismos de largura fixa. Inter: tudo o que se lê. */
   --f-tit: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --f-num: 'Barlow Condensed', 'Arial Narrow', sans-serif;
   --f-ui:  'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* ---------- tempos ---------- */
+  --t-rapida: 150ms;
+  --t-media:  250ms;
+  --t-lenta:  450ms;
+  --ease-saida: cubic-bezier(.22,1,.36,1);
+
+  /* ---------- pontos de quebra (só documentação: CSS não os aceita em
+     @media) — telemóvel ≤480 · tablet ≤820 · gaveta ≤900 ·
+     portátil ≤1240 · largo >1240 ---------- */
+
+  /* ---------- alturas da moldura da aplicação ---------- */
+  --altura-barra-inferior: 64px;
 }
 
 /* =========================================================================

@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sporting CP</title>
-<!-- o ícone do separador é o mesmo emblema do site (img/crest.*) -->
 <meta name="description" content="Sporting ao Minuto — notícias do Sporting CP ao minuto, mercado, jogos, classificação, plantel e estatísticas.">
 <meta name="theme-color" content="#0b0d0c">
 <meta name="color-scheme" content="dark">
@@ -12,20 +11,26 @@
 <meta property="og:site_name" content="Sporting ao Minuto">
 <meta property="og:title" content="Sporting ao Minuto">
 <meta property="og:description" content="Notícias do Sporting CP ao minuto, mercado, jogos, classificação e plantel.">
-<meta property="og:image" content="img/crest.svg">
+<meta property="og:image" content="/img/partilha.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Sporting ao Minuto — emblema sobre as listas verdes">
 <meta property="og:locale" content="pt_PT">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Sporting ao Minuto">
 <meta name="twitter:description" content="Notícias do Sporting CP ao minuto, mercado, jogos e classificação.">
-<meta name="twitter:image" content="img/crest.svg">
-<link rel="icon" href="img/crest.svg">
+<meta name="twitter:image" content="/img/partilha.jpg">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/img/icones/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="/img/icones/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/base.css?v=60">
-<link rel="stylesheet" href="css/componentes.css?v=60">
-<link rel="stylesheet" href="css/style.css?v=60">
-<link rel="stylesheet" href="css/portal.css?v=60">
+<link rel="stylesheet" href="css/base.css?v=61">
+<link rel="stylesheet" href="css/componentes.css?v=61">
+<link rel="stylesheet" href="css/style.css?v=61">
+<link rel="stylesheet" href="css/portal.css?v=61">
+<link rel="stylesheet" href="css/app.css?v=61">
 </head>
 <body class="trancado">
 
@@ -146,18 +151,40 @@
 </button>
 
 <nav class="menu" id="menu" aria-label="Navegação principal">
-  <button class="menu__item is-on" data-vista="inicio">INÍCIO</button>
-  <button class="menu__item" data-vista="noticias">NOTÍCIAS</button>
-  <button class="menu__item" data-vista="rumores">MERCADO</button>
-  <button class="menu__item" data-vista="jogos">JOGOS</button>
-  <button class="menu__item" data-vista="classificacao">CLASSIFICAÇÃO</button>
-  <button class="menu__item" data-vista="equipa">PLANTEL</button>
-  <button class="menu__item" data-vista="aominuto">AO MINUTO</button>
-  <button class="menu__item" data-vista="estatisticas">ESTATÍSTICAS</button>
-  <button class="menu__item" data-vista="formacao">FORMAÇÃO</button>
-  <button class="menu__item menu__item--vivo" data-vista="aovivo" id="menu-aovivo" hidden><span class="ponto-vivo" aria-hidden="true"></span>AO VIVO</button>
-  <button class="menu__item" data-vista="chat">CHAT</button>
-  <button class="menu__item menu__item--taca" data-vista="clube"><span class="menu__taca" aria-hidden="true"></span>CLUBE</button>
+  <button class="menu__item menu__item--topo is-on" data-vista="inicio">Início</button>
+  <div class="menu__grupo" data-grupo="noticias">
+    <button class="menu__pai" aria-expanded="false" aria-controls="sub-noticias">Notícias<svg class="icone menu__seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <div class="menu__sub" id="sub-noticias" role="group" aria-label="Notícias">
+      <button class="menu__item" data-vista="noticias">Todas as notícias<small>Os 11 jornais, de minuto a minuto</small></button>
+      <button class="menu__item" data-vista="aominuto">Ao minuto<small>A linha do tempo completa</small></button>
+      <button class="menu__item" data-vista="rumores">Mercado<small>Entradas, saídas e rumores</small></button>
+    </div>
+  </div>
+  <div class="menu__grupo" data-grupo="jogos">
+    <button class="menu__pai" aria-expanded="false" aria-controls="sub-jogos">Jogos<svg class="icone menu__seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <div class="menu__sub" id="sub-jogos" role="group" aria-label="Jogos">
+      <button class="menu__item" data-vista="jogos">Calendário e resultados<small>Todos os jogos da época</small></button>
+      <button class="menu__item" data-vista="agenda">Agenda<small>Hoje, amanhã e os próximos dias</small></button>
+      <button class="menu__item" data-vista="classificacao">Classificação<small>Liga Portugal e Liga dos Campeões</small></button>
+      <button class="menu__item" data-vista="aovivo" id="menu-aovivo" hidden>Ao vivo<small>Placar, onze e lances do jogo</small></button>
+    </div>
+  </div>
+  <div class="menu__grupo" data-grupo="equipa">
+    <button class="menu__pai" aria-expanded="false" aria-controls="sub-equipa">Equipa<svg class="icone menu__seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <div class="menu__sub" id="sub-equipa" role="group" aria-label="Equipa">
+      <button class="menu__item" data-vista="equipa">Plantel<small>Jogadores, fichas e valores</small></button>
+      <button class="menu__item" data-vista="estatisticas">Estatísticas<small>Golos, jogos e números da época</small></button>
+    </div>
+  </div>
+  <button class="menu__item menu__item--topo" data-vista="modalidades">Modalidades</button>
+  <div class="menu__grupo" data-grupo="comunidade">
+    <button class="menu__pai" aria-expanded="false" aria-controls="sub-comunidade">Comunidade<svg class="icone menu__seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <div class="menu__sub" id="sub-comunidade" role="group" aria-label="Comunidade">
+      <button class="menu__item" data-vista="chat">Chat<small>Fala com outros leões</small></button>
+      <button class="menu__item" data-vista="formacao">Fantasy<small>Monta o teu onze e soma pontos</small></button>
+    </div>
+  </div>
+  <button class="menu__item menu__item--topo menu__item--taca" data-vista="clube"><span class="menu__taca" aria-hidden="true"></span>Clube</button>
   <span class="menu__estado" id="estado-dados">a ligar…</span>
 </nav>
 </header>
@@ -421,6 +448,34 @@
       <ul class="jogos-lista" id="jogos-lista"></ul>
     </div>
   </section>
+</main>
+
+<!-- ============================ AGENDA ============================ -->
+<main class="vista" id="vista-agenda" aria-labelledby="tit-agenda">
+  <header class="vista__cabeca">
+    <p class="seccao__sobre">Os próximos jogos</p>
+    <h2 class="vista__titulo" id="tit-agenda">Agenda</h2>
+    <p class="vista__sub" id="agenda-resumo">Hoje, amanhã e os dias seguintes, por hora de início.</p>
+  </header>
+  <div class="separadores" id="agenda-filtro" role="group" aria-label="Filtrar agenda">
+    <button type="button" class="separador is-on" data-filtro="todos" aria-pressed="true">Todos</button>
+    <button type="button" class="separador" data-filtro="futebol" aria-pressed="false">Futebol</button>
+    <button type="button" class="separador" data-filtro="modalidades" aria-pressed="false">Modalidades</button>
+    <button type="button" class="separador" data-filtro="formacao" aria-pressed="false">Formação</button>
+    <button type="button" class="separador" data-filtro="feminino" aria-pressed="false">Feminino</button>
+  </div>
+  <div class="agenda" id="agenda-lista" aria-live="polite"></div>
+</main>
+
+<!-- ============================ MODALIDADES ============================ -->
+<main class="vista" id="vista-modalidades" aria-labelledby="tit-modalidades">
+  <header class="vista__cabeca">
+    <p class="seccao__sobre">Muito mais do que futebol</p>
+    <h2 class="vista__titulo" id="tit-modalidades">Modalidades</h2>
+    <p class="vista__sub">Notícias, jogos e classificações de cada equipa do clube.</p>
+  </header>
+  <div class="mod-separadores" id="mod-separadores" role="tablist" aria-label="Escolher modalidade"></div>
+  <section class="mod-painel" id="mod-painel" role="tabpanel" aria-live="polite"></section>
 </main>
 
 <main class="vista" id="vista-estatisticas">
@@ -719,15 +774,27 @@
   <div class="legal__corpo" id="legal-corpo"></div>
 </dialog>
 
+
+<!-- ============================ BARRA INFERIOR (telemóvel) ============================ -->
+<nav class="barra-inferior" id="barra-inferior" aria-label="Navegação rápida">
+  <button class="barra-inferior__item is-on" data-vista="inicio"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/></svg><span>Início</span></button>
+  <button class="barra-inferior__item" data-vista="jogos"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span>Jogos</span></button>
+  <button class="barra-inferior__item barra-inferior__item--vivo" data-vista="aominuto" id="barra-vivo">
+    <span class="barra-inferior__pulso" aria-hidden="true"></span><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="barra-vivo-rotulo">Ao minuto</span>
+  </button>
+  <button class="barra-inferior__item" data-vista="noticias"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h13a2 2 0 0 1 2 2v13a1 1 0 0 0 2 0V8"/><path d="M4 4v15a2 2 0 0 0 2 2h14"/><path d="M8 8h7M8 12h7M8 16h4"/></svg><span>Notícias</span></button>
+  <button class="barra-inferior__item" id="barra-mais" aria-controls="menu" aria-expanded="false"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Mais</span></button>
+</nav>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.min.js" defer></script>
-<script src="js/nuvem.js?v=60"></script>
-<script src="js/jogo.js?v=60"></script>
-<script src="js/fd.js?v=60"></script>
-<script src="js/componentes.js?v=60"></script>
-<script src="js/contas.js?v=60"></script>
-<script src="js/arte.js?v=60"></script>
-<script src="js/data.js?v=60"></script>
-<script src="js/wiki.js?v=60"></script>
-<script src="js/app.js?v=60"></script>
+<script src="js/nuvem.js?v=61" defer></script>
+<script src="js/jogo.js?v=61" defer></script>
+<script src="js/fd.js?v=61" defer></script>
+<script src="js/componentes.js?v=61" defer></script>
+<script src="js/contas.js?v=61" defer></script>
+<script src="js/arte.js?v=61" defer></script>
+<script src="js/data.js?v=61" defer></script>
+<script src="js/wiki.js?v=61" defer></script>
+<script src="js/app.js?v=61" defer></script>
 </body>
 </html>

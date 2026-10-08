@@ -1,0 +1,201 @@
+/* =========================================================================
+   APLICAÇÃO — a moldura à volta do conteúdo
+   -------------------------------------------------------------------------
+   Navegação com submenus, gaveta e barra inferior do telemóvel, cabeçalho
+   das vistas, separadores, faixa ao vivo e convite para instalar.
+   Carrega depois do portal.css. Os tokens estão no base.css.
+   ========================================================================= */
+
+/* =========================================================================
+   NAVEGAÇÃO — ecrãs largos
+   ========================================================================= */
+@media (min-width: 901px){
+  .cabeca .menu{ overflow: visible; -webkit-mask-image: none; mask-image: none; }
+
+  .menu__grupo{ position: relative; }
+
+  /* o "pai" de cada grupo tem o mesmo desenho dos itens de topo */
+  .cabeca .menu__item--topo,
+  .cabeca .menu__pai{
+    position: relative;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 14px 14px 16px;
+    font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--tx-2); background: none; border: 0;
+    transition: color var(--t-rapida);
+  }
+  .cabeca .menu__pai::after{
+    content: ''; position: absolute; left: 14px; right: 14px; bottom: 0; height: 2px;
+    border-radius: 2px 2px 0 0; background: var(--verde-claro);
+    transform: scaleX(0); transition: transform .3s var(--ease-saida), background .2s;
+  }
+  .cabeca .menu__pai:hover,
+  .menu__grupo.aberto > .menu__pai{ color: var(--tx-1); }
+  .cabeca .menu__pai:hover::after{ transform: scaleX(.35); background: rgba(255,255,255,.35); }
+  .cabeca .menu__pai.is-on{ color: var(--tx-1); }
+  .cabeca .menu__pai.is-on::after{ transform: scaleX(1); background: var(--verde-claro); }
+  .menu__seta{ width: 14px; height: 14px; opacity: .7; transition: transform var(--t-media) var(--ease-saida); }
+  .menu__grupo.aberto .menu__seta{ transform: rotate(180deg); }
+
+  /* painel do submenu */
+  .menu__sub{
+    position: absolute; top: calc(100% - 4px); left: 4px; z-index: 5;
+    min-width: 300px; padding: 8px;
+    display: flex; flex-direction: column; gap: 2px;
+    background: rgba(18,21,20,.98);
+    border: 1px solid var(--borda-forte); border-radius: 14px;
+    box-shadow: 0 24px 48px -16px rgba(0,0,0,.7);
+    opacity: 0; visibility: hidden; transform: translateY(-6px);
+    transition: opacity var(--t-media) var(--ease-saida), transform var(--t-media) var(--ease-saida), visibility var(--t-media);
+  }
+  @supports (backdrop-filter: blur(1px)){
+    .menu__sub{ background: rgba(18,21,20,.9); backdrop-filter: blur(18px) saturate(140%); }
+  }
+  .menu__grupo.aberto .menu__sub{ opacity: 1; visibility: visible; transform: none; }
+
+  .cabeca .menu__sub .menu__item{
+    display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+    width: 100%; padding: 10px 12px; border-radius: 10px;
+    font-size: 14px; font-weight: 600; letter-spacing: 0; text-transform: none;
+    color: var(--tx-1); text-align: left;
+    transition: background var(--t-rapida);
+  }
+  .cabeca .menu__sub .menu__item::after{ content: none; }
+  .menu__sub .menu__item small{ font-size: 12.5px; font-weight: 400; color: var(--tx-3); }
+  .cabeca .menu__sub .menu__item:hover,
+  .cabeca .menu__sub .menu__item:focus-visible{ background: var(--cartao-alto); }
+  .cabeca .menu__sub .menu__item.is-on{ color: var(--verde-claro); background: var(--verde-vidro); }
+  .menu__sub .menu__item[hidden]{ display: none; }
+}
+
+/* =========================================================================
+   GAVETA — telemóvel e tablet
+   ========================================================================= */
+@media (max-width: 900px){
+  .menu-abrir{ display: none; }
+  /* com a gaveta aberta, o botão volta como "fechar" por cima dela */
+  body.menu-aberto .menu-abrir{ display: flex; z-index: calc(var(--z-navbar) + 6); }
+  .topo__acoes{ margin-right: 0; }
+
+  .menu{ width: min(340px, 88vw); padding-top: max(64px, env(safe-area-inset-top)); }
+  .menu__grupo{ display: block; }
+  .menu__pai{
+    display: block; width: 100%; text-align: left; cursor: default;
+    padding: 20px 12px 6px;
+    font-size: 11.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--tx-3);
+  }
+  .menu__pai .menu__seta{ display: none; }
+  .menu__sub{ display: flex; flex-direction: column; }
+  .menu .menu__item{
+    flex-direction: column; align-items: flex-start; gap: 2px;
+    min-height: 52px; justify-content: center;
+    font-size: 15px; font-weight: 600; letter-spacing: 0; text-transform: none;
+    border-left-width: 3px;
+  }
+  .menu .menu__item small{ font-size: 12.5px; font-weight: 400; color: var(--tx-3); }
+  .menu .menu__item--topo{ font-size: 15px; }
+  .menu .menu__item[hidden]{ display: none; }
+}
+@media (min-width: 901px){ .menu__item small{ display: none; } .menu__sub .menu__item small{ display: block; } }
+
+/* =========================================================================
+   BARRA INFERIOR — telemóvel, como numa aplicação
+   ========================================================================= */
+.barra-inferior{ display: none; }
+
+@media (max-width: 900px){
+  .barra-inferior{
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: calc(var(--z-navbar) + 3);
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    height: calc(var(--altura-barra-inferior) + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    background: rgba(10,12,11,.94);
+    border-top: 1px solid var(--borda);
+  }
+  @supports (backdrop-filter: blur(1px)){
+    .barra-inferior{ background: rgba(10,12,11,.82); backdrop-filter: blur(18px) saturate(150%); }
+  }
+  body.trancado .barra-inferior{ display: none; }
+
+  .barra-inferior__item{
+    position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    min-height: var(--altura-barra-inferior);
+    font-size: 11px; font-weight: 600; letter-spacing: .02em;
+    color: var(--tx-3);
+    -webkit-tap-highlight-color: transparent;
+    transition: color var(--t-rapida);
+  }
+  .barra-inferior__item .icone{ width: 23px; height: 23px; transition: transform var(--t-media) var(--ease-saida); }
+  .barra-inferior__item::before{
+    content: ''; position: absolute; top: 0; left: 50%; width: 28px; height: 3px; margin-left: -14px;
+    border-radius: 0 0 3px 3px; background: var(--verde-claro);
+    transform: scaleX(0); transition: transform var(--t-media) var(--ease-saida);
+  }
+  .barra-inferior__item.is-on{ color: var(--tx-1); }
+  .barra-inferior__item.is-on .icone{ color: var(--verde-claro); }
+  .barra-inferior__item.is-on::before{ transform: scaleX(1); }
+  .barra-inferior__item:active .icone{ transform: scale(.88); }
+
+  /* ao vivo: o terceiro botão passa a "Ao vivo" com um ponto a pulsar */
+  .barra-inferior__pulso{
+    position: absolute; top: 10px; left: calc(50% + 8px);
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--verde-claro); box-shadow: 0 0 0 2px var(--fundo);
+    display: none;
+  }
+  .barra-inferior__item--vivo.a-jogar .barra-inferior__pulso{ display: block; animation: pulsa 1.8s infinite; }
+  .barra-inferior__item--vivo.a-jogar{ color: var(--verde-claro); }
+
+  /* o conteúdo não fica escondido por baixo da barra */
+  body{ padding-bottom: calc(var(--altura-barra-inferior) + env(safe-area-inset-bottom)); }
+  .ao-topo{ bottom: calc(var(--altura-barra-inferior) + env(safe-area-inset-bottom) + 14px) !important; }
+}
+
+/* =========================================================================
+   CABEÇALHO DAS VISTAS E SEPARADORES
+   ========================================================================= */
+.vista__cabeca{ margin-bottom: 28px; max-width: 760px; }
+.vista__titulo{
+  font-family: var(--f-tit); font-weight: 800; text-transform: uppercase;
+  font-size: clamp(2.1rem, 4.6vw, 3.4rem); line-height: .95; letter-spacing: .005em;
+  color: var(--tx-1);
+}
+.vista__sub{ margin-top: 10px; font-size: 16px; line-height: 1.55; color: var(--tx-2); }
+
+.separadores{
+  display: inline-flex; gap: 4px; max-width: 100%;
+  padding: 4px; margin-bottom: 28px;
+  background: var(--fundo-2); border: 1px solid var(--borda); border-radius: 12px;
+  overflow-x: auto; scrollbar-width: none;
+}
+.separadores::-webkit-scrollbar{ display: none; }
+.separador{
+  flex: none; min-height: 40px; padding: 0 16px; border-radius: 9px;
+  font-size: 13px; font-weight: 600; color: var(--tx-3); white-space: nowrap;
+  transition: background var(--t-rapida), color var(--t-rapida);
+}
+.separador:hover{ color: var(--tx-1); }
+.separador.is-on{ background: var(--cartao-alto); color: var(--tx-1); box-shadow: 0 1px 2px rgba(0,0,0,.4); }
+.separador__n{ margin-left: 6px; font-weight: 500; color: var(--tx-3); font-variant-numeric: tabular-nums; }
+@media (max-width: 820px){ .separador{ min-height: 44px; } }
+
+/* =========================================================================
+   ESTADOS — vazio, erro, a carregar
+   ========================================================================= */
+.estado{
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+  padding: 28px; border-radius: 14px;
+  background: var(--cartao); border: 1px dashed var(--linha-forte);
+}
+.estado__titulo{ font-family: var(--f-tit); font-weight: 700; font-size: 22px; text-transform: uppercase; letter-spacing: .02em; color: var(--tx-1); }
+.estado__texto{ font-size: 14.5px; line-height: 1.55; color: var(--tx-2); max-width: 56ch; }
+.estado--erro{ border-color: rgba(224,82,82,.35); }
+.estado .botao-texto{ margin-top: 4px; }
+.botao-texto{
+  display: inline-flex; align-items: center; gap: 6px; min-height: 40px;
+  font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--verde-claro);
+}
+.botao-texto:hover{ color: #fff; }

@@ -129,7 +129,7 @@ body.rolou .cabeca .marca-txt span{ opacity: 0; max-height: 0; margin-top: 0; }
   }
   .cabeca .menu__item{
     position: relative;
-    padding: 14px 14px 16px;
+    padding: 14px 14px 16px; text-transform: uppercase;
     font-size: 13px; font-weight: 600; letter-spacing: .08em;
     color: var(--tx-2); border: 0;
     transition: color .2s;
@@ -146,18 +146,6 @@ body.rolou .cabeca .marca-txt span{ opacity: 0; max-height: 0; margin-top: 0; }
   .cabeca .menu__item.is-on::after{ transform: scaleX(1); background: var(--verde-claro); }
   .cabeca .menu__estado{ font-size: 11.5px; color: var(--tx-3); }
 }
-/* entre tablet e portátil pequeno, a navegação aperta; se ainda sobrar,
-   a ponta desvanece em vez de cortar uma palavra a meio */
-@media (min-width: 901px) and (max-width: 1240px){
-  .cabeca .menu__item{ padding-inline: 9px; font-size: 12px; letter-spacing: .05em; }
-  .cabeca .menu__item::after{ left: 9px; right: 9px; }
-  .cabeca .menu__estado{ display: none; }
-  .cabeca .menu{
-    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent);
-            mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent);
-  }
-}
-
 /* =========================================================================
    PALCO — o destaque
    ========================================================================= */
@@ -400,7 +388,7 @@ body.rolou .cabeca .marca-txt span{ opacity: 0; max-height: 0; margin-top: 0; }
 }
 .capa__marca{
   position: absolute; inset: 0; z-index: 0;
-  background: url('../img/crest.svg') center / 26% auto no-repeat;
+  background: url('../img/marca/emblema-128.webp') center / 26% auto no-repeat;
   opacity: .9;
 }
 .capa--vazia img{ display: none; }
@@ -465,7 +453,7 @@ body.rolou .cabeca .marca-txt span{ opacity: 0; max-height: 0; margin-top: 0; }
 }
 .ed--tipografico .ed__ligacao::before{
   content: ''; position: absolute; top: 28px; right: 28px; width: 64px; height: 76px;
-  background: url('../img/crest.svg') center / contain no-repeat; opacity: .9;
+  background: url('../img/marca/emblema-128.webp') center / contain no-repeat; opacity: .9;
 }
 .ed--tipografico .ed__corpo{ gap: 14px; position: relative; }
 .ed--tipografico .ed__titulo{ font-size: clamp(2rem, 3vw, 2.75rem); -webkit-line-clamp: 4; max-width: 20ch; }
