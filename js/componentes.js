@@ -90,6 +90,68 @@ const Componentes = (() => {
     return corte.slice(0, corte.lastIndexOf(' ')) + '…';
   }
 
+  /* Imagem de uma notícia, com capa da marca por baixo. Se a fotografia
+     não existir ou falhar, fica a capa (listas verdes + emblema), que é
+     da casa e não parece um buraco. */
+  /* os links vêm dos feeds: só http(s) chega a um href */
+  const ligacao = u => /^https?:\/\//i.test(u || '') ? seguro(u) : '#';
+
+  function capa(n, { grande = false, prioridade = false } = {}){
+    const src = n.imagem ? (grande ? imagemGrande(n.imagem) : n.imagem) : '';
+    const reserva = n.imagem ? seguro(n.imagem) : '';
+    return `
+      <div class="capa ${n.imagem ? '' : 'capa--vazia'}">
+        <span class="capa__marca" aria-hidden="true"></span>
+        ${src ? `<img src="${seguro(src)}" alt="" decoding="async"
+             ${prioridade ? 'fetchpriority="high"' : 'loading="lazy"'}
+             onerror="if('${reserva}'&&this.src!=='${reserva}'){this.src='${reserva}'}else{this.closest('.capa').classList.add('capa--vazia')}">` : ''}
+      </div>`;
+  }
+
+  /* ---------------------------------------------------------------------
+     CARTÃO EDITORIAL — a página inicial
+     variante: 'principal' (grande) · 'secundaria' · 'curta'
+     --------------------------------------------------------------------- */
+  function cartaoEditorial(n, variante = 'curta', destaque = ''){
+    const tamanhoResumo = { principal: 220, secundaria: 0, curta: 0 }[variante];
+    const resumo = tamanhoResumo ? destacar(resumir(n.resumo, tamanhoResumo), destaque) : '';
+    /* uma principal sem fotografia não fica com um bloco vazio enorme:
+       passa a cartão tipográfico, com o título grande sobre as listas */
+    const tipografico = variante === 'principal' && !n.imagem;
+    /* sem fotografia não se inventa uma: o cartão fica só com texto */
+    const semFoto = !n.imagem && !tipografico;
+    return `
+    <article class="ed ed--${variante} ${tipografico ? 'ed--tipografico' : ''} ${semFoto ? 'ed--sem-foto' : ''}">
+      <a class="ed__ligacao" href="${ligacao(n.link)}" target="_blank" rel="noopener"
+         data-link="${seguro(n.link)}">
+        ${n.imagem ? capa(n, { grande: variante === 'principal' }) : ''}
+        <div class="ed__corpo">
+          <div class="ed__meta">
+            <span class="etiqueta etiqueta--${categoriaClasse(n.categoria)}">${seguro(n.categoria)}</span>
+            <time datetime="${n.data.toISOString()}">${haQuanto(n.data)}</time>
+          </div>
+          <h3 class="ed__titulo">${destacar(n.titulo, destaque)}</h3>
+          ${resumo ? `<p class="ed__resumo">${resumo}</p>` : ''}
+          <span class="ed__fonte">${seguro(n.fonte)}</span>
+        </div>
+      </a>
+    </article>`;
+  }
+
+  /* manchete numa lista: hora, título e jornal — para as que não têm foto */
+  function manchete(n, destaque = ''){
+    return `
+    <li class="manchete">
+      <a href="${ligacao(n.link)}" target="_blank" rel="noopener" data-link="${seguro(n.link)}" class="manchete__ligacao">
+        <time datetime="${n.data.toISOString()}">${n.data.toDateString() === new Date().toDateString() ? horaCurta(n.data) : dataCurta(n.data)}</time>
+        <span class="manchete__corpo">
+          <span class="manchete__titulo ed__titulo">${destacar(n.titulo, destaque)}</span>
+          <span class="manchete__meta"><i class="manchete__cat manchete__cat--${categoriaClasse(n.categoria)}" aria-hidden="true"></i>${seguro(n.categoria)} · <span class="ed__fonte">${seguro(n.fonte)}</span></span>
+        </span>
+      </a>
+    </li>`;
+  }
+
   /* ---------------------------------------------------------------------
      CARTÃO DE NOTÍCIA
      modo: 'lista' (imagem à esquerda) · 'grelha' (imagem em cima)
@@ -135,14 +197,14 @@ const Componentes = (() => {
   /* ---------------------------------------------------------------------
      HERO — a notícia principal
      --------------------------------------------------------------------- */
-  function hero(n, destaque = ''){
+  function hero(n, destaque = '', ordem = 0){
     if(!n) return esqueletoHero();
     return `
     <article class="hero">
-      <a class="hero__ligacao" href="#noticia/${encodeURIComponent(n.link)}" data-link="${seguro(n.link)}">
+      <a class="hero__ligacao" href="${ligacao(n.link)}" target="_blank" rel="noopener" data-link="${seguro(n.link)}">
         <div class="hero__foto">
           ${n.imagem ? `<img src="${seguro(imagemGrande(n.imagem))}" alt=""
-                 fetchpriority="high" decoding="async"
+                 ${ordem === 0 ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async"
                  onerror="if(this.src!=='${seguro(n.imagem)}'){this.src='${seguro(n.imagem)}'}else{this.closest('.hero__foto').classList.add('sem-foto')}"
                  onload="if(this.naturalWidth<520)this.closest('.hero__foto').classList.add('sem-foto')">` : ''}
         </div>
@@ -150,12 +212,14 @@ const Componentes = (() => {
         <div class="hero__txt">
           <div class="hero__meta">
             <span class="etiqueta etiqueta--${categoriaClasse(n.categoria)}">${seguro(n.categoria)}</span>
-            <span>${seguro(n.fonte)}</span>
+            <span class="hero__fonte">${seguro(n.fonte)}</span>
             <time datetime="${n.data.toISOString()}">${haQuanto(n.data)}</time>
           </div>
           <h2 class="hero__titulo">${destacar(n.titulo, destaque)}</h2>
-          ${n.resumo ? `<p class="hero__resumo">${destacar(resumir(n.resumo, 190), destaque)}</p>` : ''}
-          <span class="botao botao--principal">Ler notícia <i aria-hidden="true">→</i></span>
+          ${n.resumo ? `<p class="hero__resumo">${destacar(resumir(n.resumo, 200), destaque)}</p>` : ''}
+          <span class="botao botao--hero">Ler notícia
+            <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </span>
         </div>
       </a>
     </article>`;
@@ -191,6 +255,14 @@ const Componentes = (() => {
       </div>
     </div>`).join('');
 
+  const esqueletoEditorial = () => `
+    <div class="editorial__topo" aria-hidden="true">
+      <div class="osso ed-osso ed-osso--principal"></div>
+      <div class="editorial__lado">
+        ${'<div class="osso ed-osso"></div>'.repeat(3)}
+      </div>
+    </div>`;
+
   const esqueletoHero = () => `
     <div class="hero hero--osso" aria-hidden="true"><div class="osso osso--hero"></div></div>`;
 
@@ -217,7 +289,7 @@ const Componentes = (() => {
 
   return {
     seguro, destacar, haQuanto, dataCurta, horaCurta, resumir,
-    cartaoNoticia, hero, itemCompacto, categoriaClasse, imagemGrande,
-    esqueletoCartao, esqueletoHero, esqueletoCompacto, vazio
+    cartaoNoticia, cartaoEditorial, manchete, capa, hero, itemCompacto, categoriaClasse, imagemGrande,
+    esqueletoCartao, esqueletoEditorial, esqueletoHero, esqueletoCompacto, vazio
   };
 })();

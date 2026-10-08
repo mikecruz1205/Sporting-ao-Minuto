@@ -595,13 +595,15 @@ function pintarHome(){
   /* ---- últimas ---- */
   const alvoUltimas = $('#ultimas');
   if(alvoUltimas){
-    const restantes = lista.filter(n => n !== principal)
+    /* o que já está no palco não se repete logo a seguir */
+    const noPalco = new Set(heroLista.map(n => n.link));
+    const restantes = lista.filter(n => !noPalco.has(n.link))
                            .filter(n => categoriaHome === 'todas' || n.categoria === categoriaHome)
-                           .slice(0,8);
+                           .slice(0, 13);
     alvoUltimas.innerHTML = !NOTICIAS.length
-      ? Componentes.esqueletoCartao(5)
+      ? Componentes.esqueletoEditorial()
       : restantes.length
-        ? restantes.map(n => Componentes.cartaoNoticia(n, {destaque: procuraTexto})).join('')
+        ? composicaoEditorial(restantes)
         : Componentes.vazio('Nada nesta categoria',
             'Experimenta outro filtro — as notícias entram de minuto a minuto.',
             tacaSVG('taca', 'var(--texto-3)'));
@@ -614,7 +616,7 @@ function pintarHome(){
     alvoMercado.innerHTML = !NOTICIAS.length
       ? Componentes.esqueletoCartao(3)
       : mercado.length
-        ? mercado.map(n => Componentes.cartaoNoticia(n, {modo:'grelha'})).join('')
+        ? mercado.map(n => Componentes.cartaoEditorial(n, 'curta')).join('')
         : Componentes.vazio('Mercado calmo', 'Sem movimentações na imprensa neste momento.',
             tacaSVG('supertaca', 'var(--texto-3)'));
   }
@@ -626,11 +628,71 @@ function pintarHome(){
     alvoVideos.closest('.seccao').hidden = NOTICIAS.length > 0 && videos.length === 0;
     alvoVideos.innerHTML = !NOTICIAS.length
       ? Componentes.esqueletoCartao(2)
-      : videos.map(n => Componentes.cartaoNoticia(n, {modo:'grelha'})).join('');
+      : videos.map(n => Componentes.cartaoEditorial(n, 'curta')).join('');
   }
 
   /* ---- mais lidas ---- */
   pintarMaisLidas();
+  /* a entrada só se faz na primeira pintura com notícias; as que chegam
+     depois, de minuto a minuto, aparecem sem voltar a animar a página */
+  if(NOTICIAS.length && !homeRevelada){
+    homeRevelada = true;
+    revelar($('#vista-inicio'));
+  }
+}
+let homeRevelada = false;
+
+/* Uma principal grande, três secundárias ao lado e o resto em grelha.
+   As que têm fotografia vão primeiro para os lugares grandes — uma
+   principal sem imagem estraga a página toda — mas dentro de cada grupo
+   mantém-se a ordem por data. */
+function composicaoEditorial(lista){
+  const comFoto = n => !!n.imagem;
+  const porFoto = (a, b) => comFoto(b) - comFoto(a);       // estável: dentro de cada grupo fica a data
+  const topo = [...lista].sort(porFoto).slice(0, 4);
+  const resto = lista.filter(n => !topo.includes(n));
+  /* com fotografia vão para cartões; sem fotografia, para a lista de
+     manchetes — uma grelha de capas vazias iguais não diz nada */
+  let grelha = resto.filter(comFoto).slice(0, 6);
+  if(grelha.length < 2) grelha = [];
+  const manchetes = resto.filter(n => !grelha.includes(n)).slice(0, 10);
+
+  const [principal, ...secundarias] = topo;
+  const d = procuraTexto;
+  return `
+    <div class="editorial__topo">
+      ${principal ? Componentes.cartaoEditorial(principal, 'principal', d) : ''}
+      ${secundarias.length ? `<div class="editorial__lado">
+        ${secundarias.map(n => Componentes.cartaoEditorial(n, 'secundaria', d)).join('')}
+      </div>` : ''}
+    </div>
+    ${grelha.length ? `<div class="editorial__grelha">
+      ${grelha.map(n => Componentes.cartaoEditorial(n, 'curta', d)).join('')}
+    </div>` : ''}
+    ${manchetes.length ? `<div class="editorial__manchetes">
+      <h3 class="editorial__sub">Mais manchetes</h3>
+      <ol class="manchetes">${manchetes.map(n => Componentes.manchete(n, d)).join('')}</ol>
+    </div>` : ''}`;
+}
+
+/* Os cartões entram com um deslize curto quando chegam ao ecrã.
+   Uma vez visto, fica visto — não se anima de cada vez que se volta. */
+let observadorRevelar = null;
+function revelar(raiz){
+  if(!raiz) return;
+  const alvos = raiz.querySelectorAll('.ed:not(.visto), .cartao:not(.visto), .caixa:not(.visto)');
+  if(!('IntersectionObserver' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches){
+    alvos.forEach(el => el.classList.add('visto'));
+    return;
+  }
+  observadorRevelar ||= new IntersectionObserver(entradas => {
+    entradas.forEach(e => {
+      if(!e.isIntersecting) return;
+      e.target.classList.add('visto');
+      observadorRevelar.unobserve(e.target);
+    });
+  }, { rootMargin: '0px 0px -40px 0px' });
+  alvos.forEach(el => { el.classList.add('revela'); observadorRevelar.observe(el); });
 }
 
 /* =========================================================================
@@ -665,12 +727,20 @@ function montarHero(lista, principal){
   heroIdx = 0;
 
   alvo.innerHTML = heroLista
-    .map((n,i) => `<div class="hero-slide ${i===0?'is-on':''}" data-i="${i}">
-        ${Componentes.hero(n, procuraTexto)}</div>`).join('');
+    .map((n,i) => `<div class="hero-slide ${i===0?'is-on':''}" data-i="${i}"
+        role="tabpanel" aria-roledescription="destaque" aria-label="${i+1} de ${heroLista.length}">
+        ${Componentes.hero(n, procuraTexto, i)}</div>`).join('');
 
+  /* em vez de pontos, a fila do que vem a seguir — número, título e a
+     barra que enche até mudar */
   $('#hero-pontos').innerHTML = heroLista.map((n,i) => `
     <button class="hero-ponto ${i===0?'is-on':''}" data-i="${i}" role="tab"
-            aria-selected="${i===0}" aria-label="Destaque ${i+1}"></button>`).join('');
+            aria-selected="${i===0}" aria-label="Destaque ${i+1}: ${Componentes.seguro(n.titulo)}">
+      <span class="hero-ponto__n" aria-hidden="true">${String(i+1).padStart(2,'0')}</span>
+      <span class="hero-ponto__t" aria-hidden="true">${Componentes.seguro(n.titulo)}</span>
+      <span class="hero-ponto__barra" aria-hidden="true"></span>
+    </button>`).join('');
+  document.documentElement.style.setProperty('--hero-segundos', HERO_SEGUNDOS + 's');
 
   $$('#hero-pontos .hero-ponto').forEach(b =>
     b.addEventListener('click', () => mostrarHero(+b.dataset.i, true)));
@@ -693,8 +763,21 @@ function mostrarHero(i, manual){
 
 function arrancarHero(){
   clearInterval(heroRelogio);
+  reiniciarBarraHero();
   if(heroLista.length < 2) return;
-  heroRelogio = setInterval(() => mostrarHero(heroIdx + 1), HERO_SEGUNDOS * 1000);
+  /* quem pediu menos movimento não leva com slides a mudar sozinhos */
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  heroRelogio = setInterval(() => { mostrarHero(heroIdx + 1); reiniciarBarraHero(); }, HERO_SEGUNDOS * 1000);
+}
+
+/* a barra do destaque atual volta a zero e enche outra vez */
+function reiniciarBarraHero(){
+  const caixa = $('.hero-caixa');
+  if(!caixa) return;
+  caixa.classList.remove('a-correr');
+  void caixa.offsetWidth;
+  if(heroLista.length > 1 && !matchMedia('(prefers-reduced-motion: reduce)').matches)
+    caixa.classList.add('a-correr');
 }
 
 function ligarHero(){
@@ -703,8 +786,13 @@ function ligarHero(){
 
   /* com o rato em cima ou com o separador escondido, pára */
   const caixa = $('.hero-caixa');
-  caixa?.addEventListener('mouseenter', () => clearInterval(heroRelogio));
-  caixa?.addEventListener('mouseleave', arrancarHero);
+  caixa?.addEventListener('mouseenter', () => { clearInterval(heroRelogio); caixa.classList.add('em-pausa'); });
+  caixa?.addEventListener('mouseleave', () => { caixa.classList.remove('em-pausa'); arrancarHero(); });
+  /* teclado: setas mudam de destaque quando o foco está no palco */
+  caixa?.addEventListener('keydown', e => {
+    if(e.key === 'ArrowRight'){ mostrarHero(heroIdx + 1, true); e.preventDefault(); }
+    if(e.key === 'ArrowLeft'){  mostrarHero(heroIdx - 1, true); e.preventDefault(); }
+  });
   document.addEventListener('visibilitychange', () =>
     document.hidden ? clearInterval(heroRelogio) : arrancarHero());
 
@@ -906,10 +994,14 @@ function pintarLinhaTempo(){
   const evento = (n,i) => {
     const classe = n.categoria === 'DESTAQUE' ? 'ev--quente'
                  : n.categoria === 'MERCADO'  ? 'ev--mercado' : '';
-    return `<li class="ev ${classe}" style="animation-delay:${i*.03}s">
+    /* menos de meia hora: ainda é novidade */
+    const novo = Date.now() - n.data.getTime() < 30 * 60000;
+    const tipo = n.categoria === 'DESTAQUE' ? 'Destaque' : n.categoria === 'MERCADO' ? 'Mercado' : '';
+    return `<li class="ev ${classe} ${novo ? 'ev--novo' : ''}" style="animation-delay:${Math.min(i,10)*.03}s">
       <span class="ev__hora">${n.data.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'})}</span>
       <span class="ev__marca"><i class="ev__bola"></i><i class="ev__linha"></i></span>
       <span class="ev__txt">
+        ${novo || tipo ? `<span class="ev__selos">${novo ? '<span class="ev__novo">Novo</span>' : ''}${tipo ? `<span class="ev__tipo">${tipo}</span>` : ''}</span>` : ''}
         <a href="${n.link}" target="_blank" rel="noopener"><b>${n.titulo}</b></a>
         <span class="ev__fonte">${n.fonte} · ${haQuanto(n.data)}</span>
       </span>
@@ -939,9 +1031,10 @@ function ligarLeitor(){
     if(!a) return;
     ev.preventDefault();
     const link = a.dataset.link;
-    const cartao = a.closest('.ncartao, .hero, .compacto');
-    const titulo = cartao?.querySelector('.ncartao__titulo, .hero__titulo, b')?.textContent?.trim() || link;
-    const fonte  = cartao?.querySelector('.ncartao__fonte, .hero__meta span:nth-child(2), .compacto__txt span')?.textContent?.trim() || '';
+    const cartao = a.closest('.ed, .manchete, .ncartao, .hero, .compacto');
+    const titulo = cartao?.querySelector('.ed__titulo, .ncartao__titulo, .hero__titulo, b')?.textContent?.trim() || link;
+    const fonte  = cartao?.querySelector('.ed__fonte, .ncartao__fonte, .hero__fonte, .compacto__txt span')?.textContent?.trim() || '';
+    if(!/^https?:\/\//i.test(link)) return;
     registarLeitura(link, titulo, fonte);
     pintarMaisLidas();
     window.open(link, '_blank', 'noopener');
@@ -975,20 +1068,33 @@ function pintarProximoJogo(){
   const j = lista[jogoIdx];
   const d = new Date(j.data);
 
+  const nos = eSporting(j.casa) ? 'casa' : 'fora';
+  const dia = d.toLocaleDateString('pt-PT', { weekday:'long', day:'numeric', month:'long' });
+  const equipa = (nome, lado) => `
+    <div class="jogo__eq ${lado === nos ? 'e-nos' : ''}">
+      <span class="jogo__escudo"><img src="${emblemaEquipa(nome)}" alt=""></span>
+      <span class="jogo__nome">${nome}</span>
+      <span class="jogo__lado">${lado === 'casa' ? 'Casa' : 'Fora'}</span>
+    </div>`;
+
   alvo.innerHTML = `
-    <div class="jogo__comp">${j.comp}</div>
+    <div class="jogo__comp"><span>${j.comp}</span>${lista.length > 1 ? `<span class="jogo__pos">${jogoIdx + 1}/${lista.length}</span>` : ''}</div>
     <div class="jogo__equipas">
-      <div class="jogo__eq"><img src="${emblemaEquipa(j.casa)}" alt=""><span>${j.casa.toUpperCase()}</span></div>
-      <div class="jogo__x">X</div>
-      <div class="jogo__eq"><img src="${emblemaEquipa(j.fora)}" alt=""><span>${j.fora.toUpperCase()}</span></div>
+      ${equipa(j.casa, 'casa')}
+      <div class="jogo__centro">
+        <span class="jogo__hora">${horaJogo(j, d)}</span>
+        <span class="jogo__dia">${dia}</span>
+      </div>
+      ${equipa(j.fora, 'fora')}
     </div>
-    <div class="jogo__quando">${d.toLocaleDateString('pt-PT',{day:'2-digit',month:'long',year:'numeric'}).toUpperCase()} · ${horaJogo(j, d)}</div>
-    <div class="jogo__onde">${(j.local||'').toUpperCase()}</div>
-    <div class="jogo__conta">
-      <div><b id="c-d">00</b><i>DIAS</i></div>
-      <div><b id="c-h">00</b><i>HORAS</i></div>
-      <div><b id="c-m">00</b><i>MIN</i></div>
-      <div><b id="c-s">00</b><i>SEG</i></div>
+    ${j.local ? `<div class="jogo__onde">
+      <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+      ${j.local}</div>` : ''}
+    <div class="jogo__conta" role="timer" aria-label="Tempo até ao jogo">
+      <div><b id="c-d">00</b><i>dias</i></div>
+      <div><b id="c-h">00</b><i>horas</i></div>
+      <div><b id="c-m">00</b><i>min</i></div>
+      <div class="jogo__seg"><b id="c-s">00</b><i>seg</i></div>
     </div>`;
 
   clearInterval(contaTimer);
@@ -1000,7 +1106,9 @@ function pintarProximoJogo(){
     el('c-d').textContent = p(Math.floor(s/86400));
     el('c-h').textContent = p(Math.floor(s%86400/3600));
     el('c-m').textContent = p(Math.floor(s%3600/60));
-    el('c-s').textContent = p(s%60);
+    const seg = el('c-s');
+    seg.textContent = p(s%60);
+    seg.classList.remove('tique'); void seg.offsetWidth; seg.classList.add('tique');
   };
   tick();
   contaTimer = setInterval(tick, 1000);
@@ -3246,9 +3354,33 @@ function ligarMenuMobile(){
 
   /* a barra fica colada por baixo do cabeçalho — a altura é medida, não adivinhada */
   const medir = () => document.documentElement.style.setProperty(
-    '--altura-topo', ($('.topo')?.offsetHeight || 92) + 'px');
+    '--altura-topo', ($('#cabeca')?.offsetHeight || $('.topo')?.offsetHeight || 92) + 'px');
   medir();
   addEventListener('resize', medir);
+}
+
+/* Passados uns 80px de scroll, a faixa da marca encolhe e o emblema
+   pequeno aparece na navegação. A altura muda, por isso volta-se a medir
+   para a faixa de dia de jogo continuar colada por baixo. */
+function ligarCabeca(){
+  const cabeca = $('#cabeca');
+  if(!cabeca) return;
+  let rolou = null, aEsperar = false;
+  const ver = () => {
+    aEsperar = false;
+    const agora = scrollY > 80;
+    if(agora === rolou) return;
+    rolou = agora;
+    document.body.classList.toggle('rolou', agora);
+    setTimeout(() => document.documentElement.style.setProperty(
+      '--altura-topo', cabeca.offsetHeight + 'px'), 260);
+  };
+  addEventListener('scroll', () => {
+    if(aEsperar) return;
+    aEsperar = true;
+    requestAnimationFrame(ver);
+  }, { passive:true });
+  ver();
 }
 
 function ligarAoTopo(){
@@ -3412,6 +3544,15 @@ async function arranque(){
     b.addEventListener('click', () => irPara(b.dataset.ir)));
 
   $('#minuto-filtro').addEventListener('change', pintarLinhaTempo);
+  $$('#minuto-segmentos .segmento').forEach(b => b.addEventListener('click', () => {
+    $('#minuto-filtro').value = b.dataset.valor;
+    $$('#minuto-segmentos .segmento').forEach(x => {
+      x.classList.toggle('is-on', x === b);
+      x.setAttribute('aria-pressed', x === b);
+    });
+    pintarLinhaTempo();
+  }));
+  ligarCabeca();
 
   $$('#pos-filtro .pilula').forEach(b => b.addEventListener('click', () => {
     filtroPos = b.dataset.pos;
