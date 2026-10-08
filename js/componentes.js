@@ -145,6 +145,36 @@ const Componentes = (() => {
     </article>`;
   }
 
+  /* ---------------------------------------------------------------------
+     NOTÍCIA EM LISTA — vista Notícias, Mercado e Formação
+     imagem 3:2 · categoria · título · resumo · fonte e hora · "Novo"
+     --------------------------------------------------------------------- */
+  const RECENTE_MIN = 45;   // até quantos minutos uma notícia leva "Novo"
+  function itemLista(n, destaque = ''){
+    const minutos = (Date.now() - n.data.getTime()) / 60000;
+    const recente = minutos >= 0 && minutos < RECENTE_MIN;
+    const hora = n.data.toDateString() === new Date().toDateString() ? horaCurta(n.data) : dataCurta(n.data);
+    const resumo = resumir(n.resumo, 180);
+    return `
+    <li class="nl ${recente ? 'nl--recente' : ''}">
+      <a class="nl__ligacao" href="${ligacao(n.link)}" target="_blank" rel="noopener" data-link="${seguro(n.link)}">
+        <span class="nl__capa">${capa(n)}</span>
+        <span class="nl__corpo">
+          <span class="nl__meta">
+            <span class="etiqueta etiqueta--${categoriaClasse(n.categoria)}">${seguro(n.categoria)}</span>
+            ${recente ? '<span class="nl__novo">Novo</span>' : ''}
+          </span>
+          <span class="nl__titulo">${destacar(n.titulo, destaque)}</span>
+          ${resumo ? `<span class="nl__resumo">${destacar(resumo, destaque)}</span>` : ''}
+          <span class="nl__rodape">
+            <span class="nl__fonte">${seguro(n.fonte)}</span>
+            <time datetime="${n.data.toISOString()}">${hora} · ${haQuanto(n.data)}</time>
+          </span>
+        </span>
+      </a>
+    </li>`;
+  }
+
   /* manchete numa lista: hora, título e jornal — para as que não têm foto */
   function manchete(n, destaque = ''){
     return `
@@ -297,7 +327,7 @@ const Componentes = (() => {
 
   return {
     seguro, destacar, haQuanto, dataCurta, horaCurta, resumir,
-    cartaoNoticia, cartaoEditorial, manchete, capa, hero, itemCompacto, categoriaClasse, imagemGrande,
+    cartaoNoticia, cartaoEditorial, manchete, itemLista, capa, hero, itemCompacto, categoriaClasse, imagemGrande,
     esqueletoCartao, esqueletoEditorial, esqueletoHero, esqueletoCompacto, vazio
   };
 })();

@@ -544,17 +544,7 @@ function haQuanto(d){
 const dataCurta = d => `${String(d.getDate()).padStart(2,'0')} ${MESES_CURTOS[d.getMonth()].toUpperCase()}`;
 
 function itemNoticia(n){
-  const img = n.imagem
-    ? `<img src="${n.imagem}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`
-    : `<img src="${escudoIniciais('SCP')}" alt="">`;
-  return `<li><a href="${n.link}" target="_blank" rel="noopener">
-      ${img}
-      <div>
-        <div class="cat">${n.categoria} <i>· ${dataCurta(n.data)} · ${n.fonte}</i></div>
-        <h4>${n.titulo}</h4>
-        <p>${n.resumo || ''}</p>
-      </div>
-    </a></li>`;
+  return Componentes.itemLista(n, procuraTexto);
 }
 
 /* mostra a lista com uma barra por dia, para se perceber o recuo no tempo */
@@ -569,15 +559,98 @@ function agruparPorDia(lista){
     const d = n.data.toDateString();
     if(d !== diaAtual){
       diaAtual = d;
-      const rotulo = d === hoje ? 'HOJE'
-                   : d === ontem ? 'ONTEM'
-                   : n.data.toLocaleDateString('pt-PT',
-                       {weekday:'long', day:'2-digit', month:'long'}).toUpperCase();
+      const rotulo = d === hoje ? 'Hoje'
+                   : d === ontem ? 'Ontem'
+                   : n.data.toLocaleDateString('pt-PT', {weekday:'long', day:'numeric', month:'long'});
       saida += `<li class="dia"><span>${rotulo}</span></li>`;
     }
     saida += itemNoticia(n);
   });
   return saida;
+}
+
+/* ---------------------------------------------------------------------
+   TEMAS DAS NOTÍCIAS — grupos e subtemas para os filtros da vista
+   Notícias. Cada subtema é uma regra sobre o título (e sobre a categoria
+   e o tema que a notícia já tem). São leituras por palavras-chave: nada
+   muda a origem nem a categoria da notícia, e um subtema sem notícias
+   não aparece.
+   --------------------------------------------------------------------- */
+const RX_ENTRADA = /refor[çc]o|contrat(a|ou|ad[oa])\b|\bassin(a|ou)\b|chega(da)? a alvalade|apresentad[oa]|novo le[ãa]o|garante|acordo (com|para) (a )?(contrata|chegada)/i;
+const RX_SAIDA   = /sa[íi]da|deixa(r)? (o sporting|alvalade)|vendid[oa]|venda de|empr[ée]st|rescis|cedid[oa]|rumo a|troca o sporting|despede|adeus|\bsai\b/i;
+const RX_RUMOR   = /interess|alvo|na mira|sondag|poder[áa]|rumor|negocia|proposta|\bquer\b|observa|cobi[çc]a|pretend|segue|aponta/i;
+const RX_ANTEVISAO = /antevis|confer[êe]ncia de imprensa|convocad|onze prov[áa]vel|antes do jogo|pr[ée]-jogo|vai defrontar|defronta|recebe o|visita o|prepara (o|a) (jogo|receção|deslocação)/i;
+const RX_RESULTADO = /\b\d{1,2}-\d{1,2}\b|venc(e|eu)|empat(a|ou)|perd(e|eu)\b|derrot|golei|triunf|vit[óo]ria/i;
+const RX_RESCALDO  = /ap[óo]s o jogo|no final do jogo|rescaldo|reag(e|iu)|rea[çc][ãa]o|declara[çc]|\bnotas\b|an[áa]lise|figura|melhor em campo|depois d[ao] (jogo|vit[óo]ria|empate|derrota)|flash/i;
+const RX_DIRECAO = /varandas|dire[çc][ãa]o|presidente|assembleia|\bSAD\b|elei[çc]|administra[çc]/i;
+const RX_ESTADIO = /est[áa]dio|alvalade xxi|bilhete|lota[çc][ãa]o|relvado|obras|camarote|lugar anual/i;
+const RX_ADEPTOS = /adeptos|claque|juve leo|juventude leonina|torcida|s[óo]cios|\bf[ãa]s\b/i;
+
+const GRUPOS_TEMA = [
+  { id:'sporting', nome:'Sporting', subs:[
+    ['equipa',      'Equipa principal', n => temaDe(n) === 'futebol' && (n.categoria === 'EQUIPA PRINCIPAL' || n.categoria === 'DESTAQUE')],
+    ['formacao',    'Formação',         n => temaDe(n) === 'formacao'],
+    ['feminino',    'Futebol feminino', n => temaDe(n) === 'feminino'],
+    ['academia',    'Academia',         n => /academia|alcochete/i.test(n.titulo)],
+    ['modalidades', 'Modalidades',      n => !['futebol','clube','formacao','feminino'].includes(temaDe(n))]
+  ]},
+  { id:'mercado', nome:'Mercado', subs:[
+    ['entradas', 'Entradas', n => n.categoria === 'MERCADO' && RX_ENTRADA.test(n.titulo)],
+    ['saidas',   'Saídas',   n => n.categoria === 'MERCADO' && RX_SAIDA.test(n.titulo)],
+    ['rumores',  'Rumores',  n => n.categoria === 'MERCADO' && (RX_RUMOR.test(n.titulo) || (!RX_ENTRADA.test(n.titulo) && !RX_SAIDA.test(n.titulo)))]
+  ]},
+  { id:'jogos', nome:'Jogos', subs:[
+    ['antevisao',  'Antevisão',  n => RX_ANTEVISAO.test(n.titulo)],
+    ['resultados', 'Resultados', n => RX_RESULTADO.test(n.titulo)],
+    ['rescaldo',   'Rescaldo',   n => RX_RESCALDO.test(n.titulo)]
+  ]},
+  { id:'clube', nome:'Clube', subs:[
+    ['direcao', 'Direção', n => RX_DIRECAO.test(n.titulo)],
+    ['estadio', 'Estádio', n => RX_ESTADIO.test(n.titulo)],
+    ['adeptos', 'Adeptos', n => RX_ADEPTOS.test(n.titulo)]
+  ]}
+];
+let temaNoticias = 'todos', subtemaNoticias = 'todos';
+
+const grupoTema = id => GRUPOS_TEMA.find(g => g.id === id);
+function noTema(n, grupo, sub){
+  if(grupo === 'todos') return true;
+  const g = grupoTema(grupo);
+  if(!g) return true;
+  if(sub !== 'todos'){ const s = g.subs.find(x => x[0] === sub); return s ? s[2](n) : true; }
+  return g.subs.some(x => x[2](n));
+}
+
+/* desenha as duas linhas de filtros de tema, com as contagens reais */
+function pintarTemasNoticias(base){
+  const alvo = $('#temas-noticias');
+  const linhaSub = $('#subtemas-noticias');
+  if(!alvo || !linhaSub) return;
+  const conta = (g, s = 'todos') => base.filter(n => noTema(n, g, s)).length;
+
+  const grupos = GRUPOS_TEMA.map(g => [g, conta(g.id)]).filter(([, c]) => c > 0);
+  if(temaNoticias !== 'todos' && !grupos.some(([g]) => g.id === temaNoticias)){ temaNoticias = 'todos'; subtemaNoticias = 'todos'; }
+  alvo.innerHTML = [
+    `<button type="button" class="separador ${temaNoticias === 'todos' ? 'is-on' : ''}" data-tema="todos" aria-pressed="${temaNoticias === 'todos'}">Tudo<span class="separador__n">${base.length}</span></button>`,
+    ...grupos.map(([g, c]) => `<button type="button" class="separador ${temaNoticias === g.id ? 'is-on' : ''}" data-tema="${g.id}" aria-pressed="${temaNoticias === g.id}">${g.nome}<span class="separador__n">${c}</span></button>`)
+  ].join('');
+
+  const g = grupoTema(temaNoticias);
+  const subs = g ? g.subs.map(x => [x, conta(g.id, x[0])]).filter(([, c]) => c > 0) : [];
+  linhaSub.hidden = !g || !subs.length;
+  if(g && subtemaNoticias !== 'todos' && !subs.some(([x]) => x[0] === subtemaNoticias)) subtemaNoticias = 'todos';
+  linhaSub.innerHTML = g ? [
+    `<button type="button" class="chip ${subtemaNoticias === 'todos' ? 'is-on' : ''}" data-sub="todos" aria-pressed="${subtemaNoticias === 'todos'}">Todo o ${g.nome.toLowerCase()}</button>`,
+    ...subs.map(([x, c]) => `<button type="button" class="chip ${subtemaNoticias === x[0] ? 'is-on' : ''}" data-sub="${x[0]}" aria-pressed="${subtemaNoticias === x[0]}">${x[1]}<span class="chip__n">${c}</span></button>`)
+  ].join('') : '';
+
+  alvo.querySelectorAll('[data-tema]').forEach(b => b.addEventListener('click', () => {
+    temaNoticias = b.dataset.tema; subtemaNoticias = 'todos'; mostradas = 40; pintarNoticias();
+  }));
+  linhaSub.querySelectorAll('[data-sub]').forEach(b => b.addEventListener('click', () => {
+    subtemaNoticias = b.dataset.sub; mostradas = 40; pintarNoticias();
+  }));
+  requestAnimationFrame(() => marcarTransbordo($('#vista-noticias')));
 }
 
 function noticiasFiltradas(){
@@ -978,16 +1051,21 @@ function pintarNoticias(){
   const curtas = NOTICIAS.filter(n => n.categoria !== 'MERCADO').slice(0,6);
   $('#noticias-curtas').innerHTML = curtas.length ? curtas.map(itemNoticia).join('') : vazio;
 
-  const todas = noticiasFiltradas();
+  /* a fonte e a pesquisa filtram primeiro; o tema por cima disso */
+  const daFonte = noticiasFiltradas();
+  pintarTemasNoticias(daFonte);
+  const todas = daFonte.filter(n => noTema(n, temaNoticias, subtemaNoticias));
   $('#noticias-todas').innerHTML = todas.length
     ? agruparPorDia(todas.slice(0, mostradas))
-    : `<li class="vazio">Nada encontrado${procuraTexto ? ' para «'+procuraTexto+'»' : ''}.</li>`;
+    : `<li class="estado"><p class="estado__titulo">Nada encontrado</p><p class="estado__texto">${procuraTexto
+        ? 'Nenhuma notícia fala de «' + Componentes.seguro(procuraTexto) + '» com estes filtros.'
+        : 'Não há notícias com esta combinação de tema e fonte. Experimenta outro filtro.'}</p></li>`;
 
   const btn = $('#mais-antigas');
   if(btn){
     const restam = todas.length - mostradas;
     btn.hidden = restam <= 0;
-    btn.textContent = `VER MAIS ANTIGAS (${restam})`;
+    btn.textContent = `Ver mais antigas (${restam})`;
   }
   const cont = $('#noticias-conta');
   if(cont) cont.textContent = todas.length
@@ -1022,10 +1100,12 @@ function pintarFontes(){
   const caixa = $('#fontes-filtro');
   if(caixa.dataset.n === String(usadas.length)) return;
   caixa.dataset.n = usadas.length;
-  caixa.innerHTML = `<button class="pilula ${filtroFonte==='todas'?'is-on':''}" data-fonte="todas">TODAS</button>` +
+  const contaFonte = id => NOTICIAS.filter(n => n.canal === id).length;
+  caixa.innerHTML = `<button type="button" class="pilula ${filtroFonte==='todas'?'is-on':''}" data-fonte="todas" aria-pressed="${filtroFonte==='todas'}">Todas</button>` +
     usadas.map(id => {
       const f = CONFIG.feeds.find(x => x.id === id);
-      return `<button class="pilula ${filtroFonte===id?'is-on':''}" data-fonte="${id}">${f?f.nome:id}</button>`;
+      const nome = f ? f.nome.toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase()) : id;
+      return `<button type="button" class="pilula ${filtroFonte===id?'is-on':''}" data-fonte="${id}" aria-pressed="${filtroFonte===id}">${nome}<span class="pilula__n">${contaFonte(id)}</span></button>`;
     }).join('');
   $$('#fontes-filtro .pilula').forEach(b => b.addEventListener('click', () => {
     filtroFonte = b.dataset.fonte;
@@ -1163,9 +1243,9 @@ function ligarLeitor(){
     if(!a) return;
     ev.preventDefault();
     const link = a.dataset.link;
-    const cartao = a.closest('.ed, .manchete, .ncartao, .hero, .compacto');
-    const titulo = cartao?.querySelector('.ed__titulo, .ncartao__titulo, .hero__titulo, b')?.textContent?.trim() || link;
-    const fonte  = cartao?.querySelector('.ed__fonte, .ncartao__fonte, .hero__fonte, .compacto__txt span')?.textContent?.trim() || '';
+    const cartao = a.closest('.nl, .ed, .manchete, .ncartao, .hero, .compacto, .ev');
+    const titulo = cartao?.querySelector('.nl__titulo, .ed__titulo, .ncartao__titulo, .hero__titulo, b')?.textContent?.trim() || link;
+    const fonte  = cartao?.querySelector('.nl__fonte, .ed__fonte, .ncartao__fonte, .hero__fonte, .ev__fonte-nome, .compacto__txt span')?.textContent?.trim() || '';
     if(!/^https?:\/\//i.test(link)) return;
     registarLeitura(link, titulo, fonte);
     pintarMaisLidas();

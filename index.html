@@ -129,13 +129,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Manrope:wght@400..800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/base.css?v=92">
-<link rel="stylesheet" href="css/componentes.css?v=92">
-<link rel="stylesheet" href="css/style.css?v=92">
-<link rel="stylesheet" href="css/portal.css?v=92">
-<link rel="stylesheet" href="css/inicio.css?v=92">
-<link rel="stylesheet" href="css/app.css?v=92">
-<link rel="stylesheet" href="css/editorial.css?v=92">
+<link rel="stylesheet" href="css/base.css?v=94">
+<link rel="stylesheet" href="css/componentes.css?v=94">
+<link rel="stylesheet" href="css/style.css?v=94">
+<link rel="stylesheet" href="css/portal.css?v=94">
+<link rel="stylesheet" href="css/inicio.css?v=94">
+<link rel="stylesheet" href="css/app.css?v=94">
+<link rel="stylesheet" href="css/editorial.css?v=94">
 </head>
 <body class="trancado">
 <!-- ============================ ECRÃ DE CARREGAMENTO (modo aplicação) ============================ -->
@@ -539,21 +539,31 @@
 </div>
 
 <!-- ==================== VISTAS SECUNDÁRIAS ==================== -->
-<main class="vista" id="vista-noticias">
-  <section class="cartao">
-    <div class="cartao__topo">
-      <h2>NOTÍCIAS</h2>
-      <div class="fontes" id="fontes-filtro"></div>
+<main class="vista" id="vista-noticias" aria-labelledby="tit-noticias">
+  <header class="vista__cabeca">
+    <p class="seccao__sobre">De 11 jornais, ao minuto</p>
+    <h2 class="vista__titulo" id="tit-noticias">Notícias</h2>
+  </header>
+
+  <!-- dois tipos de filtro, separados: o tema (do que fala) e a fonte (quem escreve) -->
+  <div class="filtros-noticias">
+    <div class="filtro-linha">
+      <span class="filtro-linha__rotulo" id="rot-tema">Tema</span>
+      <div class="separadores filtro-temas" id="temas-noticias" role="group" aria-labelledby="rot-tema"></div>
     </div>
-    <div class="cartao__corpo">
-      <div class="noticias-barra">
-        <span id="noticias-conta"></span>
-        <span class="feed-estado" id="feed-estado">a ler…</span>
-      </div>
-      <ul class="lista-noticias lista-noticias--grande" id="noticias-todas"></ul>
-      <button class="botao-largo" id="mais-antigas" hidden>VER MAIS ANTIGAS</button>
+    <div class="filtro-linha filtro-linha--sub" id="subtemas-noticias" role="group" aria-label="Dentro do tema" hidden></div>
+    <div class="filtro-linha">
+      <span class="filtro-linha__rotulo" id="rot-fonte">Fonte</span>
+      <div class="fontes fontes--noticias" id="fontes-filtro" role="group" aria-labelledby="rot-fonte"></div>
     </div>
-  </section>
+  </div>
+
+  <div class="noticias-barra">
+    <span id="noticias-conta"></span>
+    <span class="feed-estado" id="feed-estado">a ler…</span>
+  </div>
+  <ul class="lista-noticias lista-noticias--grande" id="noticias-todas"></ul>
+  <button class="botao-largo botao-largo--fantasma" id="mais-antigas" hidden>Ver mais antigas</button>
 </main>
 
 <main class="vista" id="vista-aominuto">
@@ -966,17 +976,17 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.min.js" defer></script>
-<script src="js/nuvem.js?v=92" defer></script>
-<script src="js/jogo.js?v=92" defer></script>
-<script src="js/fd.js?v=92" defer></script>
-<script src="js/componentes.js?v=92" defer></script>
-<script src="js/contas.js?v=92" defer></script>
-<script src="js/arte.js?v=92" defer></script>
-<script src="js/data.js?v=92" defer></script>
-<script src="js/wiki.js?v=92" defer></script>
-<script src="js/tema.js?v=92" defer></script>
-<script src="js/notificacoes.js?v=92" defer></script>
-<script src="js/pwa.js?v=92" defer></script>
-<script src="js/app.js?v=92" defer></script>
+<script src="js/nuvem.js?v=94" defer></script>
+<script src="js/jogo.js?v=94" defer></script>
+<script src="js/fd.js?v=94" defer></script>
+<script src="js/componentes.js?v=94" defer></script>
+<script src="js/contas.js?v=94" defer></script>
+<script src="js/arte.js?v=94" defer></script>
+<script src="js/data.js?v=94" defer></script>
+<script src="js/wiki.js?v=94" defer></script>
+<script src="js/tema.js?v=94" defer></script>
+<script src="js/notificacoes.js?v=94" defer></script>
+<script src="js/pwa.js?v=94" defer></script>
+<script src="js/app.js?v=94" defer></script>
 </body>
 </html>
