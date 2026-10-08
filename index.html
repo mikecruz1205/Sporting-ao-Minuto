@@ -129,13 +129,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Manrope:wght@400..800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/base.css?v=98">
-<link rel="stylesheet" href="css/componentes.css?v=98">
-<link rel="stylesheet" href="css/style.css?v=98">
-<link rel="stylesheet" href="css/portal.css?v=98">
-<link rel="stylesheet" href="css/inicio.css?v=98">
-<link rel="stylesheet" href="css/app.css?v=98">
-<link rel="stylesheet" href="css/editorial.css?v=98">
+<link rel="stylesheet" href="css/base.css?v=100">
+<link rel="stylesheet" href="css/componentes.css?v=100">
+<link rel="stylesheet" href="css/style.css?v=100">
+<link rel="stylesheet" href="css/portal.css?v=100">
+<link rel="stylesheet" href="css/inicio.css?v=100">
+<link rel="stylesheet" href="css/app.css?v=100">
+<link rel="stylesheet" href="css/editorial.css?v=100">
 </head>
 <body class="trancado">
 <!-- ============================ ECRÃ DE CARREGAMENTO (modo aplicação) ============================ -->
@@ -268,9 +268,13 @@
 </button>
 
 <nav class="menu" id="menu" aria-label="Navegação principal">
-  <button class="menu__item menu__item--topo is-on" data-vista="inicio">Início</button>
+  <div class="menu__topo">
+    <img class="menu__emblema" src="/img/marca/emblema-128.webp" alt="" width="40" height="40">
+    <span class="menu__marca"><b>Sporting ao Minuto</b><small>Notícias, jogos e equipa</small></span>
+  </div>
+  <button class="menu__item menu__item--topo is-on" data-vista="inicio"><span class="menu__ico-caixa" aria-hidden="true"><svg class="icone menu__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/></svg></span>Início</button>
   <div class="menu__grupo" data-grupo="noticias">
-    <button class="menu__pai" aria-expanded="false" aria-controls="sub-noticias">Notícias<svg class="icone menu__seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <button class="menu__pai" aria-expanded="false" aria-controls="sub-noticias"><span class="menu__ico-caixa" aria-hidden="true"><svg class="icone menu__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h13a2 2 0 0 1 2 2v13a1 1 0 0 0 2 0V8"/><path d="M4 4v15a2 2 0 0 0 2 2h14"/><path d="M8 8h7M8 12h7M8 16h4"/></svg></span><span class="menu__pai-nome">Notícias</span><svg class="icone menu__seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
     <div class="menu__sub" id="sub-noticias" role="group" aria-label="Notícias">
       <button class="menu__item" data-vista="noticias">Todas as notícias<small>Os 11 jornais, de minuto a minuto</small></button>
       <button class="menu__item" data-vista="aominuto">Ao minuto<small>A linha do tempo completa</small></button>
@@ -278,7 +282,7 @@
     </div>
   </div>
   <div class="menu__grupo" data-grupo="jogos">
-    <button class="menu__pai" aria-expanded="false" aria-controls="sub-jogos">Jogos<svg class="icone menu__seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <button class="menu__pai" aria-expanded="false" aria-controls="sub-jogos"><span class="menu__ico-caixa" aria-hidden="true"><svg class="icone menu__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span><span class="menu__pai-nome">Jogos</span><svg class="icone menu__seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
     <div class="menu__sub" id="sub-jogos" role="group" aria-label="Jogos">
       <button class="menu__item" data-vista="jogos">Calendário e resultados<small>Todos os jogos da época</small></button>
       <button class="menu__item" data-vista="agenda">Agenda<small>Hoje, amanhã e os próximos dias</small></button>
@@ -287,21 +291,21 @@
     </div>
   </div>
   <div class="menu__grupo" data-grupo="equipa">
-    <button class="menu__pai" aria-expanded="false" aria-controls="sub-equipa">Equipa<svg class="icone menu__seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <button class="menu__pai" aria-expanded="false" aria-controls="sub-equipa"><span class="menu__ico-caixa" aria-hidden="true"><svg class="icone menu__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.4 3.5 16 2a4 4 0 0 1-8 0L3.6 3.5a2 2 0 0 0-1.3 2.2l.6 3.5a1 1 0 0 0 1 .8H6v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V10h2.1a1 1 0 0 0 1-.8l.6-3.5a2 2 0 0 0-1.3-2.2Z"/></svg></span><span class="menu__pai-nome">Equipa</span><svg class="icone menu__seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
     <div class="menu__sub" id="sub-equipa" role="group" aria-label="Equipa">
       <button class="menu__item" data-vista="equipa">Plantel<small>Jogadores, fichas e valores</small></button>
       <button class="menu__item" data-vista="estatisticas">Estatísticas<small>Golos, jogos e números da época</small></button>
     </div>
   </div>
-  <button class="menu__item menu__item--topo" data-vista="modalidades">Modalidades</button>
+  <button class="menu__item menu__item--topo" data-vista="modalidades"><span class="menu__ico-caixa" aria-hidden="true"><svg class="icone menu__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="15" r="6"/><path d="M8.2 9.8 5 3h4l3 6M15.8 9.8 19 3h-4l-1.5 3"/></svg></span>Modalidades</button>
   <div class="menu__grupo" data-grupo="comunidade">
-    <button class="menu__pai" aria-expanded="false" aria-controls="sub-comunidade">Comunidade<svg class="icone menu__seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <button class="menu__pai" aria-expanded="false" aria-controls="sub-comunidade"><span class="menu__ico-caixa" aria-hidden="true"><svg class="icone menu__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2Z"/></svg></span><span class="menu__pai-nome">Comunidade</span><svg class="icone menu__seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
     <div class="menu__sub" id="sub-comunidade" role="group" aria-label="Comunidade">
       <button class="menu__item" data-vista="chat">Chat<small>Fala com outros leões</small></button>
       <button class="menu__item" data-vista="formacao">Fantasy<small>Monta o teu onze e soma pontos</small></button>
     </div>
   </div>
-  <button class="menu__item menu__item--topo menu__item--taca" data-vista="clube"><span class="menu__taca" aria-hidden="true"></span>Clube</button>
+  <button class="menu__item menu__item--topo menu__item--taca" data-vista="clube"><span class="menu__ico-caixa" aria-hidden="true"><span class="menu__taca"></span></span>Clube</button>
   <button type="button" class="menu__instalar" id="instalar-gaveta" hidden><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg><span data-rotulo>Instalar aplicação</span></button>
   <div class="menu__conta">
     <button type="button" class="menu__acao" data-tema-botao aria-label="Mudar de tema"><svg class="icone tema-sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="icone tema-lua" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></svg><span data-tema-rotulo>Tema claro</span></button>
@@ -994,17 +998,17 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.min.js" defer></script>
-<script src="js/nuvem.js?v=98" defer></script>
-<script src="js/jogo.js?v=98" defer></script>
-<script src="js/fd.js?v=98" defer></script>
-<script src="js/componentes.js?v=98" defer></script>
-<script src="js/contas.js?v=98" defer></script>
-<script src="js/arte.js?v=98" defer></script>
-<script src="js/data.js?v=98" defer></script>
-<script src="js/wiki.js?v=98" defer></script>
-<script src="js/tema.js?v=98" defer></script>
-<script src="js/notificacoes.js?v=98" defer></script>
-<script src="js/pwa.js?v=98" defer></script>
-<script src="js/app.js?v=98" defer></script>
+<script src="js/nuvem.js?v=100" defer></script>
+<script src="js/jogo.js?v=100" defer></script>
+<script src="js/fd.js?v=100" defer></script>
+<script src="js/componentes.js?v=100" defer></script>
+<script src="js/contas.js?v=100" defer></script>
+<script src="js/arte.js?v=100" defer></script>
+<script src="js/data.js?v=100" defer></script>
+<script src="js/wiki.js?v=100" defer></script>
+<script src="js/tema.js?v=100" defer></script>
+<script src="js/notificacoes.js?v=100" defer></script>
+<script src="js/pwa.js?v=100" defer></script>
+<script src="js/app.js?v=100" defer></script>
 </body>
 </html>
