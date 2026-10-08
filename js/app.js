@@ -1482,10 +1482,10 @@ function pintarProximoJogo(){
     </div>
     ${j.local ? `<p class="cartaz__onde">${ICONE_LOCAL}${j.local}</p>` : ''}
     <div class="contagem" role="timer" aria-label="Tempo até ao início">
-      <div><b id="c-d">00</b><i>dias</i></div>
-      <div><b id="c-h">00</b><i>horas</i></div>
-      <div><b id="c-m">00</b><i>min</i></div>
-      <div class="contagem__seg"><b id="c-s">00</b><i>seg</i></div>
+      <div><b id="c-d">00</b><i data-curto="d">dias</i></div>
+      <div><b id="c-h">00</b><i data-curto="h">horas</i></div>
+      <div><b id="c-m">00</b><i data-curto="m">min</i></div>
+      <div class="contagem__seg"><b id="c-s">00</b><i data-curto="s">seg</i></div>
     </div>
     <div class="cartaz__acoes">
       <button type="button" class="botao-cta" id="ver-proximo">Ver jogo ${ICONE_SETA}</button>

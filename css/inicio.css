@@ -465,3 +465,111 @@
   .palco__controlo{ padding-bottom: 12px; }
   .cartaz .seta{ width: 44px; height: 44px; }
 }
+
+/* =========================================================================
+   TELEMÓVEL — o primeiro ecrã inteiro: destaque + próximo jogo
+   -------------------------------------------------------------------------
+   O cartaz do próximo jogo tinha quase 600 px e aparecia só a ponta por
+   baixo do destaque, cortado pela barra inferior. Agora é compacto
+   (~250 px) e o destaque mede o que sobra do ecrã: os dois cabem juntos
+   nos telemóveis comuns, sem nada cortado a meio.
+   ========================================================================= */
+@media (max-width: 820px){
+  .topo-inicio{ gap: 12px; }
+  .topo-inicio .palco{ margin-bottom: 0; }
+  .topo-inicio .palco .hero-caixa{
+    min-height: 0;
+    height: clamp(360px, calc(100vh - var(--altura-topo, 61px) - var(--altura-barra-inferior, 64px) - 300px), 580px);
+    height: clamp(360px, calc(100svh - var(--altura-topo, 61px) - var(--altura-barra-inferior, 64px) - env(safe-area-inset-bottom) - 300px), 580px);
+  }
+
+  .cartaz{ padding: 10px 16px 16px; }
+  .cartaz__topo{ min-height: 44px; }
+  .cartaz__titulo{ font-family: var(--f-tit); font-size: 17px; font-weight: 800; letter-spacing: .08em; color: var(--tx-1); }
+
+  /* equipas lado a lado com a hora ao meio; prova e estádio por baixo;
+     contagem e botão na mesma linha */
+  .cartaz .cartaz__corpo{
+    margin-top: 6px;
+    display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-areas: "casa quando fora" "prova prova prova" "onde onde onde" "contagem contagem acoes";
+    align-items: center; column-gap: 8px;
+  }
+  .cartaz .cartaz__corpo > .estado, .cartaz .cartaz__corpo > .cartaz__osso{ grid-column: 1 / -1; }
+  .cartaz .cartaz__equipas{ display: contents; }
+  .cartaz .cartaz__equipas > .cartaz__eq:first-child{ grid-area: casa; }
+  .cartaz .cartaz__equipas > .cartaz__eq:last-child{ grid-area: fora; }
+  .cartaz .cartaz__vs, .cartaz .cartaz__lado, .cartaz .cartaz__pos{ display: none; }
+  .cartaz .cartaz__eq{ display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; text-align: center; }
+  .cartaz .cartaz__escudo{ width: 54px; height: 54px; }
+  .cartaz .cartaz__escudo img{ width: 38px; height: 38px; }
+  .cartaz .cartaz__nome{ max-width: 100%; font-size: 16.5px; white-space: nowrap; }
+
+  .cartaz .cartaz__quando{
+    grid-area: quando; flex-direction: column; flex-wrap: nowrap; align-items: center; gap: 2px;
+    margin: 0; padding: 0 4px; border: 0; text-align: center;
+  }
+  .cartaz .cartaz__hora{ order: -1; font-size: 38px; margin-bottom: 2px; }
+  .cartaz .cartaz__data{ font-size: 13.5px; line-height: 1.2; color: var(--tx-1); }
+  .cartaz .cartaz__dia{ flex-basis: auto; font-size: 12px; line-height: 1.2; }
+  /* o esqueleto com a altura do cartaz final, para nada saltar */
+  .cartaz__osso{ gap: 12px; }
+  .cartaz__osso .osso{ height: 76px; }
+  .cartaz__osso .osso:nth-child(2){ height: 40px; }
+  .cartaz__osso .osso:nth-child(3){ height: 44px; }
+
+  .cartaz .cartaz__prova{
+    grid-area: prova; flex-direction: row; justify-content: center; gap: 6px;
+    margin-top: 12px; min-width: 0; white-space: nowrap; overflow: hidden;
+  }
+  .cartaz .cartaz__prova span:first-child{ font-family: var(--f-ui); font-size: 13px; font-weight: 800; letter-spacing: .06em; }
+  .cartaz .cartaz__prova span + span{ font-size: 13px; overflow: hidden; text-overflow: ellipsis; }
+  .cartaz .cartaz__prova span + span::before{ content: "·"; margin-right: 6px; color: var(--tx-3); }
+  .cartaz .cartaz__onde{
+    grid-area: onde; display: block; margin-top: 2px; min-width: 0;
+    font-size: 12.5px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .cartaz .cartaz__onde .icone{ display: inline-block; vertical-align: -2px; margin-right: 4px; }
+
+  /* contagem numa régua curta: 02d 04h 12m 33s */
+  .cartaz .contagem{ grid-area: contagem; display: flex; align-items: baseline; gap: 10px; margin: 14px 0 0; padding: 0; }
+  .cartaz .contagem > div{ flex-direction: row; align-items: baseline; gap: 1px; padding: 0; border: 0; }
+  .cartaz .contagem b{ font-size: 23px; }
+  .cartaz .contagem i{ font-size: 0; letter-spacing: 0; }
+  .cartaz .contagem i::after{ content: attr(data-curto); font-size: 12.5px; font-weight: 700; color: var(--tx-2); text-transform: none; }
+  .cartaz .cartaz__acoes{ grid-area: acoes; margin: 14px 0 0; justify-content: flex-end; }
+  .cartaz .botao-cta{ flex: none; min-height: 44px; padding: 0 16px; font-size: 13px; }
+}
+
+/* =========================================================================
+   SECÇÕES — o mesmo cabeçalho em todo o Início
+   -------------------------------------------------------------------------
+   Sem coluna lateral (tablet e telemóvel), os cartões do lado (Ao minuto,
+   Classificação, Mais lidas) passam a secções como as outras: título
+   grande com o fio verde, sem cartão dentro de cartão.
+   ========================================================================= */
+.pagina__lado .cartao__topo h2{ display: flex; align-items: center; gap: 10px; }
+.pagina__lado .cartao__topo h2::before{ content: ''; flex: none; width: 4px; height: 18px; border-radius: 2px; background: var(--verde-claro); }
+
+@media (max-width: 1000px){
+  #vista-inicio .pagina__lado .cartao{ background: none; border: 0; border-radius: 0; box-shadow: none; overflow: visible; }
+  #vista-inicio .pagina__lado .cartao__topo{
+    position: relative; align-items: flex-end;
+    padding: 0 0 12px; border-bottom: 1px solid var(--borda); background: none;
+  }
+  #vista-inicio .pagina__lado .cartao__topo::after{ content: ''; position: absolute; left: 0; bottom: -1px; width: 48px; height: 2px; background: var(--verde-claro); }
+  #vista-inicio .pagina__lado .cartao__topo h2{
+    font-family: var(--f-tit); font-weight: 800; font-size: clamp(1.55rem, 7.4vw, 2rem);
+    letter-spacing: .01em; line-height: 1; text-transform: uppercase; color: var(--texto);
+  }
+  #vista-inicio .pagina__lado .cartao__topo h2::before{ content: none; }
+  #vista-inicio .pagina__lado .cartao__corpo{ padding: 16px 0 0; }
+
+  /* ao minuto sem scroll dentro do scroll: as seis mais recentes e o botão */
+  #vista-inicio .cartao--vivo .linha-tempo{ max-height: none; overflow: visible; padding-right: 0; -webkit-mask-image: none; mask-image: none; }
+  #vista-inicio .cartao--vivo .linha-tempo .ev:nth-child(n+7){ display: none; }
+}
+@media (max-width: 820px){
+  /* últimas: a principal, as três ao lado e cinco manchetes; o resto está em "Ver todas" */
+  .editorial__manchetes .manchete:nth-child(n+6){ display: none; }
+}
