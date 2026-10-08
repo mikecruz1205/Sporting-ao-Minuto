@@ -146,19 +146,43 @@ const Componentes = (() => {
   }
 
   /* ---------------------------------------------------------------------
-     NOTÍCIA EM LISTA — vista Notícias, Mercado e Formação
-     imagem 3:2 · categoria · título · resumo · fonte e hora · "Novo"
+     FONTE — a cor e a sigla de cada jornal
+     A cor vem da classe f-<canal> (editorial.css). Serve para reconhecer
+     a fonte de relance e dar cara às notícias sem fotografia; não são as
+     cores oficiais das marcas.
+     --------------------------------------------------------------------- */
+  const SIGLAS = { leonino:'L', record:'R', mf:'MF', nam:'NM', zz:'zz', rtp:'RTP',
+                   obs:'O', bnr:'BR', f365:'365', cm:'CM', publico:'P' };
+  const classeFonte = n => SIGLAS[n.canal] ? 'f-' + n.canal : 'f-outra';
+  const sigla = n => SIGLAS[n.canal] ||
+    String(n.fonte || '?').trim().split(/\s+/).map(p => p[0]).join('').slice(0, 3).toUpperCase();
+  /* bolinha com a cor do jornal e o nome */
+  const etiquetaFonte = n =>
+    `<span class="fonte-tag ${classeFonte(n)}"><i aria-hidden="true"></i>${seguro(n.fonte)}</span>`;
+  /* a sigla num quadrado com a cor do jornal */
+  const siglaFonte = (n, extra = '') =>
+    `<span class="sigla ${classeFonte(n)} ${extra}" aria-hidden="true">${seguro(sigla(n))}</span>`;
+
+  /* ---------------------------------------------------------------------
+     NOTÍCIA EM CARTÃO — vista Notícias, Mercado e Formação
+     imagem (ou a sigla do jornal) · categoria · título · resumo ·
+     jornal com a sua cor · hora discreta
+     grande: imagem em cima, larga — a primeira com foto de cada dia
+     agrupado: a lista já tem o dia no cabeçalho, chega a hora
      --------------------------------------------------------------------- */
   const RECENTE_MIN = 45;   // até quantos minutos uma notícia leva "Novo"
-  function itemLista(n, destaque = ''){
+  function itemLista(n, destaque = '', { grande = false, agrupado = false } = {}){
     const minutos = (Date.now() - n.data.getTime()) / 60000;
     const recente = minutos >= 0 && minutos < RECENTE_MIN;
-    const hora = n.data.toDateString() === new Date().toDateString() ? horaCurta(n.data) : dataCurta(n.data);
-    const resumo = resumir(n.resumo, 180);
+    const hoje = n.data.toDateString() === new Date().toDateString();
+    const hora = minutos >= 0 && minutos < 60 ? haQuanto(n.data)
+               : (hoje || agrupado) ? horaCurta(n.data) : dataCurta(n.data);
+    const comFoto = !!n.imagem;
+    const resumo = resumir(n.resumo, grande ? 220 : 180);
     return `
-    <li class="nl ${recente ? 'nl--recente' : ''}">
+    <li class="nl ${grande && comFoto ? 'nl--grande' : ''} ${comFoto ? '' : 'nl--sem-foto'} ${recente ? 'nl--recente' : ''}">
       <a class="nl__ligacao" href="${ligacao(n.link)}" target="_blank" rel="noopener" data-link="${seguro(n.link)}">
-        <span class="nl__capa">${capa(n)}</span>
+        <span class="nl__capa">${comFoto ? capa(n, { grande }) : siglaFonte(n, 'sigla--capa')}</span>
         <span class="nl__corpo">
           <span class="nl__meta">
             <span class="etiqueta etiqueta--${categoriaClasse(n.categoria)}">${seguro(n.categoria)}</span>
@@ -167,8 +191,8 @@ const Componentes = (() => {
           <span class="nl__titulo">${destacar(n.titulo, destaque)}</span>
           ${resumo ? `<span class="nl__resumo">${destacar(resumo, destaque)}</span>` : ''}
           <span class="nl__rodape">
-            <span class="nl__fonte">${seguro(n.fonte)}</span>
-            <time datetime="${n.data.toISOString()}">${hora} · ${haQuanto(n.data)}</time>
+            ${etiquetaFonte(n)}
+            <time datetime="${n.data.toISOString()}" title="${seguro(n.data.toLocaleString('pt-PT'))}">${hora}</time>
           </span>
         </span>
       </a>
@@ -304,6 +328,35 @@ const Componentes = (() => {
   const esqueletoHero = () => `
     <div class="hero hero--osso" aria-hidden="true"><div class="osso osso--hero"></div></div>`;
 
+  /* cartões de notícia a carregar — o mesmo desenho do cartão final */
+  const esqueletoLista = (quantos = 4) => Array.from({length:quantos}, () => `
+    <li class="nl nl--osso" aria-hidden="true">
+      <span class="nl__ligacao">
+        <span class="nl__capa"><span class="osso"></span></span>
+        <span class="nl__corpo">
+          <span class="osso osso--linha osso--curto"></span>
+          <span class="osso osso--titulo"></span>
+          <span class="osso osso--titulo osso--curto"></span>
+          <span class="osso osso--linha osso--curto"></span>
+        </span>
+      </span>
+    </li>`).join('');
+
+  /* nenhum jornal respondeu: diz porquê e deixa tentar outra vez */
+  const erroLeitura = (semLigacao = false, tag = 'li') => `
+    <${tag} class="estado estado--erro" role="alert">
+      <span class="estado__icone" aria-hidden="true">
+        <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${semLigacao
+          ? '<path d="M2 8.8a15 15 0 0 1 4.2-2.6M9.6 5.3A15 15 0 0 1 22 8.8M5 12.9a10 10 0 0 1 5.2-2.7M14.9 10.6A10 10 0 0 1 19 12.9M8.5 16.4a5 5 0 0 1 7 0M12 20h.01M2 2l20 20"/>'
+          : '<circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5h.01"/>'}</svg>
+      </span>
+      <p class="estado__titulo">${semLigacao ? 'Sem ligação à internet' : 'Não foi possível ler os jornais'}</p>
+      <p class="estado__texto">${semLigacao
+        ? 'Quando a ligação voltar, as notícias aparecem sozinhas.'
+        : 'Os jornais não responderam desta vez. Tenta outra vez daqui a pouco.'}</p>
+      <button type="button" class="botao-largo botao-largo--fantasma" data-repetir-leitura>Tentar outra vez</button>
+    </${tag}>`;
+
   const esqueletoCompacto = (quantos = 5) => Array.from({length:quantos}, () => `
     <li class="compacto" aria-hidden="true">
       <div style="display:flex;gap:.75rem;width:100%;padding:.5rem 0">
@@ -328,6 +381,7 @@ const Componentes = (() => {
   return {
     seguro, destacar, haQuanto, dataCurta, horaCurta, resumir,
     cartaoNoticia, cartaoEditorial, manchete, itemLista, capa, hero, itemCompacto, categoriaClasse, imagemGrande,
-    esqueletoCartao, esqueletoEditorial, esqueletoHero, esqueletoCompacto, vazio
+    esqueletoCartao, esqueletoEditorial, esqueletoHero, esqueletoCompacto, esqueletoLista, erroLeitura, vazio,
+    etiquetaFonte, siglaFonte
   };
 })();

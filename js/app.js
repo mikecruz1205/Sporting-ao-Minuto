@@ -462,6 +462,9 @@ async function lerFeed(f){
 
 let novasDesdeVista = 0;
 
+/* até a primeira volta pelos jornais acabar, uma lista vazia é "a carregar";
+   depois disso, sem nenhuma notícia, é erro (e há botão para tentar outra vez) */
+let primeiraLeituraFeita = false;
 async function carregarNoticias(){
   let novas = 0;
   for(const f of CONFIG.feeds){
@@ -470,6 +473,10 @@ async function carregarNoticias(){
   }
 
   ultimaLeitura = Date.now();
+  if(!primeiraLeituraFeita){
+    primeiraLeituraFeita = true;
+    if(!NOTICIAS.length) pintarNoticias();
+  }
   if(novas > 0) novasDesdeVista += novas;
   marcarAtualizacao(novas);
   pintarSeloVivo();
@@ -513,9 +520,10 @@ function marcarAtualizacao(novas){
   const el = $('#feed-estado');
   if(!el) return;
   const hora = new Date(ultimaLeitura).toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
-  el.innerHTML = novas > 0
-    ? `<b>+${novas}</b> novas · ${hora}`
-    : `sem novidades · ${hora}`;
+  const respondeu = ultimaLeituraOk && Date.now() - ultimaLeituraOk < 2 * 60000;
+  el.innerHTML = !respondeu ? 'os jornais não responderam'
+    : novas > 0 ? `<b>+${novas}</b> novas · ${hora}`
+    : `atualizado às ${hora}`;
   el.classList.toggle('brilha', novas > 0);
   if(novas > 0) setTimeout(() => el.classList.remove('brilha'), 4000);
 }
@@ -576,11 +584,26 @@ function itemNoticia(n){
   return Componentes.itemLista(n, procuraTexto);
 }
 
+/* lista ainda vazia: a carregar, sem ligação ou os jornais não responderam */
+function estadoSemNoticias(tag = 'li'){
+  return primeiraLeituraFeita || navigator.onLine === false
+    ? Componentes.erroLeitura(navigator.onLine === false, tag)
+    : (tag === 'li' ? Componentes.esqueletoLista(4) : '');
+}
+document.addEventListener('click', e => {
+  if(!e.target.closest('[data-repetir-leitura]')) return;
+  primeiraLeituraFeita = false;
+  pintarNoticias();
+  carregarNoticias();
+});
+addEventListener('online', () => { if(!NOTICIAS.length) carregarNoticias(); });
+
 /* mostra a lista com uma barra por dia, para se perceber o recuo no tempo */
 let mostradas = 40;
 
+/* a primeira notícia com fotografia de cada dia vai em cartão grande */
 function agruparPorDia(lista){
-  let saida = '', diaAtual = '';
+  let saida = '', diaAtual = '', grandeNoDia = false;
   const hoje = new Date().toDateString();
   const ontem = new Date(Date.now()-86400000).toDateString();
 
@@ -588,12 +611,15 @@ function agruparPorDia(lista){
     const d = n.data.toDateString();
     if(d !== diaAtual){
       diaAtual = d;
+      grandeNoDia = false;
       const rotulo = d === hoje ? 'Hoje'
                    : d === ontem ? 'Ontem'
                    : n.data.toLocaleDateString('pt-PT', {weekday:'long', day:'numeric', month:'long'});
-      saida += `<li class="dia"><span>${rotulo}</span></li>`;
+      saida += `<li class="dia ${d === hoje ? 'dia--hoje' : ''}"><span>${rotulo}</span></li>`;
     }
-    saida += itemNoticia(n);
+    const grande = !grandeNoDia && !!n.imagem;
+    if(grande) grandeNoDia = true;
+    saida += Componentes.itemLista(n, procuraTexto, { grande, agrupado: true });
   });
   return saida;
 }
@@ -660,8 +686,8 @@ function pintarTemasNoticias(base){
   const grupos = GRUPOS_TEMA.map(g => [g, conta(g.id)]).filter(([, c]) => c > 0);
   if(temaNoticias !== 'todos' && !grupos.some(([g]) => g.id === temaNoticias)){ temaNoticias = 'todos'; subtemaNoticias = 'todos'; }
   alvo.innerHTML = [
-    `<button type="button" class="separador ${temaNoticias === 'todos' ? 'is-on' : ''}" data-tema="todos" aria-pressed="${temaNoticias === 'todos'}">Tudo<span class="separador__n">${base.length}</span></button>`,
-    ...grupos.map(([g, c]) => `<button type="button" class="separador ${temaNoticias === g.id ? 'is-on' : ''}" data-tema="${g.id}" aria-pressed="${temaNoticias === g.id}">${g.nome}<span class="separador__n">${c}</span></button>`)
+    `<button type="button" class="chip ${temaNoticias === 'todos' ? 'is-on' : ''}" data-tema="todos" aria-pressed="${temaNoticias === 'todos'}">Tudo<span class="chip__n">${base.length}</span></button>`,
+    ...grupos.map(([g, c]) => `<button type="button" class="chip ${temaNoticias === g.id ? 'is-on' : ''}" data-tema="${g.id}" aria-pressed="${temaNoticias === g.id}">${g.nome}<span class="chip__n">${c}</span></button>`)
   ].join('');
 
   const g = grupoTema(temaNoticias);
@@ -779,7 +805,7 @@ let homeRevelada = false;
 /* Filas que deslizam para o lado (temas, separadores): quando há mais do
    que cabe, a ponta desvanece — sem isso o último item parece cortado. */
 function marcarTransbordo(raiz = document){
-  raiz.querySelectorAll('.temas, .mod-separadores, .separadores, #pos-filtro, .jogos-filtro, .filtros-categoria, .atalhos, .fontes--noticias, .filtro-linha--sub').forEach(el => {
+  raiz.querySelectorAll('.temas, .mod-separadores, .separadores, #pos-filtro, .jogos-filtro, .filtros-categoria, .atalhos, .filtro-temas, .filtro-linha--sub').forEach(el => {
     const mais = el.scrollWidth - el.clientWidth - el.scrollLeft > 4;
     el.classList.toggle('tem-mais', mais);
     if(!el.dataset.transbordo){
@@ -1134,11 +1160,12 @@ function pintarMaisLidas(){
 }
 
 function pintarNoticias(){
-  const vazio = `<li class="vazio">Sem notícias de momento.<br>
-     Arranca com <b>python servidor.py</b> para ler os feeds sem bloqueios.</li>`;
+  /* sem nenhuma notícia: esqueleto enquanto se lê, erro depois; com
+     notícias mas nenhuma daquele tipo: uma frase simples */
+  const vazio = texto => NOTICIAS.length ? `<li class="vazio">${texto}</li>` : estadoSemNoticias();
 
   const curtas = NOTICIAS.filter(n => n.categoria !== 'MERCADO').slice(0,6);
-  $('#noticias-curtas').innerHTML = curtas.length ? curtas.map(itemNoticia).join('') : vazio;
+  $('#noticias-curtas').innerHTML = curtas.length ? curtas.map(itemNoticia).join('') : vazio('Sem notícias de momento.');
 
   /* a fonte e a pesquisa filtram primeiro; o tema por cima disso */
   const daFonte = noticiasFiltradas();
@@ -1146,6 +1173,7 @@ function pintarNoticias(){
   const todas = daFonte.filter(n => noTema(n, temaNoticias, subtemaNoticias));
   $('#noticias-todas').innerHTML = todas.length
     ? agruparPorDia(todas.slice(0, mostradas))
+    : !NOTICIAS.length ? estadoSemNoticias()
     : `<li class="estado"><p class="estado__titulo">Nada encontrado</p><p class="estado__texto">${procuraTexto
         ? 'Nenhuma notícia fala de «' + Componentes.seguro(procuraTexto) + '» com estes filtros.'
         : 'Não há notícias com esta combinação de tema e fonte. Experimenta outro filtro.'}</p></li>`;
@@ -1162,7 +1190,7 @@ function pintarNoticias(){
     : '';
 
   const rumores = NOTICIAS.filter(n => n.categoria === 'MERCADO');
-  $('#rumores-todos').innerHTML = rumores.length ? rumores.slice(0,40).map(itemNoticia).join('') : vazio;
+  $('#rumores-todos').innerHTML = rumores.length ? rumores.slice(0,40).map(itemNoticia).join('') : vazio('Sem rumores de mercado neste momento.');
   $('#rumores-curtos').innerHTML = rumores.slice(0,3).map(n => `
     <li><a href="${n.link}" target="_blank" rel="noopener">
       <img src="${n.imagem || escudoIniciais('SCP')}" alt="" loading="lazy"
@@ -1173,34 +1201,47 @@ function pintarNoticias(){
   const formacao = NOTICIAS.filter(n => n.categoria === 'FORMAÇÃO');
   $('#formacao-lista').innerHTML = formacao.length
     ? formacao.map(itemNoticia).join('')
-    : `<li class="vazio">Sem notícias da formação neste momento.</li>`;
+    : vazio('Sem notícias da formação neste momento.');
 
   pintarFontes();
   pintarDestaque();
   pintarLinhaTempo();
   pintarHome();
+  /* (o intervalo da faixa do jogo é posto uma vez no arranque — aqui
+     acumulava um novo a cada leitura dos jornais) */
   pintarDiaDeJogo();
-  /* a faixa entra e sai sozinha conforme a hora do jogo */
-  setInterval(pintarDiaDeJogo, 30000);
 }
 
+/* A fonte é um seletor nativo dentro de um chip: ocupa o espaço de um
+   botão e no telemóvel abre a lista do sistema. O rótulo do chip mostra
+   a escolha. Não se refaz a lista com o seletor aberto. */
 function pintarFontes(){
-  const usadas = [...new Set(NOTICIAS.map(n => n.canal))];
-  const caixa = $('#fontes-filtro');
-  if(caixa.dataset.n === String(usadas.length)) return;
-  caixa.dataset.n = usadas.length;
-  const contaFonte = id => NOTICIAS.filter(n => n.canal === id).length;
-  caixa.innerHTML = `<button type="button" class="pilula ${filtroFonte==='todas'?'is-on':''}" data-fonte="todas" aria-pressed="${filtroFonte==='todas'}">Todas</button>` +
-    usadas.map(id => {
-      const f = CONFIG.feeds.find(x => x.id === id);
-      const nome = f ? f.nome.toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase()) : id;
-      return `<button type="button" class="pilula ${filtroFonte===id?'is-on':''}" data-fonte="${id}" aria-pressed="${filtroFonte===id}">${nome}<span class="pilula__n">${contaFonte(id)}</span></button>`;
-    }).join('');
-  $$('#fontes-filtro .pilula').forEach(b => b.addEventListener('click', () => {
-    filtroFonte = b.dataset.fonte;
-    caixa.dataset.n = '';
-    pintarNoticias();
-  }));
+  const sel = $('#fonte-escolha');
+  if(!sel) return;
+  const nomeFonte = id => {
+    const f = CONFIG.feeds.find(x => x.id === id);
+    return f ? f.nome.toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase()) : id;
+  };
+  if(document.activeElement !== sel){
+    const usadas = [...new Set(NOTICIAS.map(n => n.canal))];
+    const conta = id => NOTICIAS.filter(n => n.canal === id).length;
+    sel.innerHTML = `<option value="todas">Todas as fontes (${NOTICIAS.length})</option>` +
+      usadas.map(id => `<option value="${Componentes.seguro(id)}">${Componentes.seguro(nomeFonte(id))} (${conta(id)})</option>`).join('');
+    sel.value = filtroFonte;
+    if(sel.value !== filtroFonte) sel.value = 'todas';
+  }
+  const rotulo = $('#fonte-rotulo');
+  if(rotulo) rotulo.textContent = filtroFonte === 'todas' ? 'Fontes' : nomeFonte(filtroFonte);
+  sel.closest('.chip')?.classList.toggle('is-on', filtroFonte !== 'todas');
+  if(!sel.dataset.ligado){
+    sel.dataset.ligado = '1';
+    sel.addEventListener('change', () => {
+      filtroFonte = sel.value;
+      mostradas = 40;
+      sel.blur();
+      pintarNoticias();
+    });
+  }
 }
 
 /* ---------------- destaque rotativo ---------------- */

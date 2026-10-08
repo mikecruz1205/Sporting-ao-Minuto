@@ -113,51 +113,131 @@ body{
 :root[data-tema="claro"] ::-webkit-scrollbar-track{ background: var(--fundo-2); }
 
 /* =========================================================================
-   NOTÍCIAS — lista editorial (vista Notícias, Mercado, Formação)
+   FONTES — a cor de cada jornal
+   -------------------------------------------------------------------------
+   Para reconhecer a fonte de relance (bolinha, sigla, quadrado das notícias
+   sem foto). Não são as cores oficiais das marcas. Todas dão contraste AA
+   com texto branco (≥ 5:1).
    ========================================================================= */
-.filtros-noticias{ display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-.filtro-linha{ display: flex; align-items: center; gap: 12px; min-width: 0; }
-.filtro-linha__rotulo{ flex: none; width: 52px; font-size: var(--fs-rotulo); font-weight: 800; letter-spacing: var(--tracking-rotulo); text-transform: uppercase; color: var(--texto-3); }
-.filtro-linha .separadores{ margin-bottom: 0; }
-.filtro-linha--sub{ padding-left: 64px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; gap: 6px; }
+.f-leonino{ --fonte: #0b7a43; }  .f-record{ --fonte: #c8102e; }  .f-mf{ --fonte: #1d4ed8; }
+.f-nam{ --fonte: #b45309; }      .f-zz{ --fonte: #0369a1; }      .f-rtp{ --fonte: #6d28d9; }
+.f-obs{ --fonte: #be185d; }      .f-bnr{ --fonte: #0f766e; }     .f-f365{ --fonte: #c2410c; }
+.f-cm{ --fonte: #4338ca; }       .f-publico{ --fonte: #475569; } .f-outra{ --fonte: #3f4a45; }
+
+.fonte-tag{
+  display: inline-flex; align-items: center; gap: 7px; min-width: 0;
+  font-weight: 800; font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--texto-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.fonte-tag i{
+  flex: none; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--fonte); box-shadow: 0 0 0 2px color-mix(in srgb, var(--fonte) 25%, transparent);
+}
+.sigla{
+  flex: none; display: inline-grid; place-items: center;
+  width: 22px; height: 22px; border-radius: 6px;
+  background: var(--fonte); color: #fff;
+  font-family: var(--f-tit); font-weight: 800; font-size: 11px; letter-spacing: .02em; line-height: 1;
+}
+/* no lugar da fotografia: a sigla grande sobre a cor do jornal e as listas */
+.sigla--capa{
+  position: relative; display: grid; width: 100%; height: 100%; border-radius: 0; overflow: hidden;
+  font-size: 34px;
+  background: linear-gradient(135deg, color-mix(in srgb, #fff 12%, var(--fonte)) 0%, var(--fonte) 55%, color-mix(in srgb, #000 25%, var(--fonte)) 100%);
+}
+.sigla--capa::after{
+  content: ''; position: absolute; inset: 0;
+  background: repeating-linear-gradient(180deg, rgba(255,255,255,.07) 0 14px, transparent 14px 28px);
+}
+
+/* =========================================================================
+   NOTÍCIAS — filtros numa barra só
+   ========================================================================= */
+.filtros-noticias{ display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; max-width: 920px; }
+.filtro-barra{ display: flex; align-items: center; gap: 8px; min-width: 0; }
+.filtro-temas, .filtro-linha--sub{
+  display: flex; gap: 6px; min-width: 0;
+  overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain;
+  padding: 4px 0;   /* espaço para a área de toque dos chips (44 px) */
+}
+.filtro-temas{ flex: 1; }
+.filtro-temas::-webkit-scrollbar, .filtro-linha--sub::-webkit-scrollbar{ display: none; }
 .filtro-linha--sub[hidden]{ display: none; }
-.chip, .fontes--noticias .pilula{
-  flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 14px;
-  border-radius: 999px; border: 1px solid var(--linha-forte); background: transparent;
+
+.chip{
+  position: relative; flex: none;
+  display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 14px;
+  border-radius: 999px; border: 1px solid var(--linha-forte); background: var(--cartao);
   font-size: 13px; font-weight: 700; letter-spacing: 0; color: var(--texto-2); white-space: nowrap;
   transition: background var(--t-rapida), border-color var(--t-rapida), color var(--t-rapida);
 }
-.chip:hover, .fontes--noticias .pilula:hover{ color: var(--texto); border-color: var(--verde-claro); }
-.chip.is-on, .fontes--noticias .pilula.is-on{ background: var(--verde); border-color: var(--verde); color: var(--sobre-verde); }
-.chip__n, .pilula__n{ font-weight: 600; opacity: .7; font-variant-numeric: tabular-nums; }
-.fontes--noticias{ display: flex; flex-wrap: nowrap; gap: 6px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
-.fontes--noticias::-webkit-scrollbar, .filtro-linha--sub::-webkit-scrollbar{ display: none; }
+/* o chip parece compacto, mas o toque apanha 44 px de altura */
+.chip::after{ content: ''; position: absolute; inset: -4px 0; }
+/* nas filas de filtros fica com 36 px à vista (a regra geral dos botões põe 44) */
+.filtro-temas .chip, .filtro-linha--sub .chip, .filtro-barra .chip--fonte{ min-height: 36px; }
+.chip:hover{ color: var(--texto); border-color: var(--verde-claro); }
+.chip:focus-visible{ outline: 2px solid var(--verde-claro); outline-offset: 2px; }
+.chip.is-on{ background: var(--verde); border-color: var(--verde); color: var(--sobre-verde); }
+.chip__n{ font-weight: 600; opacity: .72; font-variant-numeric: tabular-nums; }
 
-#vista-noticias .noticias-barra{ border-bottom-color: var(--linha); font-size: var(--fs-meta); }
+/* fonte: o seletor nativo, invisível, por cima do chip inteiro */
+.chip--fonte{ padding: 0 10px 0 12px; cursor: pointer; }
+.chip--fonte .icone{ width: 16px; height: 16px; flex: none; }
+.chip--fonte .chip__seta{ width: 14px; height: 14px; opacity: .7; }
+#fonte-rotulo{ max-width: 128px; overflow: hidden; text-overflow: ellipsis; }
+.chip--fonte select{
+  position: absolute; inset: -4px 0; width: 100%; height: calc(100% + 8px);
+  opacity: 0; cursor: pointer; border: 0; font-size: 16px; -webkit-appearance: none; appearance: none;
+}
+.chip--fonte:focus-within{ outline: 2px solid var(--verde-claro); outline-offset: 2px; }
+
+/* contagem e última leitura: uma linha pequena, sem moldura */
+#vista-noticias .noticias-barra{
+  justify-content: flex-start; gap: 8px; margin: 2px 0 6px; padding: 0; border: 0;
+  font-size: 12px; color: var(--texto-3);
+}
+#noticias-conta:empty{ display: none; }
+#noticias-conta:not(:empty) + .feed-estado::before{ content: "·"; margin-right: 2px; }
+#vista-noticias .feed-estado b{ font-family: var(--f-ui); font-size: 12px; font-weight: 800; }
+
+/* =========================================================================
+   NOTÍCIAS — cartões (vista Notícias, Mercado, Formação)
+   ========================================================================= */
 .lista-noticias--grande{ max-width: 920px; }
 .lista-noticias li.dia{
   position: sticky; top: var(--altura-topo, 92px); z-index: 2;
-  padding: 18px 0 8px; background: var(--fundo); border: 0;
+  padding: 18px 0 10px; background: var(--fundo); border: 0;
 }
 .lista-noticias li.dia span{
   display: inline-block; padding: 0; border: 0; background: none;
-  font-family: var(--f-tit); font-weight: 700; font-size: 17px; letter-spacing: .04em; text-transform: uppercase; color: var(--texto-2);
+  font-family: var(--f-tit); font-weight: 800; font-size: 17px; letter-spacing: .05em; text-transform: uppercase; color: var(--texto-2);
 }
+.lista-noticias li.dia--hoje span{ color: var(--texto); }
 .lista-noticias li.dia span::first-letter{ text-transform: uppercase; }
 
-.nl{ list-style: none; border-bottom: 1px solid var(--linha); }
-.nl:last-child{ border-bottom: 0; }
-.lista-noticias .nl__ligacao{
-  display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 20px; align-items: start;
-  padding: 18px 12px; margin: 0 -12px; border-radius: 14px;
-  transform: none; transition: background var(--t-rapida);
+.lista-noticias .nl{
+  list-style: none; overflow: hidden;
+  border: 1px solid var(--linha); border-radius: 16px;
+  background: var(--cartao); box-shadow: var(--sombra-cartao);
+  transition: border-color var(--t-rapida), transform var(--t-rapida) var(--ease-saida);
 }
-.lista-noticias .nl__ligacao:hover{ background: var(--cartao); transform: none; }
-.lista-noticias .nl__ligacao:focus-visible{ outline: 2px solid var(--verde-claro); outline-offset: 2px; }
-.nl__capa .capa{ aspect-ratio: 3 / 2; border-radius: 12px; }
-.lista-noticias .nl__capa img{ width: 100%; height: 100%; object-fit: cover; border-radius: 0; margin: 0; }
+.lista-noticias .nl + .nl{ margin-top: 12px; }
+.lista-noticias .nl:hover{ border-color: var(--linha-forte); }
+.lista-noticias .nl:has(.nl__ligacao:active){ transform: scale(.992); }
+.lista-noticias .nl__ligacao{
+  display: grid; grid-template-columns: 236px minmax(0, 1fr); align-items: stretch;
+  min-height: 158px; padding: 0; margin: 0; border-radius: 0;
+  transform: none; transition: none;
+}
+.lista-noticias .nl__ligacao:hover{ background: none; transform: none; }
+.lista-noticias .nl__ligacao:focus-visible{ outline: 2px solid var(--verde-claro); outline-offset: -2px; border-radius: 16px; }
+
+.nl__capa{ position: relative; display: block; overflow: hidden; background: var(--cartao-alto); }
+.nl__capa .capa, .nl__capa .sigla--capa{ position: absolute; inset: 0; aspect-ratio: auto; border-radius: 0; }
+.lista-noticias .nl__capa img{ width: 100%; height: 100%; object-fit: cover; border-radius: 0; margin: 0; transition: transform .5s var(--ease-saida); }
 .nl__ligacao:hover .capa img{ transform: scale(1.04); }
-.nl__corpo{ display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+.nl__corpo{ display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 16px 20px; }
 .nl__meta{ display: flex; align-items: center; gap: 8px; }
 .nl__meta .etiqueta{ margin: 0; padding: 3px 8px; border-radius: 6px; }
 .nl__novo{ font-size: var(--fs-rotulo); font-weight: 800; letter-spacing: var(--tracking-rotulo); text-transform: uppercase; color: var(--verde-claro); }
@@ -170,23 +250,44 @@ body{
 }
 .nl__ligacao:hover .nl__titulo{ color: var(--verde-claro); }
 .nl__resumo{ font-size: var(--fs-resumo); line-height: 1.55; color: var(--texto-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.nl__rodape{ display: flex; align-items: center; gap: 10px; font-size: var(--fs-meta); color: var(--texto-3); }
-.nl__fonte{ font-weight: 800; font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--texto-2); }
-.nl__rodape time::before{ content: "·"; margin-right: 10px; }
-/* as recentes destacam-se com um fio verde, sem gritar */
-.nl--recente .nl__ligacao{ box-shadow: inset 3px 0 0 var(--verde-claro); }
+/* rodapé: o jornal com a sua cor à esquerda, a hora discreta à direita */
+.nl__rodape{ display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto; padding-top: 2px; }
+.nl__rodape time{ flex: none; font-size: 12px; font-weight: 600; color: var(--texto-3); font-variant-numeric: tabular-nums; }
+/* as recentes têm a moldura em verde, sem gritar */
+.lista-noticias .nl--recente{ border-color: color-mix(in srgb, var(--verde-claro) 45%, var(--linha)); }
+
+/* grande: a primeira com fotografia de cada dia */
+.lista-noticias .nl--grande .nl__ligacao{ grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); min-height: 300px; }
+.nl--grande .nl__corpo{ padding: 22px 24px; gap: 10px; }
+.nl--grande .nl__titulo{ font-size: clamp(1.3rem, 1rem + .9vw, 1.6rem); line-height: 1.22; letter-spacing: -0.015em; -webkit-line-clamp: 4; }
+.nl--grande .nl__resumo{ -webkit-line-clamp: 3; }
+
+/* a carregar */
+.nl--osso .osso{ display: block; }
+.nl--osso .nl__capa .osso{ position: absolute; inset: 0; border-radius: 0; }
+.nl--osso .nl__corpo{ gap: 4px; }
+
+/* erro: nenhum jornal respondeu */
+.estado--erro{ list-style: none; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 36px 20px; text-align: center; border: 1px dashed var(--linha-forte); border-radius: 16px; }
+.estado__icone{ display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 6px; border-radius: 50%; background: var(--veu-2); color: var(--texto-2); }
+.estado__icone .icone{ width: 22px; height: 22px; }
+.estado--erro .botao-largo{ display: inline-flex; align-items: center; justify-content: center; width: auto; min-height: 44px; margin-top: 12px; padding: 0 22px; }
 
 @media (max-width: 640px){
-  .filtro-linha{ align-items: flex-start; flex-direction: column; gap: 6px; }
-  .filtro-linha--sub{ padding-left: 0; flex-direction: row; }
-  .filtro-linha .separadores, .fontes--noticias{ max-width: 100%; }
-  /* no telemóvel a imagem vai para a direita, pequena; o título manda */
-  .lista-noticias .nl__ligacao{ grid-template-columns: minmax(0, 1fr) 104px; gap: 14px; padding: 16px 10px; margin: 0 -10px; }
-  .nl__capa{ order: 2; }
-  .nl__capa .capa{ aspect-ratio: 1 / 1; }
+  .lista-noticias .nl + .nl{ margin-top: 10px; }
+  .lista-noticias .nl__ligacao{ grid-template-columns: 112px minmax(0, 1fr); min-height: 128px; }
+  .nl__corpo{ padding: 12px 14px; gap: 6px; }
+  .nl__titulo{ font-size: 16px; line-height: 1.3; }
   .nl__resumo{ display: none; }
-  .nl__titulo{ font-size: 16.5px; }
-  .chip, .fontes--noticias .pilula{ min-height: 40px; }
+  .sigla--capa{ font-size: 28px; }
+  .fonte-tag{ font-size: 11px; }
+  /* grande no telemóvel: fotografia em cima, larga */
+  .lista-noticias .nl--grande .nl__ligacao{ grid-template-columns: minmax(0, 1fr); min-height: 0; }
+  .nl--grande .nl__capa{ aspect-ratio: 16 / 9; }
+  .nl--grande .nl__corpo{ padding: 14px 16px 16px; gap: 8px; }
+  .nl--grande .nl__titulo{ font-size: 19px; }
+  .nl--grande .nl__resumo{ display: -webkit-box; -webkit-line-clamp: 2; font-size: 14.5px; }
+  #fonte-rotulo{ max-width: 96px; }
 }
 
 /* =========================================================================

@@ -135,13 +135,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Manrope:wght@400..800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/base.css?v=104">
-<link rel="stylesheet" href="css/componentes.css?v=104">
-<link rel="stylesheet" href="css/style.css?v=104">
-<link rel="stylesheet" href="css/portal.css?v=104">
-<link rel="stylesheet" href="css/inicio.css?v=104">
-<link rel="stylesheet" href="css/app.css?v=104">
-<link rel="stylesheet" href="css/editorial.css?v=104">
+<link rel="stylesheet" href="css/base.css?v=106">
+<link rel="stylesheet" href="css/componentes.css?v=106">
+<link rel="stylesheet" href="css/style.css?v=106">
+<link rel="stylesheet" href="css/portal.css?v=106">
+<link rel="stylesheet" href="css/inicio.css?v=106">
+<link rel="stylesheet" href="css/app.css?v=106">
+<link rel="stylesheet" href="css/editorial.css?v=106">
 </head>
 <body class="trancado">
 <!-- ============================ ECRÃ DE CARREGAMENTO (modo aplicação) ============================ -->
@@ -564,24 +564,30 @@
     <h2 class="vista__titulo" id="tit-noticias">Notícias</h2>
   </header>
 
-  <!-- dois tipos de filtro, separados: o tema (do que fala) e a fonte (quem escreve) -->
+  <!-- filtros numa barra só: os temas (do que fala) deslizam para o lado,
+       a fonte (quem escreve) é um seletor compacto à direita -->
   <div class="filtros-noticias">
-    <div class="filtro-linha">
-      <span class="filtro-linha__rotulo" id="rot-tema">Tema</span>
-      <div class="separadores filtro-temas" id="temas-noticias" role="group" aria-labelledby="rot-tema"></div>
+    <div class="filtro-barra">
+      <div class="filtro-temas" id="temas-noticias" role="group" aria-label="Filtrar por tema"></div>
+      <label class="chip chip--fonte">
+        <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+        <span id="fonte-rotulo">Fontes</span>
+        <svg class="icone chip__seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        <select id="fonte-escolha" aria-label="Filtrar por fonte"><option value="todas">Todas as fontes</option></select>
+      </label>
     </div>
-    <div class="filtro-linha filtro-linha--sub" id="subtemas-noticias" role="group" aria-label="Dentro do tema" hidden></div>
-    <div class="filtro-linha">
-      <span class="filtro-linha__rotulo" id="rot-fonte">Fonte</span>
-      <div class="fontes fontes--noticias" id="fontes-filtro" role="group" aria-labelledby="rot-fonte"></div>
-    </div>
+    <div class="filtro-linha--sub" id="subtemas-noticias" role="group" aria-label="Dentro do tema" hidden></div>
   </div>
 
-  <div class="noticias-barra">
+  <p class="noticias-barra">
     <span id="noticias-conta"></span>
-    <span class="feed-estado" id="feed-estado">a ler…</span>
-  </div>
-  <ul class="lista-noticias lista-noticias--grande" id="noticias-todas"></ul>
+    <span class="feed-estado" id="feed-estado">a ler os jornais…</span>
+  </p>
+  <ul class="lista-noticias lista-noticias--grande" id="noticias-todas" aria-live="polite">
+    <li class="nl nl--osso" aria-hidden="true"><span class="nl__ligacao"><span class="nl__capa"><span class="osso"></span></span><span class="nl__corpo"><span class="osso osso--linha osso--curto"></span><span class="osso osso--titulo"></span><span class="osso osso--titulo osso--curto"></span><span class="osso osso--linha osso--curto"></span></span></span></li>
+    <li class="nl nl--osso" aria-hidden="true"><span class="nl__ligacao"><span class="nl__capa"><span class="osso"></span></span><span class="nl__corpo"><span class="osso osso--linha osso--curto"></span><span class="osso osso--titulo"></span><span class="osso osso--titulo osso--curto"></span><span class="osso osso--linha osso--curto"></span></span></span></li>
+    <li class="nl nl--osso" aria-hidden="true"><span class="nl__ligacao"><span class="nl__capa"><span class="osso"></span></span><span class="nl__corpo"><span class="osso osso--linha osso--curto"></span><span class="osso osso--titulo"></span><span class="osso osso--titulo osso--curto"></span><span class="osso osso--linha osso--curto"></span></span></span></li>
+  </ul>
   <button class="botao-largo botao-largo--fantasma" id="mais-antigas" hidden>Ver mais antigas</button>
 </main>
 
@@ -1004,17 +1010,17 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.min.js" defer></script>
-<script src="js/nuvem.js?v=104" defer></script>
-<script src="js/jogo.js?v=104" defer></script>
-<script src="js/fd.js?v=104" defer></script>
-<script src="js/componentes.js?v=104" defer></script>
-<script src="js/contas.js?v=104" defer></script>
-<script src="js/arte.js?v=104" defer></script>
-<script src="js/data.js?v=104" defer></script>
-<script src="js/wiki.js?v=104" defer></script>
-<script src="js/tema.js?v=104" defer></script>
-<script src="js/notificacoes.js?v=104" defer></script>
-<script src="js/pwa.js?v=104" defer></script>
-<script src="js/app.js?v=104" defer></script>
+<script src="js/nuvem.js?v=106" defer></script>
+<script src="js/jogo.js?v=106" defer></script>
+<script src="js/fd.js?v=106" defer></script>
+<script src="js/componentes.js?v=106" defer></script>
+<script src="js/contas.js?v=106" defer></script>
+<script src="js/arte.js?v=106" defer></script>
+<script src="js/data.js?v=106" defer></script>
+<script src="js/wiki.js?v=106" defer></script>
+<script src="js/tema.js?v=106" defer></script>
+<script src="js/notificacoes.js?v=106" defer></script>
+<script src="js/pwa.js?v=106" defer></script>
+<script src="js/app.js?v=106" defer></script>
 </body>
 </html>
