@@ -3,7 +3,7 @@
   "cleanUrls": false,
   "rewrites": [
     {
-      "source": "/(noticias|ao-minuto|mercado|jogos|agenda|classificacao|ao-vivo|plantel|estatisticas|modalidades|chat|fantasy|clube)",
+      "source": "/(noticias|ao-minuto|mercado|jogos|agenda|classificacao|ao-vivo|plantel|estatisticas|modalidades|chat|fantasy|clube|privacidade|termos)",
       "destination": "/index.html"
     }
   ],

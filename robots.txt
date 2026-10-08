@@ -1,0 +1,8 @@
+# Sporting ao Minuto
+# A linha "Sitemap:" é acrescentada por scripts/gerar_seo.py com o domínio real.
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /rss
+Disallow: /ler
+Disallow: /offline.html

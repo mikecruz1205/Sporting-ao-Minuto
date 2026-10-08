@@ -1120,6 +1120,26 @@ function pintarLinhaTempo(){
 /* As notícias abrem num separador novo do browser, no site do jornal.
    O leitor dentro do site foi tirado — os links já levam target="_blank",
    por isso aqui só se garante que nada intercepta o clique. */
+/* Partilhar uma notícia: a folha nativa do telemóvel quando existe; senão
+   copia o link. Partilha-se o artigo original — é dele a pré-visualização
+   certa (imagem, título) nas redes e nas mensagens. */
+document.addEventListener('click', async ev => {
+  const b = ev.target.closest('[data-partilhar]');
+  if(!b) return;
+  ev.preventDefault();
+  const url = b.dataset.partilhar, title = b.dataset.titulo;
+  if(navigator.share){
+    try{ await navigator.share({ title, url }); }catch(e){ /* cancelado */ }
+    return;
+  }
+  try{
+    await navigator.clipboard.writeText(url);
+    if(typeof PWA !== 'undefined') PWA.aviso('Ligação copiada. Já a podes colar onde quiseres.');
+  }catch(e){
+    window.prompt('Copia a ligação:', url);
+  }
+});
+
 function ligarLeitor(){
   /* conta as aberturas para a lista "mais lidas" e abre em separador novo */
   document.addEventListener('click', ev => {
@@ -3793,6 +3813,11 @@ function ligarLegais(){
   }));
   $('#legal-fechar').addEventListener('click', () => dlg.close());
   dlg.addEventListener('click', e => { if(e.target === dlg) dlg.close(); });
+
+  /* /privacidade e /termos abrem o texto diretamente — a Google Play (e
+     quem quiser ligar para lá) precisa de um endereço público para isto */
+  const pedido = { '/privacidade':'privacidade', '/termos':'termos' }[location.pathname.replace(/\/+$/, '')];
+  if(pedido) $(`[data-legal="${pedido}"]`)?.click();
 }
 
 /* ---------------------------------------------------------------------
@@ -3814,6 +3839,60 @@ const TITULOS = {
   estatisticas:'Estatísticas', modalidades:'Modalidades', chat:'Chat',
   formacao:'Fantasy', clube:'O clube'
 };
+
+/* descrição de cada vista — vai para a meta description e para a partilha */
+const DESCRICOES = {
+  inicio:'Notícias do Sporting CP ao minuto, de 11 jornais: jogos, resultados, classificação, plantel, mercado e modalidades.',
+  noticias:'Todas as notícias do Sporting CP, de minuto a minuto, de 11 jornais portugueses.',
+  aominuto:'A linha do tempo do Sporting CP: cada notícia, rumor e lance à hora a que acontece.',
+  rumores:'Mercado do Sporting CP: entradas, saídas, renovações e rumores na imprensa.',
+  jogos:'Calendário e resultados do Sporting CP na Liga Portugal, Liga dos Campeões e taças.',
+  agenda:'Os próximos jogos do Sporting CP, por dia e hora.',
+  classificacao:'Classificação da Liga Portugal e da Liga dos Campeões, com a forma do Sporting CP.',
+  aovivo:'O jogo do Sporting CP ao vivo: resultado, onze inicial e lances.',
+  equipa:'O plantel do Sporting CP: jogadores, números, posições, valores e estatísticas.',
+  estatisticas:'Estatísticas do Sporting CP: golos, jogos e números da época, por competição.',
+  modalidades:'Futsal, andebol, basquetebol, hóquei, voleibol, atletismo, feminino e formação do Sporting CP.',
+  chat:'Conversa entre adeptos do Sporting CP sobre os jogos.',
+  formacao:'Fantasy do Sporting: monta o teu onze e soma pontos jornada a jornada.',
+  clube:'O Sporting Clube de Portugal: história, palmarés, estádio e números.'
+};
+
+/* canónico, partilha e descrição acompanham a vista aberta */
+function metaDaVista(vista){
+  const url = location.origin + ROTAS[vista];
+  const titulo = vista === 'inicio' ? 'Sporting ao Minuto' : `${TITULOS[vista]} · Sporting ao Minuto`;
+  const por = (id, atributo, valor) => document.getElementById(id)?.setAttribute(atributo, valor);
+  por('canonico', 'href', url);
+  por('og-url', 'content', url);
+  por('og-titulo', 'content', titulo);
+  por('meta-descricao', 'content', DESCRICOES[vista] || DESCRICOES.inicio);
+  por('og-descricao', 'content', DESCRICOES[vista] || DESCRICOES.inicio);
+}
+
+/* dados estruturados: o site e a pesquisa (/noticias?q=…) */
+function dadosEstruturados(){
+  if(document.getElementById('ld-site')) return;
+  const ld = document.createElement('script');
+  ld.type = 'application/ld+json';
+  ld.id = 'ld-site';
+  ld.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Sporting ao Minuto',
+    alternateName: 'Sporting ao Minuto — portal de adeptos',
+    url: location.origin + '/',
+    inLanguage: 'pt-PT',
+    description: DESCRICOES.inicio,
+    about: { '@type': 'SportsTeam', name: 'Sporting Clube de Portugal', sport: 'Futebol' },
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: { '@type': 'EntryPoint', urlTemplate: location.origin + '/noticias?q={search_term_string}' },
+      'query-input': 'required name=search_term_string'
+    }
+  });
+  document.head.appendChild(ld);
+}
 
 function vistaDaRota(caminho){
   const limpo = (caminho || '/').replace(/\/+$/, '') || '/';
@@ -3841,6 +3920,7 @@ function irPara(vista, opcoes = {}){
   fecharSubmenus();
 
   document.title = vista === 'inicio' ? TITULOS.inicio : `${TITULOS[vista]} · Sporting ao Minuto`;
+  metaDaVista(vista);
   if(historico && location.pathname !== ROTAS[vista]){
     history.pushState({ vista }, '', ROTAS[vista] + (vista === 'modalidades' ? location.hash : ''));
   }
@@ -4146,8 +4226,20 @@ async function arranque(){
   }));
   {
     const inicial = vistaDaRota(location.pathname);
-    history.replaceState({ vista: inicial }, '', ROTAS[inicial] + location.search + location.hash);
+    /* /privacidade e /termos ficam com o seu endereço (o texto abre por cima do início) */
+    if(!/^\/(privacidade|termos)\/?$/.test(location.pathname))
+      history.replaceState({ vista: inicial }, '', ROTAS[inicial] + location.search + location.hash);
     if(inicial !== 'inicio') irPara(inicial, { historico:false, rolar:false });
+    else metaDaVista('inicio');
+    dadosEstruturados();
+    /* /noticias?q=termo abre já com a pesquisa feita (é o que a SearchAction promete) */
+    const q = new URLSearchParams(location.search).get('q');
+    if(q){
+      procuraTexto = q.trim().slice(0, 80);
+      $('#procura').value = procuraTexto;
+      $('#procura-caixa')?.classList.add('is-aberta');
+      if(vistaAtual !== 'noticias') irPara('noticias', { rolar:false });
+    }
   }
   $$('[data-ir]').forEach(b =>
     b.addEventListener('click', () => irPara(b.dataset.ir)));

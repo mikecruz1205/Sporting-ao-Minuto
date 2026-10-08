@@ -259,8 +259,27 @@ const Nuvem = (() => {
     return () => cliente.removeChannel(canal);
   }
 
+  /* ---------------------------------------------------------------------
+     Notificações push — guarda a subscrição do browser (ver
+     docs/NOTIFICACOES.md; a tabela subscricoes_push ainda não existe)
+     --------------------------------------------------------------------- */
+  async function guardarSubscricaoPush(sub, tipos){
+    if(!cliente) throw new Error('sem ligação');
+    const { error } = await cliente.from('subscricoes_push').upsert({
+      utilizador: perfil?.id || null,
+      endpoint: sub.endpoint, p256dh: sub.keys?.p256dh, auth: sub.keys?.auth,
+      tipos, vista_em: new Date().toISOString()
+    }, { onConflict: 'endpoint' });
+    if(error) throw error;
+  }
+  async function apagarSubscricaoPush(endpoint){
+    if(!cliente) return;
+    await cliente.from('subscricoes_push').delete().eq('endpoint', endpoint);
+  }
+
   return {
     iniciar, registar, entrar, sair, validar, nomeLivre,
+    guardarSubscricaoPush, apagarSubscricaoPush,
     guardarEquipa, lerEquipa, ranking,
     lerMensagens, enviarMensagem, apagarMensagem, enviarFoto, ouvirChat,
     get ligado(){ return ligado; },

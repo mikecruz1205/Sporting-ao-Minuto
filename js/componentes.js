@@ -93,6 +93,12 @@ const Componentes = (() => {
   /* Imagem de uma notícia, com capa da marca por baixo. Se a fotografia
      não existir ou falhar, fica a capa (listas verdes + emblema), que é
      da casa e não parece um buraco. */
+  /* botão de partilhar — fica fora do <a> (botão dentro de link não é válido) */
+  const botaoPartilhar = n => /^https?:\/\//i.test(n.link || '') ? `
+    <button type="button" class="partilhar" data-partilhar="${seguro(n.link)}" data-titulo="${seguro(n.titulo)}" aria-label="Partilhar: ${seguro(n.titulo)}">
+      <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
+    </button>` : '';
+
   /* os links vêm dos feeds: só http(s) chega a um href */
   const ligacao = u => /^https?:\/\//i.test(u || '') ? seguro(u) : '#';
 
@@ -135,6 +141,7 @@ const Componentes = (() => {
           <span class="ed__fonte">${seguro(n.fonte)}</span>
         </div>
       </a>
+      ${variante === 'principal' ? botaoPartilhar(n) : ''}
     </article>`;
   }
 
@@ -222,6 +229,7 @@ const Componentes = (() => {
           </span>
         </div>
       </a>
+      ${botaoPartilhar(n)}
     </article>`;
   }
 
