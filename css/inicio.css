@@ -566,7 +566,7 @@
   #vista-inicio .pagina__lado .cartao__corpo{ padding: 16px 0 0; }
 
   /* ao minuto sem scroll dentro do scroll: as seis mais recentes e o botão */
-  #vista-inicio .cartao--vivo .linha-tempo{ max-height: none; overflow: visible; padding-right: 0; -webkit-mask-image: none; mask-image: none; }
+  #vista-inicio .cartao--vivo .linha-tempo{ --anel: var(--fundo); max-height: none; overflow: visible; padding-right: 0; -webkit-mask-image: none; mask-image: none; }
   #vista-inicio .cartao--vivo .linha-tempo .ev:nth-child(n+7){ display: none; }
 }
 @media (max-width: 820px){

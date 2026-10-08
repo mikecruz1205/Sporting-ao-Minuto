@@ -293,15 +293,24 @@ body{
 /* =========================================================================
    AO MINUTO — timeline (homepage e vista)
    ========================================================================= */
-.selo-vivo{ display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; color: var(--texto-3); border-color: var(--linha-forte); background: transparent; }
-.selo-vivo--ativo{ color: var(--verde-claro); background: var(--verde-vidro); border-color: color-mix(in srgb, var(--verde-claro) 35%, transparent); }
+/* selo "ao vivo": calmo quando parado ("Atualizado às…"); sólido e a
+   pulsar quando os jornais estão mesmo a ser relidos */
+.selo-vivo{ display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; color: var(--texto-2); border-color: var(--linha-forte); background: transparent; }
+.selo-vivo--ativo{ color: var(--sobre-verde); background: var(--verde); border-color: var(--verde); box-shadow: 0 6px 18px -8px rgba(10,157,95,.8); }
+.selo-vivo--ativo .ponto-vivo{ background: var(--sobre-verde); animation: pulsa-vivo 1.6s var(--ease-saida) infinite; }
+@keyframes pulsa-vivo{
+  0%  { box-shadow: 0 0 0 0 rgba(4,21,13,.55); }
+  70% { box-shadow: 0 0 0 7px rgba(4,21,13,0); }
+  100%{ box-shadow: 0 0 0 0 rgba(4,21,13,0); }
+}
 .ponto-parado{ width: 8px; height: 8px; border-radius: 50%; background: var(--texto-3); }
-.vista__cabeca--com-selo{ display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; max-width: 820px; }
+.vista__cabeca--com-selo{ display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 16px; max-width: 820px; }
 .vista__cabeca--com-selo .selo-vivo{ margin-bottom: 6px; }
-.segmentos--vista{ max-width: 420px; margin-bottom: 24px; }
+.segmentos--vista{ max-width: 420px; margin-bottom: 20px; }
 
-.linha-tempo{ list-style: none; }
+.linha-tempo{ list-style: none; --anel: var(--fundo); }
 .cartao--vivo .linha-tempo{
+  --anel: var(--sup-1, var(--cartao));
   max-height: 520px; overflow-y: auto; padding-right: 4px; overscroll-behavior: contain;
   -webkit-mask-image: linear-gradient(180deg, #000 90%, transparent);
           mask-image: linear-gradient(180deg, #000 90%, transparent);
@@ -313,31 +322,36 @@ body{
 .linha-tempo .ev{ display: block; padding: 0; animation: none; }
 .ev__ligacao{
   position: relative;
-  display: grid; grid-template-columns: 46px 14px minmax(0, 1fr) auto; column-gap: 12px; align-items: start;
-  border-radius: 12px; color: inherit;
+  display: grid; grid-template-columns: 46px 26px minmax(0, 1fr) auto; column-gap: 12px; align-items: start;
+  border-radius: 14px; color: inherit;
   transition: background var(--t-rapida);
 }
 .ev__ligacao:hover{ background: var(--veu-1); }
 .ev__ligacao:focus-visible{ outline: 2px solid var(--verde-claro); outline-offset: -2px; }
 
-/* a hora: números do letreiro, alinhados, sem competir com o título */
+/* a hora: números do letreiro, alinhados; hoje em destaque, antes mais calmos */
 .linha-tempo .ev__hora{
-  padding: 12px 0 0; text-align: right;
+  padding: 15px 0 0; text-align: right;
   font-family: var(--f-num); font-weight: 700; font-size: 16px; line-height: 1; letter-spacing: .02em;
-  color: var(--texto-2); font-variant-numeric: tabular-nums;
+  color: var(--texto); font-variant-numeric: tabular-nums;
 }
-/* a linha fina e o ponto */
-.linha-tempo .ev__marca{ align-self: stretch; display: flex; flex-direction: column; align-items: center; padding-top: 13px; }
-.linha-tempo .ev__bola{
-  flex: none; width: 10px; height: 10px; margin: 0; border-radius: 50%; border: 0;
-  background: var(--cartao); box-shadow: 0 0 0 2px var(--linha-forte);
-  transition: transform var(--t-rapida), box-shadow var(--t-rapida);
+.linha-tempo .ev--antes .ev__hora{ color: var(--texto-3); }
+
+/* o marcador: a sigla do jornal, na cor dele, sobre a linha fina */
+.linha-tempo .ev__marca{ align-self: stretch; display: flex; flex-direction: column; align-items: center; padding-top: 9px; }
+.linha-tempo .ev__sigla{
+  position: relative; z-index: 1;
+  width: 26px; height: 26px; border-radius: 50%;
+  font-size: 9.5px; letter-spacing: 0;
+  box-shadow: 0 0 0 3px var(--anel);
+  transition: transform var(--t-rapida);
 }
-.linha-tempo .ev__linha{ flex: 1; width: 1px; margin: 6px 0 0; min-height: 16px; background: var(--linha-forte); }
-.linha-tempo .ev:last-child .ev__linha{ background: linear-gradient(var(--linha-forte), transparent); }
-.linha-tempo .ev--novo .ev__bola, .linha-tempo .ev--quente .ev__bola{ background: var(--verde-claro); box-shadow: 0 0 0 3px var(--verde-vidro); }
-.linha-tempo .ev--mercado .ev__bola{ background: var(--amarelo); box-shadow: 0 0 0 3px color-mix(in srgb, var(--amarelo) 18%, transparent); }
-.ev__ligacao:hover .ev__bola{ transform: scale(1.2); }
+.linha-tempo .ev__linha{ flex: 1; width: 2px; margin: 4px 0 0; min-height: 16px; border-radius: 2px; background: var(--linha); }
+.linha-tempo .ev--hoje .ev__linha{ background: color-mix(in srgb, var(--verde-claro) 28%, var(--linha)); }
+.linha-tempo .ev:last-child .ev__linha{ background: linear-gradient(var(--linha), transparent); }
+/* novas (menos de 30 min): anel verde à volta da sigla */
+.linha-tempo .ev--novo .ev__sigla{ box-shadow: 0 0 0 2px var(--anel), 0 0 0 4px var(--verde-claro); }
+.ev__ligacao:hover .ev__sigla{ transform: scale(1.1); }
 
 .linha-tempo .ev__txt{ min-width: 0; padding: 9px 0 18px; }
 .ev__titulo{
@@ -361,36 +375,71 @@ body{
 .ev__fonte-nome{ font-weight: 800; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--texto-2); }
 .ev__quando::before{ content: "·"; margin-right: 8px; }
 
-.ev__img{ width: 120px; margin: 10px 0 14px; }
+.ev__img{ width: 128px; margin: 10px 0 14px; }
 .ev__img .capa{ aspect-ratio: 4 / 3; border-radius: 10px; }
 
-/* a mais recente: um fundo muito leve e o ponto com anel */
+/* A MAIS RECENTE — um cartão a sério: fundo verde leve, moldura, título
+   maior, resumo mais longo e imagem maior */
+.ev__rotulo{
+  display: inline-flex; align-items: center; gap: 6px; margin-bottom: 6px;
+  font-size: 10.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--verde-claro);
+}
+.ev__rotulo::before{ content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.linha-tempo .ev--ultima{ --anel: var(--cartao); }
 .linha-tempo .ev--ultima .ev__ligacao{ background: var(--verde-vidro); }
-.linha-tempo .ev--ultima .ev__bola{ background: var(--verde-claro); box-shadow: 0 0 0 4px var(--verde-vidro), 0 0 0 5px color-mix(in srgb, var(--verde-claro) 40%, transparent); }
+.linha-tempo--grande .ev--ultima .ev__ligacao{
+  margin-bottom: 10px; padding: 4px 16px 4px 0;
+  border: 1px solid color-mix(in srgb, var(--verde-claro) 30%, transparent);
+  border-radius: 18px; box-shadow: var(--sombra-cartao);
+}
+.linha-tempo--grande .ev--ultima .ev__ligacao{ --anel: color-mix(in srgb, var(--verde) 12%, var(--fundo)); }
+.linha-tempo--grande .ev--ultima .ev__txt{ padding: 14px 0 16px; }
+.linha-tempo--grande .ev--ultima .ev__titulo{ font-size: var(--fs-titulo-lg); font-weight: 800; line-height: 1.28; -webkit-line-clamp: 4; }
+.linha-tempo--grande .ev--ultima .ev__resumo{ -webkit-line-clamp: 3; }
+.linha-tempo--grande .ev--ultima .ev__img{ width: 220px; margin-top: 16px; }
+.linha-tempo--grande .ev--ultima .ev__linha{ display: none; }
 
 /* o que entrou agora: realce que se apaga sozinho */
 .linha-tempo .ev--chegou .ev__ligacao{ animation: chega-ev 2.4s var(--ease-saida); }
 @keyframes chega-ev{ 0%{ background: color-mix(in srgb, var(--verde-claro) 22%, transparent); transform: translateY(-4px); } 25%{ transform: none; } }
 
-/* dias, na vista completa */
-.ev-dia{ position: sticky; top: var(--altura-topo, 92px); z-index: 2; padding: 20px 0 8px 58px; background: var(--fundo); }
-.ev-dia span{ font-family: var(--f-tit); font-weight: 700; font-size: 16px; letter-spacing: .05em; text-transform: uppercase; color: var(--texto-2); }
+/* DIAS — hoje em verde, com a data; os anteriores com um fio */
+.ev-dia{
+  position: sticky; top: var(--altura-topo, 92px); z-index: 2;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px;
+  padding: 22px 0 10px 58px; background: var(--fundo);
+}
+.ev-dia span{ font-family: var(--f-tit); font-weight: 800; font-size: 17px; letter-spacing: .05em; text-transform: uppercase; color: var(--texto-2); }
 .ev-dia span::first-letter{ text-transform: uppercase; }
+.ev-dia small{ font-size: 12.5px; color: var(--texto-3); }
+.ev-dia small::first-letter{ text-transform: uppercase; }
+.ev-dia--hoje span{ padding: 3px 10px; border-radius: 7px; background: var(--verde); color: var(--sobre-verde); }
+.ev-dia--hoje small{ color: var(--texto-2); }
+
+/* a carregar */
+.ev--osso .osso{ display: block; }
+.ev--osso .ev__hora .osso{ width: 38px; height: 13px; margin-left: auto; }
+.ev--osso .ev__sigla{ box-shadow: none; }
 
 /* homepage: mais compacto */
-.cartao--vivo .ev__ligacao{ grid-template-columns: 42px 12px minmax(0, 1fr); column-gap: 10px; }
-.cartao--vivo .ev__hora{ font-size: 14px; }
+.cartao--vivo .ev__ligacao{ grid-template-columns: 42px 22px minmax(0, 1fr); column-gap: 10px; }
+.cartao--vivo .ev__hora{ font-size: 14px; padding-top: 13px; }
+.cartao--vivo .ev__marca{ padding-top: 8px; }
+.cartao--vivo .ev__sigla{ width: 22px; height: 22px; font-size: 8.5px; }
 .cartao--vivo .ev__txt{ padding-bottom: 14px; }
 
 @media (max-width: 640px){
-  .ev__ligacao{ grid-template-columns: 40px 12px minmax(0, 1fr); column-gap: 10px; }
-  .linha-tempo .ev__hora{ font-size: 14.5px; }
+  .ev__ligacao{ grid-template-columns: 40px 24px minmax(0, 1fr); column-gap: 10px; }
+  .linha-tempo .ev__hora{ font-size: 14.5px; padding-top: 14px; }
+  .linha-tempo .ev__sigla{ width: 24px; height: 24px; font-size: 9px; }
   .ev__img{ grid-column: 3; width: 100%; max-width: 220px; margin-top: -8px; }
+  .linha-tempo--grande .ev--ultima .ev__ligacao{ padding-right: 12px; }
+  .linha-tempo--grande .ev--ultima .ev__img{ width: 100%; max-width: none; margin-top: -4px; }
+  .linha-tempo--grande .ev--ultima .ev__img .capa{ aspect-ratio: 16 / 9; }
   .ev-dia{ padding-left: 50px; }
-  .vista__cabeca--com-selo{ flex-direction: column; align-items: flex-start; gap: 10px; }
 }
 @media (prefers-reduced-motion: reduce){
-  .linha-tempo .ev--chegou .ev__ligacao, .ponto-vivo{ animation: none !important; }
+  .linha-tempo .ev--chegou .ev__ligacao, .ponto-vivo, .selo-vivo--ativo .ponto-vivo{ animation: none !important; }
 }
 
 /* =========================================================================

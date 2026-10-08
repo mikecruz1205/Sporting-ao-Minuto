@@ -1294,7 +1294,8 @@ function mostrarDestaque(i){
 let jogosSincronizados = false;
 /* Uma atualização do ao minuto. Na homepage é compacta (hora, título,
    etiqueta e fonte); na vista completa leva também o resumo e, só nas
-   importantes, a imagem. */
+   importantes, a imagem. O marcador da linha do tempo é a sigla do
+   jornal, na cor dele — cada atualização tem cara, mesmo sem foto. */
 function itemMinuto(n, i, completo){
   const classe = n.categoria === 'DESTAQUE' ? 'ev--quente' : n.categoria === 'MERCADO' ? 'ev--mercado' : '';
   const minutos = (Date.now() - n.data.getTime()) / 60000;
@@ -1306,11 +1307,13 @@ function itemMinuto(n, i, completo){
   const resumo = completo ? Componentes.resumir(n.resumo, 170) : '';
   const hora = n.data.toLocaleTimeString('pt-PT', { hour:'2-digit', minute:'2-digit' });
   const ligacao = /^https?:\/\//i.test(n.link || '') ? Componentes.seguro(n.link) : '#';
-  return `<li class="ev ${classe} ${i === 0 ? 'ev--ultima' : ''} ${novo ? 'ev--novo' : ''} ${chegou ? 'ev--chegou' : ''}">
+  const hoje = n.data.toDateString() === new Date().toDateString();
+  return `<li class="ev ${classe} ${i === 0 ? 'ev--ultima' : ''} ${novo ? 'ev--novo' : ''} ${chegou ? 'ev--chegou' : ''} ${hoje ? 'ev--hoje' : 'ev--antes'} ${n.imagem ? '' : 'ev--sem-img'}">
     <a class="ev__ligacao" href="${ligacao}" target="_blank" rel="noopener" data-link="${Componentes.seguro(n.link)}">
       <time class="ev__hora" datetime="${n.data.toISOString()}">${hora}</time>
-      <span class="ev__marca" aria-hidden="true"><i class="ev__bola"></i><i class="ev__linha"></i></span>
+      <span class="ev__marca" aria-hidden="true">${Componentes.siglaFonte(n, 'ev__sigla')}<i class="ev__linha"></i></span>
       <span class="ev__txt">
+        ${completo && i === 0 ? '<span class="ev__rotulo">Mais recente</span>' : ''}
         <span class="ev__titulo">${Componentes.seguro(n.titulo)}</span>
         ${resumo ? `<span class="ev__resumo">${Componentes.seguro(resumo)}</span>` : ''}
         <span class="ev__meta">
@@ -1325,12 +1328,23 @@ function itemMinuto(n, i, completo){
   </li>`;
 }
 
-/* a vista completa separa os dias, para se perceber o recuo no tempo */
+/* a vista completa separa os dias, para se perceber o recuo no tempo;
+   hoje tem o cabeçalho em destaque, os dias anteriores ficam mais calmos */
 function minutoPorDia(lista){
   let dia = '';
+  const hoje = new Date().toDateString();
+  const ontem = new Date(Date.now() - 86400000).toDateString();
+  const porDia = {};
+  lista.forEach(n => { const d = n.data.toDateString(); porDia[d] = (porDia[d] || 0) + 1; });
   return lista.map((n, i) => {
     const d = n.data.toDateString();
-    const cab = d !== dia ? `<li class="ev-dia"><span>${rotuloDia(n.data)}</span></li>` : '';
+    let cab = '';
+    if(d !== dia){
+      const data = (d === hoje || d === ontem)
+        ? n.data.toLocaleDateString('pt-PT', { weekday:'long', day:'numeric', month:'long' }) : '';
+      const quantas = porDia[d] === 1 ? '1 atualização' : `${porDia[d]} atualizações`;
+      cab = `<li class="ev-dia ${d === hoje ? 'ev-dia--hoje' : ''}"><span>${rotuloDia(n.data)}</span><small>${data ? data + ' · ' : ''}${quantas}</small></li>`;
+    }
     dia = d;
     return cab + itemMinuto(n, i, true);
   }).join('');
@@ -1347,7 +1361,12 @@ function pintarLinhaTempo(){
     x.setAttribute('aria-pressed', x.dataset.valor === filtro);
   });
 
-  const vazio = `<li class="estado"><p class="estado__texto">${NOTICIAS.length ? 'Sem atualizações neste filtro.' : 'A ler os jornais…'}</p></li>`;
+  /* vazio: sem nada no filtro, a carregar (esqueleto) ou sem resposta (erro) */
+  const vazio = NOTICIAS.length
+    ? `<li class="estado"><p class="estado__texto">Sem atualizações neste filtro.</p></li>`
+    : (primeiraLeituraFeita || navigator.onLine === false)
+      ? Componentes.erroLeitura(navigator.onLine === false)
+      : Componentes.esqueletoMinuto(5);
   $('#linha-tempo').innerHTML = l.length ? l.slice(0, 12).map((n, i) => itemMinuto(n, i, false)).join('') : vazio;
 
   /* aviso discreto quando entram novidades */

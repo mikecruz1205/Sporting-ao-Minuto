@@ -342,6 +342,20 @@ const Componentes = (() => {
       </span>
     </li>`).join('');
 
+  /* atualizações do ao minuto a carregar: hora, marcador e duas linhas */
+  const esqueletoMinuto = (quantos = 5) => Array.from({length:quantos}, () => `
+    <li class="ev ev--osso" aria-hidden="true">
+      <span class="ev__ligacao">
+        <span class="ev__hora"><span class="osso"></span></span>
+        <span class="ev__marca"><span class="osso ev__sigla"></span><i class="ev__linha"></i></span>
+        <span class="ev__txt">
+          <span class="osso osso--titulo"></span>
+          <span class="osso osso--titulo osso--curto"></span>
+          <span class="osso osso--linha osso--curto"></span>
+        </span>
+      </span>
+    </li>`).join('');
+
   /* nenhum jornal respondeu: diz porquê e deixa tentar outra vez */
   const erroLeitura = (semLigacao = false, tag = 'li') => `
     <${tag} class="estado estado--erro" role="alert">
@@ -381,7 +395,7 @@ const Componentes = (() => {
   return {
     seguro, destacar, haQuanto, dataCurta, horaCurta, resumir,
     cartaoNoticia, cartaoEditorial, manchete, itemLista, capa, hero, itemCompacto, categoriaClasse, imagemGrande,
-    esqueletoCartao, esqueletoEditorial, esqueletoHero, esqueletoCompacto, esqueletoLista, erroLeitura, vazio,
+    esqueletoCartao, esqueletoEditorial, esqueletoHero, esqueletoCompacto, esqueletoLista, esqueletoMinuto, erroLeitura, vazio,
     etiquetaFonte, siglaFonte
   };
 })();
