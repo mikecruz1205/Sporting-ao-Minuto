@@ -72,6 +72,11 @@ TTL_API = 30 * 24 * 3600     # estatisticas de epocas passadas nao mudam
 
 class Manipulador(SimpleHTTPRequestHandler):
 
+    # o manifest da aplicação e as imagens webp têm tipo próprio
+    extensions_map = {**SimpleHTTPRequestHandler.extensions_map,
+                      ".webmanifest": "application/manifest+json",
+                      ".webp": "image/webp"}
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=RAIZ, **kwargs)
 

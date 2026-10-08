@@ -98,6 +98,14 @@ def main(equipas):
     print(f'\n{novos} novos, {falhados} sem emblema, {len(mapa)} no total')
     print('mapa em', MAPA)
 
+    # os emblemas vêm a 150 px em PNG de 24 bits: reduzem-se logo aqui
+    try:
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'scripts'))
+        import otimizar_imagens
+        otimizar_imagens.main()
+    except Exception as e:
+        print('(não foi possível otimizar os emblemas:', e, ')')
+
 if __name__ == '__main__':
     lista = json.load(open(sys.argv[1], encoding='utf-8')) if len(sys.argv) > 1 else []
     main(lista)

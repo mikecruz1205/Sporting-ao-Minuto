@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0c0b">
+<meta name="robots" content="noindex">
+<title>Sem ligação · Sporting ao Minuto</title>
+<link rel="icon" href="/favicon.ico">
+<style>
+  :root{ color-scheme: dark; }
+  *{ box-sizing: border-box; margin: 0; }
+  body{
+    min-height: 100vh; min-height: 100dvh;
+    display: grid; place-items: center; padding: 24px;
+    background:
+      radial-gradient(80% 50% at 50% 0%, rgba(10,157,95,.22), transparent 70%),
+      repeating-linear-gradient(180deg, #0b2519 0 28px, #0a0c0b 28px 56px);
+    color: #f2f5f3;
+    font: 16px/1.55 Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    text-align: center;
+  }
+  main{ max-width: 380px; padding: 32px 24px; border-radius: 18px; background: rgba(10,12,11,.86); border: 1px solid rgba(255,255,255,.08); }
+  img{ width: 96px; height: 96px; }
+  h1{ margin-top: 16px; font: 800 30px/1 'Barlow Condensed', 'Arial Narrow', sans-serif; text-transform: uppercase; letter-spacing: .02em; }
+  p{ margin-top: 10px; color: #a9b5af; }
+  button{
+    margin-top: 22px; min-height: 48px; padding: 0 26px; border: 0; border-radius: 999px;
+    background: #0a9d5f; color: #04150d; font: 700 14px/1 Inter, system-ui, sans-serif;
+    letter-spacing: .06em; text-transform: uppercase; cursor: pointer;
+  }
+  button:hover{ background: #2fd98a; }
+  button:focus-visible{ outline: 2px solid #fff; outline-offset: 3px; }
+</style>
+</head>
+<body>
+  <main>
+    <img src="/img/marca/emblema-128.webp" alt="" width="96" height="96">
+    <h1>Sem ligação</h1>
+    <p>Não foi possível chegar ao servidor. Assim que a rede voltar, as notícias e os jogos voltam a atualizar.</p>
+    <button type="button" onclick="location.reload()">Tentar outra vez</button>
+  </main>
+  <script>addEventListener('online', () => location.reload());</script>
+</body>
+</html>

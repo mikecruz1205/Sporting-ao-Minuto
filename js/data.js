@@ -69,6 +69,24 @@ const CONFIG = {
   filtroVideo: /v[íi]deo|assiste|em imagens|highlights|resumo do jogo|declara[çc][õo]es em v/i,
 
   /* ---------------------------------------------------------------------
+     APLICAÇÃO
+     googlePlay: o endereço da ficha na Google Play, quando a app Android
+       existir (https://play.google.com/store/apps/details?id=…). Enquanto
+       for null, o Android mostra a instalação da PWA — nunca um link
+       inventado. Ver docs/ANDROID.md.
+     --------------------------------------------------------------------- */
+  app: {
+    nome: 'Sporting ao Minuto',
+    googlePlay: null
+  },
+
+  /* notificações push: a chave pública VAPID. null = desligadas (ver
+     docs/NOTIFICACOES.md e js/notificacoes.js) */
+  push: {
+    chavePublica: null
+  },
+
+  /* ---------------------------------------------------------------------
      MODALIDADES — cada equipa do clube.
      `rx` decide de que modalidade é uma notícia (sobretudo pelo título).
      `jogos` diz de onde vem o calendário: 'principal' é o do futebol

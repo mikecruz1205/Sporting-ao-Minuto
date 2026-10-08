@@ -1,0 +1,56 @@
+{
+  "id": "/",
+  "name": "Sporting ao Minuto",
+  "short_name": "Sporting",
+  "description": "Notícias ao minuto, jogos, resultados, classificação, plantel e modalidades do Sporting CP.",
+  "lang": "pt-PT",
+  "dir": "ltr",
+  "start_url": "/?origem=app",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "theme_color": "#0a0c0b",
+  "background_color": "#0a0c0b",
+  "categories": ["sports", "news"],
+  "launch_handler": { "client_mode": ["navigate-existing", "auto"] },
+  "handle_links": "preferred",
+  "prefer_related_applications": false,
+  "icons": [
+    { "src": "/img/icones/icone-48.png",  "sizes": "48x48",   "type": "image/png", "purpose": "any" },
+    { "src": "/img/icones/icone-72.png",  "sizes": "72x72",   "type": "image/png", "purpose": "any" },
+    { "src": "/img/icones/icone-96.png",  "sizes": "96x96",   "type": "image/png", "purpose": "any" },
+    { "src": "/img/icones/icone-128.png", "sizes": "128x128", "type": "image/png", "purpose": "any" },
+    { "src": "/img/icones/icone-144.png", "sizes": "144x144", "type": "image/png", "purpose": "any" },
+    { "src": "/img/icones/icone-152.png", "sizes": "152x152", "type": "image/png", "purpose": "any" },
+    { "src": "/img/icones/icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/img/icones/icone-256.png", "sizes": "256x256", "type": "image/png", "purpose": "any" },
+    { "src": "/img/icones/icone-384.png", "sizes": "384x384", "type": "image/png", "purpose": "any" },
+    { "src": "/img/icones/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/img/icones/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/img/icones/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Ao minuto", "short_name": "Ao minuto",
+      "description": "A linha do tempo de tudo o que se passa",
+      "url": "/ao-minuto?origem=atalho",
+      "icons": [{ "src": "/img/icones/icone-96.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "Jogos e resultados", "short_name": "Jogos",
+      "url": "/jogos?origem=atalho",
+      "icons": [{ "src": "/img/icones/icone-96.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "Classificação", "short_name": "Tabela",
+      "url": "/classificacao?origem=atalho",
+      "icons": [{ "src": "/img/icones/icone-96.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "Modalidades", "short_name": "Modalidades",
+      "url": "/modalidades?origem=atalho",
+      "icons": [{ "src": "/img/icones/icone-96.png", "sizes": "96x96", "type": "image/png" }]
+    }
+  ]
+}

@@ -89,6 +89,13 @@ def main():
     guardar(quadrado(emblema, 180, 0.1, FUNDO, listas=True).convert('RGB'),
             'img', 'icones', 'apple-touch-icon.png', optimize=True)
     guardar(quadrado(emblema, 32, 0.0), 'img', 'icones', 'favicon-32.png', optimize=True)
+
+    # "badge" das notificações no Android: silhueta branca sobre transparente
+    sil = quadrado(emblema, 96, 0.08)
+    alfa = sil.split()[3].point(lambda v: 255 if v > 110 else 0)
+    badge = Image.new('RGBA', sil.size, (255, 255, 255, 0))
+    badge.putalpha(alfa)
+    guardar(badge, 'img', 'icones', 'badge-96.png', optimize=True)
     quadrado(emblema, 48, 0.0).save(caminho('favicon.ico'), sizes=[(16, 16), (32, 32), (48, 48)])
 
     # ---- ecrãs de arranque do iOS (o Android gera-os do manifest) ----

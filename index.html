@@ -2,10 +2,10 @@
 <html lang="pt-PT">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sporting CP</title>
 <meta name="description" content="Sporting ao Minuto — notícias do Sporting CP ao minuto, mercado, jogos, classificação, plantel e estatísticas.">
-<meta name="theme-color" content="#0b0d0c">
+<meta name="theme-color" content="#0a0c0b">
 <meta name="color-scheme" content="dark">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Sporting ao Minuto">
@@ -23,15 +23,32 @@
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/img/icones/favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="/img/icones/apple-touch-icon.png">
+<!-- aplicação instalável (PWA) -->
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Sporting">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="application-name" content="Sporting ao Minuto">
+<meta name="format-detection" content="telephone=no">
+<link rel="apple-touch-startup-image" href="/img/arranque/iphone-se.jpg" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="/img/arranque/iphone-x.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="/img/arranque/iphone-14.jpg" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="/img/arranque/iphone-15.jpg" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="/img/arranque/iphone-15-max.jpg" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="/img/arranque/ipad.jpg" media="(device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="/img/arranque/ipad-pro-11.jpg" media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="/img/arranque/ipad-pro-129.jpg" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/base.css?v=69">
-<link rel="stylesheet" href="css/componentes.css?v=69">
-<link rel="stylesheet" href="css/style.css?v=69">
-<link rel="stylesheet" href="css/portal.css?v=69">
-<link rel="stylesheet" href="css/inicio.css?v=81">
-<link rel="stylesheet" href="css/app.css?v=69">
+<link rel="stylesheet" href="css/base.css?v=82">
+<link rel="stylesheet" href="css/componentes.css?v=82">
+<link rel="stylesheet" href="css/style.css?v=82">
+<link rel="stylesheet" href="css/portal.css?v=82">
+<link rel="stylesheet" href="css/inicio.css?v=82">
+<link rel="stylesheet" href="css/app.css?v=82">
 </head>
 <body class="trancado">
 
@@ -128,6 +145,7 @@
   </button>
 
   <div class="topo__acoes">
+    <button type="button" class="instalar-topo" id="instalar-topo" hidden><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg><span data-rotulo>Instalar</span></button>
     <div class="acoes-capsula">
       <div class="procura" id="procura-caixa">
         <label class="so-leitor" for="procura">Procurar</label>
@@ -186,6 +204,7 @@
     </div>
   </div>
   <button class="menu__item menu__item--topo menu__item--taca" data-vista="clube"><span class="menu__taca" aria-hidden="true"></span>Clube</button>
+  <button type="button" class="menu__instalar" id="instalar-gaveta" hidden><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg><span data-rotulo>Instalar aplicação</span></button>
   <span class="menu__estado" id="estado-dados">a ligar…</span>
 </nav>
 </header>
@@ -814,6 +833,23 @@
 </dialog>
 
 
+
+<!-- ============================ ADICIONAR AO ECRÃ (iPhone / iPad) ============================ -->
+<dialog class="folha" id="instalar-ios" aria-labelledby="tit-ios">
+  <div class="folha__caixa">
+    <button type="button" class="folha__fechar" data-fechar aria-label="Fechar"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <img class="folha__icone" src="/img/icones/icone-128.png" alt="" width="64" height="64">
+    <h2 class="folha__titulo" id="tit-ios">Adicionar ao ecrã principal</h2>
+    <p class="folha__sub">No iPhone e no iPad a instalação faz-se pelo Safari, em três toques.</p>
+    <ol class="folha__passos">
+      <li><span class="folha__n">1</span><span>Toca em <b>Partilhar</b> <span class="folha__ico"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v13"/><path d="m7 8 5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></span> <span data-onde>na barra de baixo do Safari</span>.</span></li>
+      <li><span class="folha__n">2</span><span>Desliza e escolhe <b>Adicionar ao ecrã principal</b> <span class="folha__ico"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/></svg></span>.</span></li>
+      <li><span class="folha__n">3</span><span>Toca em <b>Adicionar</b>. O emblema aparece junto das outras aplicações.</span></li>
+    </ol>
+    <p class="folha__nota">Noutro browser do iPhone (Chrome, Firefox) o caminho é o mesmo: Partilhar → Adicionar ao ecrã principal.</p>
+  </div>
+</dialog>
+
 <!-- ============================ BARRA INFERIOR (telemóvel) ============================ -->
 <nav class="barra-inferior" id="barra-inferior" aria-label="Navegação rápida">
   <button class="barra-inferior__item is-on" data-vista="inicio"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/></svg><span>Início</span></button>
@@ -826,14 +862,16 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.min.js" defer></script>
-<script src="js/nuvem.js?v=69" defer></script>
-<script src="js/jogo.js?v=69" defer></script>
-<script src="js/fd.js?v=69" defer></script>
-<script src="js/componentes.js?v=69" defer></script>
-<script src="js/contas.js?v=69" defer></script>
-<script src="js/arte.js?v=69" defer></script>
-<script src="js/data.js?v=69" defer></script>
-<script src="js/wiki.js?v=69" defer></script>
-<script src="js/app.js?v=69" defer></script>
+<script src="js/nuvem.js?v=82" defer></script>
+<script src="js/jogo.js?v=82" defer></script>
+<script src="js/fd.js?v=82" defer></script>
+<script src="js/componentes.js?v=82" defer></script>
+<script src="js/contas.js?v=82" defer></script>
+<script src="js/arte.js?v=82" defer></script>
+<script src="js/data.js?v=82" defer></script>
+<script src="js/wiki.js?v=82" defer></script>
+<script src="js/notificacoes.js?v=82" defer></script>
+<script src="js/pwa.js?v=82" defer></script>
+<script src="js/app.js?v=82" defer></script>
 </body>
 </html>
