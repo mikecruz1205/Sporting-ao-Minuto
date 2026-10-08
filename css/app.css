@@ -78,6 +78,7 @@
   .topo__acoes{ margin-right: 0; }
 
   .menu{ width: min(340px, 88vw); padding-top: max(64px, env(safe-area-inset-top)); }
+
   .menu__grupo{ display: block; }
   .menu__pai{
     display: block; width: 100%; text-align: left; cursor: default;
@@ -199,3 +200,69 @@
   color: var(--verde-claro);
 }
 .botao-texto:hover{ color: #fff; }
+
+/* =========================================================================
+   MODALIDADES (vista)
+   ========================================================================= */
+.mod-separadores{
+  display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
+  padding-bottom: 4px; margin-bottom: 28px;
+}
+.mod-separadores::-webkit-scrollbar{ display: none; }
+.mod-sep{
+  flex: none; display: inline-flex; align-items: center; gap: 8px;
+  min-height: 42px; padding: 0 16px; border-radius: 999px;
+  border: 1px solid var(--borda-forte);
+  font-size: 13.5px; font-weight: 600; color: var(--tx-2); white-space: nowrap;
+  transition: border-color var(--t-rapida), color var(--t-rapida), background var(--t-rapida);
+}
+.mod-sep__ponto{ width: 8px; height: 8px; border-radius: 50%; background: var(--m-cor); }
+.mod-sep:hover{ color: var(--tx-1); border-color: color-mix(in srgb, var(--m-cor) 45%, transparent); }
+.mod-sep.is-on{ color: var(--tx-1); background: color-mix(in srgb, var(--m-cor) 12%, transparent); border-color: var(--m-cor); }
+
+.mod-cabeca{ padding-left: 18px; border-left: 4px solid var(--m-cor); margin-bottom: 24px; }
+.mod-cabeca__nome{
+  font-family: var(--f-tit); font-weight: 800; text-transform: uppercase;
+  font-size: clamp(2rem, 4vw, 2.8rem); line-height: 1; color: var(--tx-1);
+}
+.mod-cabeca__n{ margin-top: 6px; font-size: 13.5px; color: var(--tx-3); }
+
+.mod-jogos{ display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-bottom: 40px; }
+.mod-jogo, .mod-tabela{
+  display: flex; flex-direction: column; gap: 8px; text-align: left; width: 100%;
+  padding: 18px; border-radius: 14px;
+  background: var(--cartao); border: 1px solid var(--borda);
+}
+button.mod-jogo{ transition: border-color var(--t-rapida), background var(--t-rapida); }
+button.mod-jogo:hover{ border-color: color-mix(in srgb, var(--m-cor) 40%, transparent); background: var(--cartao-alto); }
+.mod-jogo--vazio{ border-style: dashed; }
+.mod-jogo__rotulo{ font-size: 11.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--m-cor); }
+.mod-jogo__prova{ font-size: 13px; color: var(--tx-3); }
+.mod-jogo__vazio{ font-size: 14px; line-height: 1.5; color: var(--tx-2); }
+.mod-jogo__equipas{ display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; margin-top: 6px; }
+.mod-jogo__equipas > span{ display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; font-size: 13.5px; font-weight: 600; color: var(--tx-2); }
+.mod-jogo__equipas > span.e-nos{ color: var(--tx-1); }
+.mod-jogo__equipas img{ width: 32px; height: 32px; object-fit: contain; }
+.mod-jogo__res, .mod-jogo__hora{ font-family: var(--f-num); font-weight: 800; font-size: 30px; color: var(--tx-1); font-variant-numeric: tabular-nums; }
+.mod-jogo__res i{ font-style: normal; margin: 0 4px; color: var(--tx-3); }
+.mod-noticias .editorial{ margin-top: 0; }
+
+/* vista agenda */
+#vista-agenda .agenda{ max-width: 860px; }
+#vista-agenda .estado{ max-width: 860px; margin-top: 24px; }
+/* dentro de uma modalidade a principal é mais baixa: a página já tem cabeçalho e jogos por cima */
+.mod-noticias .ed--principal .capa{ aspect-ratio: 21 / 9; }
+.mod-noticias .ed--tipografico .ed__ligacao{ min-height: 260px; }
+
+/* a fotografia do ecrã de entrada tem zoom lento (até 1.16): não sai do ecrã */
+.acesso{ overflow: hidden; }
+
+/* Os textos só para leitores de ecrã (.so-leitor) são position:absolute.
+   Dentro de uma fila que desliza para o lado, sem pai posicionado, eram
+   colocados em relação à janela — no sítio do 6.º cartão, fora do ecrã —
+   e escapavam ao corte do deslizador. No telemóvel isso alargava a página
+   inteira (até 4×, com as media queries a passarem ao layout largo).
+   Cada deslizador passa a ser o contentor dos seus filhos absolutos. */
+.rcartoes, .temas, .separadores, .mod-separadores, .filtros-categoria,
+#pos-filtro, .jogos-filtro, .placares, .linha-tempo, .grelha-cartoes, .editorial{ position: relative; }
+

@@ -26,11 +26,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/base.css?v=61">
-<link rel="stylesheet" href="css/componentes.css?v=61">
-<link rel="stylesheet" href="css/style.css?v=61">
-<link rel="stylesheet" href="css/portal.css?v=61">
-<link rel="stylesheet" href="css/app.css?v=61">
+<link rel="stylesheet" href="css/base.css?v=69">
+<link rel="stylesheet" href="css/componentes.css?v=69">
+<link rel="stylesheet" href="css/style.css?v=69">
+<link rel="stylesheet" href="css/portal.css?v=69">
+<link rel="stylesheet" href="css/inicio.css?v=80">
+<link rel="stylesheet" href="css/app.css?v=69">
 </head>
 <body class="trancado">
 
@@ -209,6 +210,8 @@
 <!-- ============================ INÍCIO ============================ -->
 <main class="vista is-on" id="vista-inicio">
 
+  <!-- ================= TOPO: o destaque e o próximo jogo, lado a lado ================= -->
+  <div class="topo-inicio">
   <!-- ================= PALCO: o destaque, a toda a largura ================= -->
   <section class="palco" aria-labelledby="tit-hero" aria-roledescription="carrossel">
     <h2 class="so-leitor" id="tit-hero">Notícias em destaque</h2>
@@ -224,8 +227,21 @@
     </div>
   </section>
 
-  <div class="pagina">
+    <!-- PRÓXIMO JOGO — cartaz -->
+    <section class="cartaz" id="cartao-proximo" aria-labelledby="tit-proximo">
+      <header class="cartaz__topo">
+        <h2 class="cartaz__titulo" id="tit-proximo">Próximo jogo</h2>
+        <span class="cartaz__estado" id="proximo-estado"></span>
+        <div class="setas">
+          <button class="seta" id="jogo-ant" aria-label="Jogo anterior"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+          <button class="seta" id="jogo-seg" aria-label="Jogo seguinte"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+        </div>
+      </header>
+      <div class="cartaz__corpo" id="proximo-jogo" aria-live="polite"></div>
+    </section>
+  </div>
 
+  <div class="pagina">
     <!-- ================= COLUNA PRINCIPAL ================= -->
     <div class="pagina__principal">
 
@@ -238,10 +254,98 @@
           </div>
           <button class="seccao__mais" data-ir="noticias">Ver todas <i aria-hidden="true">→</i></button>
         </div>
-        <div class="filtros-categoria" id="filtros-categoria" role="group" aria-label="Filtrar por categoria"></div>
+        <div class="temas" id="filtros-categoria" role="group" aria-label="Filtrar por tema"></div>
         <div class="editorial" id="ultimas"></div>
       </section>
+    </div>
 
+    <!-- ================= COLUNA LATERAL ================= -->
+    <aside class="pagina__lado" aria-label="Ao minuto e classificação">
+
+      <!-- AO MINUTO — feed ao vivo -->
+      <section class="cartao cartao--vivo" aria-labelledby="tit-aominuto">
+        <div class="cartao__topo">
+          <h2 id="tit-aominuto">Ao minuto</h2>
+          <span class="selo-vivo"><span class="ponto-vivo" aria-hidden="true"></span>Ao vivo</span>
+        </div>
+        <div class="cartao__corpo">
+          <div class="segmentos" id="minuto-segmentos" role="group" aria-label="Filtrar eventos">
+            <button type="button" class="segmento is-on" data-valor="todos" aria-pressed="true">Tudo</button>
+            <button type="button" class="segmento" data-valor="quente" aria-pressed="false">Destaques</button>
+            <button type="button" class="segmento" data-valor="mercado" aria-pressed="false">Mercado</button>
+          </div>
+          <select class="so-leitor" id="minuto-filtro" tabindex="-1" aria-hidden="true">
+            <option value="todos">Todos os eventos</option>
+            <option value="quente">Só destaques</option>
+            <option value="mercado">Só mercado</option>
+          </select>
+          <p class="vivo-novas" id="vivo-novas" hidden role="status"></p>
+          <ol class="linha-tempo" id="linha-tempo"></ol>
+          <button class="botao-largo botao-largo--fantasma" data-ir="aominuto">Ver ao minuto completo</button>
+        </div>
+      </section>
+
+      <!-- CLASSIFICAÇÃO — compacta -->
+      <section class="cartao cartao--tabela" aria-labelledby="tit-tabela">
+        <div class="cartao__topo">
+          <h2 id="tit-tabela">Classificação</h2>
+          <span class="tag" id="tabela-casa-jornada">Liga</span>
+        </div>
+        <div class="cartao__corpo">
+          <div id="tabela-casa"></div>
+          <button class="botao-largo botao-largo--fantasma" data-ir="classificacao">Ver classificação completa</button>
+        </div>
+      </section>
+
+      <section class="cartao" aria-labelledby="tit-lidas">
+        <div class="cartao__topo">
+          <h2 id="tit-lidas">Mais lidas</h2>
+          <span class="tag" title="Contadas neste browser">Tuas</span>
+        </div>
+        <div class="cartao__corpo"><ol class="lista-compacta" id="mais-lidas"></ol></div>
+      </section>
+    </aside>
+  </div>
+
+  <!-- ================= RESULTADOS E PRÓXIMOS JOGOS ================= -->
+  <div class="banda-jogos">
+    <section class="seccao seccao--resultados" aria-labelledby="tit-resultados">
+      <div class="seccao__topo">
+        <div>
+          <p class="seccao__sobre">Equipa principal</p>
+          <h2 class="seccao__titulo" id="tit-resultados">Últimos resultados</h2>
+        </div>
+        <button class="seccao__mais" data-ir="jogos">Todos os jogos <i aria-hidden="true">→</i></button>
+      </div>
+      <ul class="rcartoes" id="resultados"></ul>
+    </section>
+
+    <section class="seccao seccao--agenda" aria-labelledby="tit-calendario">
+      <div class="seccao__topo">
+        <div>
+          <p class="seccao__sobre">O que aí vem</p>
+          <h2 class="seccao__titulo" id="tit-calendario">Próximos jogos</h2>
+        </div>
+        <button class="seccao__mais" data-ir="agenda">Agenda <i aria-hidden="true">→</i></button>
+      </div>
+      <ol class="agenda agenda--curta" id="calendario"></ol>
+    </section>
+  </div>
+
+  <!-- ================= MODALIDADES ================= -->
+  <section class="seccao seccao--modalidades" aria-labelledby="tit-modalidades-casa">
+    <div class="seccao__topo">
+      <div>
+        <p class="seccao__sobre">Muito mais do que futebol</p>
+        <h2 class="seccao__titulo" id="tit-modalidades-casa">Modalidades</h2>
+      </div>
+      <button class="seccao__mais" data-ir="modalidades">Ver modalidades <i aria-hidden="true">→</i></button>
+    </div>
+    <div class="mod-mosaico" id="modalidades-casa"></div>
+  </section>
+
+  <div class="pagina pagina--segunda">
+    <div class="pagina__principal">
       <!-- MERCADO -->
       <section class="seccao seccao--mercado" aria-labelledby="tit-mercado-home">
         <div class="seccao__topo">
@@ -265,7 +369,7 @@
         <div class="grelha-cartoes" id="videos"></div>
       </section>
 
-      <!-- ESTATÍSTICAS DA EQUIPA -->
+      <!-- DESEMPENHO -->
       <section class="seccao seccao--desempenho" aria-labelledby="tit-desempenho">
         <div class="seccao__topo">
           <div>
@@ -278,64 +382,7 @@
       </section>
     </div>
 
-    <!-- ================= BARRA LATERAL ================= -->
-    <aside class="pagina__lado" aria-label="Informação do clube">
-
-      <!-- próximo jogo: o cartão mais importante da coluna -->
-      <section class="cartao cartao--jogo" aria-labelledby="tit-proximo">
-        <div class="cartao__topo">
-          <h2 id="tit-proximo">Próximo jogo</h2>
-          <div class="setas">
-            <button class="seta" id="jogo-ant" aria-label="Jogo anterior"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
-            <button class="seta" id="jogo-seg" aria-label="Jogo seguinte"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
-          </div>
-        </div>
-        <div class="cartao__corpo jogo" id="proximo-jogo"></div>
-      </section>
-
-      <!-- ao minuto: feed ao vivo -->
-      <section class="cartao cartao--vivo" aria-labelledby="tit-aominuto">
-        <div class="cartao__topo">
-          <h2 id="tit-aominuto">Ao minuto</h2>
-          <span class="selo-vivo"><span class="ponto-vivo" aria-hidden="true"></span>Ao vivo</span>
-        </div>
-        <div class="cartao__corpo">
-          <div class="segmentos" id="minuto-segmentos" role="group" aria-label="Filtrar eventos">
-            <button type="button" class="segmento is-on" data-valor="todos" aria-pressed="true">Tudo</button>
-            <button type="button" class="segmento" data-valor="quente" aria-pressed="false">Destaques</button>
-            <button type="button" class="segmento" data-valor="mercado" aria-pressed="false">Mercado</button>
-          </div>
-          <!-- o select continua a ser a fonte da verdade para o resto do código -->
-          <select class="so-leitor" id="minuto-filtro" tabindex="-1" aria-hidden="true">
-            <option value="todos">Todos os eventos</option>
-            <option value="quente">Só destaques</option>
-            <option value="mercado">Só mercado</option>
-          </select>
-          <ol class="linha-tempo" id="linha-tempo"></ol>
-          <button class="botao-largo botao-largo--fantasma" data-ir="aominuto">Ver ao minuto completo</button>
-        </div>
-      </section>
-
-      <section class="cartao" aria-labelledby="tit-lidas">
-        <div class="cartao__topo">
-          <h2 id="tit-lidas">Mais lidas</h2>
-          <span class="tag" title="Contadas neste browser">Tuas</span>
-        </div>
-        <div class="cartao__corpo"><ol class="lista-compacta" id="mais-lidas"></ol></div>
-      </section>
-
-      <section class="cartao" aria-labelledby="tit-tabela">
-        <div class="cartao__topo"><h2 id="tit-tabela">Classificação</h2></div>
-        <div class="cartao__corpo">
-          <table class="tabela" id="tabela-curta">
-            <caption class="so-leitor">Classificação da Liga Portugal</caption>
-            <thead><tr><th scope="col">#</th><th scope="col">EQUIPA</th><th scope="col">J</th><th scope="col">DG</th><th scope="col">PTS</th></tr></thead>
-            <tbody></tbody>
-          </table>
-          <button class="botao-largo botao-largo--fantasma" data-ir="classificacao">Ver classificação completa</button>
-        </div>
-      </section>
-
+    <aside class="pagina__lado" aria-label="Rumores e marcadores">
       <section class="cartao" aria-labelledby="tit-rumores">
         <div class="cartao__topo">
           <h2 id="tit-rumores">Rumores</h2>
@@ -351,24 +398,15 @@
           <button class="botao-largo botao-largo--fantasma" data-ir="estatisticas">Ver todas as estatísticas</button>
         </div>
       </section>
-
-      <section class="cartao" aria-labelledby="tit-calendario">
-        <div class="cartao__topo">
-          <h2 id="tit-calendario">Calendário</h2>
-          <button class="ver-todos" data-ir="jogos">Ver todos</button>
-        </div>
-        <div class="cartao__corpo"><ul class="calendario" id="calendario"></ul></div>
-      </section>
-
-      <section class="cartao" aria-labelledby="tit-resultados">
-        <div class="cartao__topo">
-          <h2 id="tit-resultados">Últimos resultados</h2>
-          <button class="ver-todos" data-ir="jogos">Ver todos</button>
-        </div>
-        <div class="cartao__corpo"><ul class="resultados" id="resultados"></ul></div>
-      </section>
     </aside>
   </div>
+
+  <!-- ================= LEVA O SPORTING CONTIGO ================= -->
+  <section class="levar" id="levar" aria-labelledby="tit-levar" hidden></section>
+
+  <!-- a tabela antiga da coluna continua no documento (o pintarTabela escreve
+       nela), mas a homepage mostra a versão nova em #tabela-casa -->
+  <table hidden id="tabela-curta"><tbody></tbody></table>
 </main>
 
 <!-- o carrossel antigo continua a existir para não partir nada, mas escondido -->
@@ -787,14 +825,14 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.min.js" defer></script>
-<script src="js/nuvem.js?v=61" defer></script>
-<script src="js/jogo.js?v=61" defer></script>
-<script src="js/fd.js?v=61" defer></script>
-<script src="js/componentes.js?v=61" defer></script>
-<script src="js/contas.js?v=61" defer></script>
-<script src="js/arte.js?v=61" defer></script>
-<script src="js/data.js?v=61" defer></script>
-<script src="js/wiki.js?v=61" defer></script>
-<script src="js/app.js?v=61" defer></script>
+<script src="js/nuvem.js?v=69" defer></script>
+<script src="js/jogo.js?v=69" defer></script>
+<script src="js/fd.js?v=69" defer></script>
+<script src="js/componentes.js?v=69" defer></script>
+<script src="js/contas.js?v=69" defer></script>
+<script src="js/arte.js?v=69" defer></script>
+<script src="js/data.js?v=69" defer></script>
+<script src="js/wiki.js?v=69" defer></script>
+<script src="js/app.js?v=69" defer></script>
 </body>
 </html>

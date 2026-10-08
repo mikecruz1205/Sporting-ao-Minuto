@@ -389,6 +389,35 @@ function classificar(n){
   return 'EQUIPA PRINCIPAL';
 }
 
+/* Tema fino de uma notícia: a modalidade, a formação, o clube ou o
+   futebol. Não substitui a categoria (que continua a mandar nas cores e
+   nos filtros antigos) — junta-se a ela. O título manda; o resumo só
+   conta quando a categoria já diz que é de outra modalidade. */
+const ORDEM_TEMAS = ['futsal','andebol','basquetebol','hoquei','voleibol','atletismo','feminino','formacao'];
+function temaDe(n){
+  const mods = Object.fromEntries(CONFIG.modalidades.map(m => [m.id, m]));
+  for(const id of ORDEM_TEMAS) if(mods[id]?.rx?.test(n.titulo)) return id;
+  if(n.categoria === 'MODALIDADES' || n.categoria === 'FEMININO'){
+    for(const id of ORDEM_TEMAS) if(mods[id]?.rx?.test(n.resumo || '')) return id;
+  }
+  if(n.categoria === 'FEMININO') return 'feminino';
+  if(n.categoria === 'FORMAÇÃO') return 'formacao';
+  if(CONFIG.filtroClube.test(n.titulo)) return 'clube';
+  return 'futebol';
+}
+const modalidade = id => CONFIG.modalidades.find(m => m.id === id);
+
+/* etiqueta curta para o ao minuto: OFICIAL, MERCADO, BASQUETEBOL… */
+function etiquetaEvento(n){
+  const tema = temaDe(n);
+  if(/\boficial\b/i.test(n.titulo)) return { texto:'Oficial', classe:'oficial' };
+  if(tema === 'clube') return { texto:'Clube', classe:'clube' };
+  if(tema !== 'futebol') return { texto: modalidade(tema)?.curto || tema, classe:'m-' + tema };
+  if(n.categoria === 'MERCADO')  return { texto:'Mercado', classe:'mercado' };
+  if(n.categoria === 'DESTAQUE') return { texto:'Destaque', classe:'destaque' };
+  return { texto:'Equipa principal', classe:'equipa' };
+}
+
 async function lerFeed(f){
   const itens = await buscarRSS(f.url);
   if(!itens) return 0;
@@ -511,7 +540,7 @@ function haQuanto(d){
   return `há ${Math.floor(s/86400)} dias`;
 }
 
-const dataCurta = d => d.toLocaleDateString('pt-PT',{day:'2-digit',month:'short'}).toUpperCase().replace('.','');
+const dataCurta = d => `${String(d.getDate()).padStart(2,'0')} ${MESES_CURTOS[d.getMonth()].toUpperCase()}`;
 
 function itemNoticia(n){
   const img = n.imagem
@@ -596,7 +625,7 @@ function pintarHome(){
     /* o que já está no palco não se repete logo a seguir */
     const noPalco = new Set(heroLista.map(n => n.link));
     const restantes = lista.filter(n => !noPalco.has(n.link))
-                           .filter(n => categoriaHome === 'todas' || n.categoria === categoriaHome)
+                           .filter(n => noSeparador(n, categoriaHome))
                            .slice(0, 13);
     alvoUltimas.innerHTML = !NOTICIAS.length
       ? Componentes.esqueletoEditorial()
@@ -629,6 +658,8 @@ function pintarHome(){
       : videos.map(n => Componentes.cartaoEditorial(n, 'curta')).join('');
   }
 
+  pintarModalidadesCasa();
+
   /* ---- mais lidas ---- */
   pintarMaisLidas();
   /* a entrada só se faz na primeira pintura com notícias; as que chegam
@@ -639,6 +670,43 @@ function pintarHome(){
   }
 }
 let homeRevelada = false;
+
+/* notícias de uma modalidade, das mais recentes para trás */
+const noticiasDe = id => NOTICIAS.filter(n => temaDe(n) === id);
+
+/* Mosaico das modalidades na homepage: cada uma com a cor própria, a
+   notícia mais recente e quantas houve na última semana. */
+function pintarModalidadesCasa(){
+  const alvo = $('#modalidades-casa');
+  if(!alvo) return;
+  if(!NOTICIAS.length){
+    alvo.innerHTML = Array.from({ length: 8 }, () => '<div class="mod-tile mod-tile--osso"><div class="osso"></div></div>').join('');
+    return;
+  }
+  const semana = Date.now() - 7 * 86400000;
+  alvo.innerHTML = CONFIG.modalidades.filter(m => m.id !== 'futebol').map(m => {
+    const lista = noticiasDe(m.id);
+    const recentes = lista.filter(n => n.data.getTime() > semana).length;
+    const ultima = lista[0];
+    return `
+      <a class="mod-tile" href="/modalidades#${m.id}" data-modalidade="${m.id}" style="--m-cor: var(--m-${m.id})">
+        <span class="mod-tile__topo">
+          <span class="mod-tile__nome">${m.nome}</span>
+          <span class="mod-tile__n">${recentes ? `${recentes} ${recentes === 1 ? 'notícia' : 'notícias'} esta semana` : 'Sem novidades esta semana'}</span>
+        </span>
+        ${ultima
+          ? `<span class="mod-tile__titulo">${Componentes.seguro(ultima.titulo)}</span>
+             <span class="mod-tile__quando">${haQuanto(ultima.data)} · ${Componentes.seguro(ultima.fonte)}</span>`
+          : `<span class="mod-tile__titulo mod-tile__titulo--vazio">Ainda sem notícias no arquivo.</span>`}
+      </a>`;
+  }).join('');
+  alvo.querySelectorAll('.mod-tile').forEach(a => a.addEventListener('click', e => {
+    e.preventDefault();
+    modalidadeAtual = a.dataset.modalidade;
+    history.pushState({ vista:'modalidades' }, '', '/modalidades#' + modalidadeAtual);
+    irPara('modalidades', { historico:false });
+  }));
+}
 
 /* Uma principal grande, três secundárias ao lado e o resto em grelha.
    As que têm fotografia vão primeiro para os lugares grandes — uma
@@ -824,26 +892,39 @@ function escolherPrincipal(lista){
   return [...comFoto].sort((a,b) => pontos(b) - pontos(a))[0];
 }
 
+/* separadores das notícias: compactos, uma linha só. Os da antiga
+   categoria continuam a funcionar; Sub-23, Clube e Modalidades usam o tema. */
+const SEPARADORES_NOTICIAS = [
+  ['todas', 'Tudo'], ['EQUIPA PRINCIPAL', 'Equipa principal'], ['MERCADO', 'Mercado'],
+  ['MODALIDADES', 'Modalidades'], ['FORMAÇÃO', 'Formação'], ['SUB-23', 'Sub-23'],
+  ['FEMININO', 'Feminino'], ['CLUBE', 'Clube']
+];
+function noSeparador(n, chave){
+  if(chave === 'todas') return true;
+  if(chave === 'SUB-23') return CONFIG.filtroSub23.test(n.titulo);
+  if(chave === 'CLUBE') return temaDe(n) === 'clube';
+  if(chave === 'MODALIDADES') return !['futebol','clube','formacao','feminino'].includes(temaDe(n));
+  if(chave === 'EQUIPA PRINCIPAL') return (n.categoria === 'EQUIPA PRINCIPAL' || n.categoria === 'DESTAQUE') && temaDe(n) === 'futebol';
+  return n.categoria === chave;
+}
+
 function pintarFiltrosCategoria(){
   const alvo = $('#filtros-categoria');
   if(!alvo || !NOTICIAS.length) return;
 
-  const contas = {};
-  NOTICIAS.forEach(n => contas[n.categoria] = (contas[n.categoria] || 0) + 1);
-  const cats = ['todas', ...CONFIG.categorias.filter(c => contas[c])];
+  const contas = Object.fromEntries(SEPARADORES_NOTICIAS.map(([c]) => [c, NOTICIAS.filter(n => noSeparador(n, c)).length]));
+  const visiveis = SEPARADORES_NOTICIAS.filter(([c]) => c === 'todas' || contas[c] > 0);
 
-  const chave = cats.map(c => c + (contas[c]||0)).join('|') + categoriaHome;
+  const chave = visiveis.map(([c]) => c + contas[c]).join('|') + categoriaHome;
   if(alvo.dataset.chave === chave) return;
   alvo.dataset.chave = chave;
 
-  alvo.innerHTML = cats.map(c => `
-    <button class="filtro-cat ${c===categoriaHome?'is-on':''}" data-cat="${c}"
-            aria-pressed="${c===categoriaHome}">
-      ${c === 'todas' ? 'Todas' : c}
-      ${c !== 'todas' ? `<span class="filtro-cat__n">${contas[c]}</span>` : ''}
+  alvo.innerHTML = visiveis.map(([c, rotulo]) => `
+    <button type="button" class="tema ${c === categoriaHome ? 'is-on' : ''}" data-cat="${c}" aria-pressed="${c === categoriaHome}">
+      ${rotulo}${c !== 'todas' ? `<span class="tema__n">${contas[c]}</span>` : ''}
     </button>`).join('');
 
-  $$('#filtros-categoria .filtro-cat').forEach(b =>
+  $$('#filtros-categoria .tema').forEach(b =>
     b.addEventListener('click', () => {
       categoriaHome = b.dataset.cat;
       alvo.dataset.chave = '';
@@ -983,6 +1064,9 @@ function mostrarDestaque(i){
 }
 
 /* ---------------- ao minuto ---------------- */
+let vivoVisto = 0, avisoVivoTimer = null;
+/* até a primeira sincronização acabar, os jogos podem ser os guardados no código */
+let jogosSincronizados = false;
 function pintarLinhaTempo(){
   const filtro = $('#minuto-filtro').value;
   let l = NOTICIAS;
@@ -994,12 +1078,14 @@ function pintarLinhaTempo(){
                  : n.categoria === 'MERCADO'  ? 'ev--mercado' : '';
     /* menos de meia hora: ainda é novidade */
     const novo = Date.now() - n.data.getTime() < 30 * 60000;
-    const tipo = n.categoria === 'DESTAQUE' ? 'Destaque' : n.categoria === 'MERCADO' ? 'Mercado' : '';
-    return `<li class="ev ${classe} ${novo ? 'ev--novo' : ''}" style="animation-delay:${Math.min(i,10)*.03}s">
+    /* acabou de chegar desde a última pintura: entra com destaque */
+    const chegou = vivoVisto && n.data.getTime() > vivoVisto;
+    const et = etiquetaEvento(n);
+    return `<li class="ev ${classe} ${novo ? 'ev--novo' : ''} ${chegou ? 'ev--chegou' : ''}" style="animation-delay:${Math.min(i,10)*.03}s">
       <span class="ev__hora">${n.data.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'})}</span>
       <span class="ev__marca"><i class="ev__bola"></i><i class="ev__linha"></i></span>
       <span class="ev__txt">
-        ${novo || tipo ? `<span class="ev__selos">${novo ? '<span class="ev__novo">Novo</span>' : ''}${tipo ? `<span class="ev__tipo">${tipo}</span>` : ''}</span>` : ''}
+        <span class="ev__selos">${novo ? '<span class="ev__novo">Novo</span>' : ''}<span class="ev__tipo ev__tipo--${et.classe}">${et.texto}</span></span>
         <a href="${n.link}" target="_blank" rel="noopener"><b>${n.titulo}</b></a>
         <span class="ev__fonte">${n.fonte} · ${haQuanto(n.data)}</span>
       </span>
@@ -1008,7 +1094,19 @@ function pintarLinhaTempo(){
 
   $('#linha-tempo').innerHTML = l.length
     ? l.slice(0,12).map(evento).join('')
-    : `<li class="vazio">sem eventos</li>`;
+    : `<li class="estado"><p class="estado__texto">Sem eventos neste filtro.</p></li>`;
+
+  /* aviso discreto quando entram novidades */
+  const maisRecente = NOTICIAS[0]?.data.getTime() || 0;
+  const aviso = $('#vivo-novas');
+  if(aviso && vivoVisto && maisRecente > vivoVisto){
+    const n = NOTICIAS.filter(x => x.data.getTime() > vivoVisto).length;
+    aviso.textContent = n === 1 ? '1 novidade agora mesmo' : `${n} novidades agora mesmo`;
+    aviso.hidden = false;
+    clearTimeout(avisoVivoTimer);
+    avisoVivoTimer = setTimeout(() => { aviso.hidden = true; }, 6000);
+  }
+  if(maisRecente) vivoVisto = Math.max(vivoVisto, maisRecente);
   $('#linha-tempo-total').innerHTML = l.length
     ? l.slice(0,80).map(evento).join('')
     : `<li class="vazio">sem eventos</li>`;
@@ -1052,48 +1150,116 @@ function resultadoSCP(j){
   return { nos, deles, r: nos>deles ? 'V' : nos===deles ? 'E' : 'D' };
 }
 
+const ICONE_LOCAL = '<svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>';
+const ICONE_SETA = '<svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
+
+/* "09 OUT" — o pt-PT do browser às vezes devolve "09/10" com month:'short' */
+const MESES_CURTOS = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const diaMes = d => `${String(d.getDate()).padStart(2,'0')} ${MESES_CURTOS[d.getMonth()]}`;
+
 const porJogar = () => JOGOS.filter(j => !jogado(j) && new Date(j.data) > Date.now())
                             .sort((a,b) => new Date(a.data)-new Date(b.data));
 
 let jogoIdx = 0, contaTimer = null;
 
+/* "LIGA — J8" → { prova:'Liga Portugal', fase:'Jornada 8' } */
+const NOMES_PROVA = {
+  'LIGA':'Liga Portugal', 'CHAMPIONS':'Liga dos Campeões', 'TAÇA DA LIGA':'Taça da Liga',
+  'TAÇA DE PORTUGAL':'Taça de Portugal', 'SUPERTAÇA':'Supertaça', 'PRÉ-ÉPOCA':'Particular',
+  'EUROPA LEAGUE':'Liga Europa', 'LIGA EUROPA':'Liga Europa'
+};
+const NOMES_FASE = { QF:'Quartos de final', MF:'Meias-finais', SF:'Meias-finais', F:'Final',
+                     '1/8':'Oitavos de final', '1/16':'16 avos de final', PO:'Play-off' };
+function nomeProva(comp){
+  const [base, resto = ''] = String(comp || '').split(/\s+—\s+/);
+  const prova = NOMES_PROVA[base.trim()] || base.trim();
+  const m = resto.match(/^J(\d+)$/i);
+  const fase = m ? `Jornada ${m[1]}` : (NOMES_FASE[resto.trim()] || resto.trim());
+  return { prova, fase, completo: fase ? `${prova} · ${fase}` : prova };
+}
+
+/* em que pé está um jogo, em palavras */
+function estadoDoJogo(j){
+  if(jogado(j)) return { texto:'Terminado', classe:'fim' };
+  const e = Jogo.estado(JOGOS);
+  if(e && e.jogo?.data === j.data && Jogo.emJogo(e)) return { texto:`Ao vivo · ${Jogo.rotuloMinuto(e)}`, classe:'vivo' };
+  const d = new Date(j.data), hoje = new Date();
+  const dia = x => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const dias = Math.round((dia(d) - dia(hoje)) / 86400000);
+  if(dias === 0) return { texto:'Hoje', classe:'hoje' };
+  if(dias === 1) return { texto:'Amanhã', classe:'breve' };
+  return { texto:'Agendado', classe:'agendado' };
+}
+
+/* "Ver jogo": no dia vai para o ao vivo; noutro dia, para a lista de
+   jogos já com a linha desse jogo à vista */
+function verJogo(j){
+  const e = Jogo.estado(JOGOS);
+  if(e && e.fase !== 'longe' && e.jogo?.data === j.data){ irPara('aovivo'); return; }
+  irPara('jogos');
+  const i = JOGOS.indexOf(j);
+  requestAnimationFrame(() => {
+    const li = document.querySelector(`#jogos-lista li[data-jogo="${i}"]`);
+    if(!li) return;
+    li.scrollIntoView({ block:'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    li.classList.remove('pisca'); void li.offsetWidth; li.classList.add('pisca');
+  });
+}
+
 function pintarProximoJogo(){
   const lista = porJogar();
   const alvo = $('#proximo-jogo');
-  if(!lista.length){ alvo.innerHTML = `<div class="vazio">sem jogos agendados</div>`; return; }
+  const estado = $('#proximo-estado');
+  if(!alvo) return;
+  if(!lista.length){
+    alvo.innerHTML = jogosSincronizados
+      ? `<div class="estado"><p class="estado__titulo">Sem jogos marcados</p>
+           <p class="estado__texto">Assim que a próxima jornada tiver data, aparece aqui.</p></div>`
+      : `<div class="cartaz__osso" aria-hidden="true"><div class="osso"></div><div class="osso"></div><div class="osso"></div></div>`;
+    if(estado) estado.textContent = '';
+    return;
+  }
 
-  jogoIdx = Math.max(0, Math.min(jogoIdx, lista.length-1));
+  jogoIdx = Math.max(0, Math.min(jogoIdx, lista.length - 1));
   const j = lista[jogoIdx];
   const d = new Date(j.data);
+  const prova = nomeProva(j.comp);
+  const est = estadoDoJogo(j);
+  if(estado){ estado.textContent = est.texto; estado.className = 'cartaz__estado cartaz__estado--' + est.classe; }
 
-  const nos = eSporting(j.casa) ? 'casa' : 'fora';
-  const dia = d.toLocaleDateString('pt-PT', { weekday:'long', day:'numeric', month:'long' });
   const equipa = (nome, lado) => `
-    <div class="jogo__eq ${lado === nos ? 'e-nos' : ''}">
-      <span class="jogo__escudo"><img src="${emblemaEquipa(nome)}" alt=""></span>
-      <span class="jogo__nome">${nome}</span>
-      <span class="jogo__lado">${lado === 'casa' ? 'Casa' : 'Fora'}</span>
+    <div class="cartaz__eq ${eSporting(nome) ? 'e-nos' : ''}">
+      <span class="cartaz__escudo"><img src="${emblemaEquipa(nome)}" alt="" width="56" height="56"></span>
+      <span class="cartaz__nome">${nome}</span>
+      <span class="cartaz__lado">${lado}</span>
     </div>`;
+  const diaCurto = diaMes(d);
+  const diaSemana = d.toLocaleDateString('pt-PT', { weekday:'long' });
 
   alvo.innerHTML = `
-    <div class="jogo__comp"><span>${j.comp}</span>${lista.length > 1 ? `<span class="jogo__pos">${jogoIdx + 1}/${lista.length}</span>` : ''}</div>
-    <div class="jogo__equipas">
-      ${equipa(j.casa, 'casa')}
-      <div class="jogo__centro">
-        <span class="jogo__hora">${horaJogo(j, d)}</span>
-        <span class="jogo__dia">${dia}</span>
-      </div>
-      ${equipa(j.fora, 'fora')}
+    <p class="cartaz__prova"><span>${prova.prova}</span>${prova.fase ? `<span>${prova.fase}</span>` : ''}</p>
+    <div class="cartaz__equipas">
+      ${equipa(j.casa, 'Casa')}
+      <span class="cartaz__vs" aria-label="contra">VS</span>
+      ${equipa(j.fora, 'Fora')}
     </div>
-    ${j.local ? `<div class="jogo__onde">
-      <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-      ${j.local}</div>` : ''}
-    <div class="jogo__conta" role="timer" aria-label="Tempo até ao jogo">
+    <div class="cartaz__quando">
+      <span class="cartaz__data">${diaCurto}</span>
+      <span class="cartaz__hora">${horaJogo(j, d)}</span>
+      <span class="cartaz__dia">${diaSemana}</span>
+    </div>
+    ${j.local ? `<p class="cartaz__onde">${ICONE_LOCAL}${j.local}</p>` : ''}
+    <div class="contagem" role="timer" aria-label="Tempo até ao início">
       <div><b id="c-d">00</b><i>dias</i></div>
       <div><b id="c-h">00</b><i>horas</i></div>
       <div><b id="c-m">00</b><i>min</i></div>
-      <div class="jogo__seg"><b id="c-s">00</b><i>seg</i></div>
+      <div class="contagem__seg"><b id="c-s">00</b><i>seg</i></div>
+    </div>
+    <div class="cartaz__acoes">
+      <button type="button" class="botao-cta" id="ver-proximo">Ver jogo ${ICONE_SETA}</button>
+      ${lista.length > 1 ? `<span class="cartaz__pos">${jogoIdx + 1} de ${lista.length}</span>` : ''}
     </div>`;
+  $('#ver-proximo')?.addEventListener('click', () => verJogo(j));
 
   clearInterval(contaTimer);
   const tick = () => {
@@ -1112,39 +1278,117 @@ function pintarProximoJogo(){
   contaTimer = setInterval(tick, 1000);
 }
 
-function pintarCalendario(){
-  $('#calendario').innerHTML = porJogar().slice(0,4).map(j => {
-    const d = new Date(j.data);
-    return `<li>
-      <div class="cal-data"><b>${d.getDate()}</b><i>${d.toLocaleDateString('pt-PT',{month:'short'}).toUpperCase().replace('.','')}</i></div>
-      <div class="cal-jogo">
-        <div class="comp">${j.comp}</div>
-        <div class="eqs">${j.casa} x ${j.fora}</div>
-      </div>
-      <div class="cal-hora">${horaJogo(j, d)}</div>
+/* um jogo na agenda: hora à esquerda, modalidade e prova, equipas */
+function itemAgenda(j, opcoes = {}){
+  const d = new Date(j.data);
+  const prova = nomeProva(j.comp);
+  const est = estadoDoJogo(j);
+  const mod = modalidade(j.modalidade || 'futebol');
+  const centro = jogado(j)
+    ? `<span class="ag__res">${j.golosCasa}<i>–</i>${j.golosFora}</span>`
+    : `<span class="ag__vs">vs</span>`;
+  return `
+    <li class="ag ag--${est.classe}" style="--m-cor: var(--m-${mod?.id || 'futebol'})">
+      <button type="button" class="ag__ligacao" data-jogo-data="${j.data}">
+        <span class="ag__hora">${horaJogo(j, d)}</span>
+        <span class="ag__corpo">
+          <span class="ag__meta"><b>${mod?.curto || 'Futebol'}</b> · ${prova.completo}${est.classe === 'vivo' || est.classe === 'fim' ? ` · <em>${est.texto}</em>` : ''}</span>
+          <span class="ag__equipas">
+            <span class="ag__eq ${eSporting(j.casa) ? 'e-nos' : ''}"><img src="${emblemaEquipa(j.casa)}" alt="" width="22" height="22" loading="lazy">${j.casa}</span>
+            ${centro}
+            <span class="ag__eq ${eSporting(j.fora) ? 'e-nos' : ''}"><img src="${emblemaEquipa(j.fora)}" alt="" width="22" height="22" loading="lazy">${j.fora}</span>
+          </span>
+          ${opcoes.local && j.local ? `<span class="ag__local">${j.local}</span>` : ''}
+        </span>
+      </button>
     </li>`;
-  }).join('') || `<li class="vazio">sem jogos</li>`;
+}
+
+/* rótulo do dia: Hoje, Amanhã, ou "sábado, 17 de outubro" */
+function rotuloDia(d){
+  const dia = x => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const dif = Math.round((dia(d) - dia(new Date())) / 86400000);
+  if(dif === 0) return 'Hoje';
+  if(dif === 1) return 'Amanhã';
+  if(dif === -1) return 'Ontem';
+  return d.toLocaleDateString('pt-PT', { weekday:'long', day:'numeric', month:'long' });
+}
+
+/* lista de jogos agrupada por dia */
+function agendaPorDia(jogos, opcoes = {}){
+  let diaAtual = '';
+  return jogos.map(j => {
+    const d = new Date(j.data);
+    const rot = rotuloDia(d);
+    const cab = rot !== diaAtual ? `<li class="ag-dia"><span>${rot}</span></li>` : '';
+    diaAtual = rot;
+    return cab + itemAgenda(j, opcoes);
+  }).join('');
+}
+
+function ligarItensAgenda(raiz){
+  raiz?.querySelectorAll('.ag__ligacao').forEach(b => b.addEventListener('click', () => {
+    const j = JOGOS.find(x => x.data === b.dataset.jogoData);
+    if(j) verJogo(j);
+  }));
+}
+
+function pintarCalendario(){
+  const alvo = $('#calendario');
+  if(!alvo) return;
+  const prox = porJogar().slice(0, 5);
+  alvo.innerHTML = prox.length
+    ? agendaPorDia(prox)
+    : jogosSincronizados
+      ? `<li class="estado"><p class="estado__texto">Sem jogos marcados para já.</p></li>`
+      : Array.from({ length: 4 }, () => `<li class="ag ag--osso" aria-hidden="true"><div class="osso"></div></li>`).join('');
+  ligarItensAgenda(alvo);
 }
 
 function pintarResultados(){
-  const feitos = JOGOS.filter(jogado).slice(-5).reverse();
-  $('#resultados').innerHTML = feitos.map(j => {
+  const alvo = $('#resultados');
+  if(!alvo) return;
+  const feitos = JOGOS.filter(jogado).slice(-6).reverse();
+  if(!feitos.length){
+    alvo.innerHTML = JOGOS.length
+      ? `<li class="estado"><p class="estado__texto">Ainda não há resultados esta época.</p></li>`
+      : Array.from({ length: 4 }, () => `<li class="rcartao rcartao--osso" aria-hidden="true"><div class="osso"></div></li>`).join('');
+    return;
+  }
+  const NOME = { V:'Vitória', E:'Empate', D:'Derrota' };
+  alvo.innerHTML = feitos.map(j => {
     const r = resultadoSCP(j);
-    const cor = r.r === 'V' ? 'res-v' : r.r === 'D' ? 'res-d' : '';
     const d = new Date(j.data);
-    const golos = [...(j.marcadoresCasa||[]), ...(j.marcadoresFora||[])];
-    return `<li>
-      <span class="res-data">${dataCurta(d)}</span>
-      <span class="res-eq"><img src="${emblemaEquipa(j.casa)}" alt=""><span>${j.casa}</span></span>
-      <span class="res-golos ${cor}">${j.golosCasa} - ${j.golosFora}</span>
-      <span class="res-eq res-eq--d"><img src="${emblemaEquipa(j.fora)}" alt=""><span>${j.fora}</span></span>
-      <span class="res-comp">${j.comp.split('—')[0].trim()}</span>
-      ${golos.length ? `<span class="res-golead">${golos.map(g => `${g.nome} ${g.minuto}'`).join(' · ')}</span>` : ''}
+    const prova = nomeProva(j.comp);
+    const linha = (nome, golos, ganhou) => `
+      <span class="rcartao__eq ${eSporting(nome) ? 'e-nos' : ''} ${ganhou ? 'ganhou' : ''}">
+        <img src="${emblemaEquipa(nome)}" alt="" width="28" height="28" loading="lazy">
+        <span class="rcartao__nome">${nome}</span>
+        <b class="rcartao__golos">${golos}</b>
+      </span>`;
+    return `
+    <li class="rcartao rcartao--${r.r}">
+      <button type="button" class="rcartao__ligacao" data-jogo-data="${j.data}">
+        <span class="rcartao__topo">
+          <span class="rcartao__prova">${prova.completo}</span>
+          <time datetime="${d.toISOString()}">${diaMes(d)}</time>
+        </span>
+        ${linha(j.casa, j.golosCasa, j.golosCasa > j.golosFora)}
+        ${linha(j.fora, j.golosFora, j.golosFora > j.golosCasa)}
+        <span class="rcartao__fim">
+          <span class="rcartao__ved rcartao__ved--${r.r}">${r.r}<span class="so-leitor"> — ${NOME[r.r]}</span></span>
+          <span class="rcartao__estado">Terminado</span>
+          <span class="rcartao__ver">Ver jogo ${ICONE_SETA}</span>
+        </span>
+      </button>
     </li>`;
-  }).join('') || `<li class="vazio">sem resultados</li>`;
+  }).join('');
+  alvo.querySelectorAll('.rcartao__ligacao').forEach(b => b.addEventListener('click', () => {
+    const j = JOGOS.find(x => x.data === b.dataset.jogoData);
+    if(j) verJogo(j);
+  }));
 }
 
-/* marcadores em texto: "Pote 12', 45'  ·  Suárez 61' (g.p.)" */
 function textoMarcadores(lista){
   if(!lista || !lista.length) return '';
   const juntos = {};
@@ -1310,6 +1554,47 @@ function zonaChampions(pos){
   return 'q-fora';
 }
 
+/* forma recente do Sporting na Liga: os últimos cinco resultados */
+function formaSporting(n = 5){
+  return JOGOS.filter(j => jogado(j) && provaDe(j) === 'LIGA').slice(-n).map(resultadoSCP);
+}
+function chipsForma(forma){
+  const NOME = { V:'Vitória', E:'Empate', D:'Derrota' };
+  return forma.map(r => `<span class="forma__chip forma__chip--${r.r}" title="${NOME[r.r]} ${r.nos}-${r.deles}">${r.r}<span class="so-leitor"> ${NOME[r.r]}</span></span>`).join('');
+}
+
+/* Classificação da homepage: os cinco primeiros e o Sporting, se estiver
+   abaixo. A forma só aparece para o Sporting — das outras equipas não há
+   jogo a jogo, e não se inventa. */
+function pintarTabelaCasa(){
+  const alvo = $('#tabela-casa');
+  if(!alvo) return;
+  const comecou = TABELA.some(t => t.j > 0);
+  let linhas = TABELA.slice(0, 5);
+  const nos = TABELA.find(t => eSporting(t.equipa));
+  if(nos && !linhas.includes(nos)) linhas = [...linhas, nos];
+  const jornada = Math.max(0, ...TABELA.map(t => t.j || 0));
+  const etiqueta = $('#tabela-casa-jornada');
+  if(etiqueta) etiqueta.textContent = comecou ? `Jornada ${jornada}` : 'Liga';
+
+  if(!TABELA.length){ alvo.innerHTML = '<div class="osso" style="height:220px"></div>'; return; }
+  alvo.innerHTML = `
+    <table class="classif">
+      <caption class="so-leitor">Liga Portugal, primeiros classificados</caption>
+      <thead><tr><th scope="col">#</th><th scope="col">Equipa</th><th scope="col">J</th><th scope="col">DG</th><th scope="col">Pts</th></tr></thead>
+      <tbody>${linhas.map((t, i) => `
+        <tr class="${eSporting(t.equipa) ? 'eu' : ''} ${i === 5 ? 'separada' : ''}">
+          <td class="classif__pos">${t.pos}</td>
+          <td><span class="eq"><img src="${emblemaEquipa(t.equipa)}" alt="" width="22" height="22" loading="lazy">${t.equipa}</span></td>
+          <td>${t.j}</td>
+          <td>${t.gm - t.gs > 0 ? '+' : ''}${t.gm - t.gs}</td>
+          <td class="classif__pts">${t.p}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    ${formaSporting().length ? `<div class="forma"><span class="forma__rotulo">Forma do Sporting</span><span class="forma__chips">${chipsForma(formaSporting())}</span></div>` : ''}`;
+}
+
 function pintarTabela(){
   const naChampions = provaTabela === 'champions';
   const dados = naChampions ? TABELA_CL : TABELA;
@@ -1319,6 +1604,8 @@ function pintarTabela(){
     ? `Liga dos Campeões ${CONFIG.epoca} · fase de liga`
     : (comecou ? 'Liga Portugal Betclic ' + CONFIG.epoca
                : 'ordem alfabética — a época ainda não começou');
+
+  pintarTabelaCasa();
 
   /* a tabela curta da página inicial é sempre a da Liga */
   const curta = $('#tabela-curta tbody');
@@ -2514,6 +2801,15 @@ function ligarEscolha(){
 let onzeOficial = null;      // { titulares, suplentes, fonte, link, data }
 let relogioJogo = null;
 
+/* durante o jogo, o "Ao minuto" da barra inferior passa a "Ao vivo" */
+function marcarBarraVivo(vivo){
+  const b = $('#barra-vivo');
+  if(!b) return;
+  b.classList.toggle('a-jogar', vivo);
+  b.dataset.vista = vivo ? 'aovivo' : 'aominuto';
+  $('#barra-vivo-rotulo').textContent = vivo ? 'Ao vivo' : 'Ao minuto';
+}
+
 function pintarDiaDeJogo(){
   const e = Jogo.estado(JOGOS);
   const faixa = $('#faixa-jogo');
@@ -2524,6 +2820,7 @@ function pintarDiaDeJogo(){
   if(!e || e.fase === 'longe'){
     faixa.hidden = true;
     noMenu.hidden = true;
+    marcarBarraVivo(false);
     document.body.classList.remove('dia-de-jogo');
     clearInterval(relogioJogo); relogioJogo = null;
     return;
@@ -2533,6 +2830,7 @@ function pintarDiaDeJogo(){
   noMenu.hidden = false;
   document.body.classList.add('dia-de-jogo');
   document.body.classList.toggle('a-jogar', Jogo.emJogo(e));
+  marcarBarraVivo(Jogo.emJogo(e));
 
   const j = e.jogo;
   $('#faixa-casa').textContent = j.casa;
@@ -3298,6 +3596,9 @@ async function sincronizar(){
 
     pintarProximoJogo(); pintarCalendario(); pintarResultados();
     pintarJogosTodos(); pintarEstatisticas(); pintarDiaDeJogo();
+    pintarTabelaCasa(); pintarModalidadesCasa();
+    if(vistaAtual === 'agenda') pintarAgenda();
+    if(vistaAtual === 'modalidades') pintarModalidades();
   }catch(e){ falhas.push('plantel/jogos'); }
 
   const hora = new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
@@ -3305,6 +3606,7 @@ async function sincronizar(){
   if(noRodape) noRodape.textContent = falhas.length
     ? 'dados parciais · ' + hora
     : 'dados atualizados às ' + hora;
+  jogosSincronizados = true; pintarProximoJogo(); pintarCalendario();
   if(!falhas.length){ marca.textContent = `dados reais · ${hora}`; marca.className = 'menu__estado ok'; }
   else if(falhas.length === 1){ marca.textContent = `parcial: falhou ${falhas[0]}`; marca.className = 'menu__estado aviso'; }
   else { marca.textContent = 'offline · dados locais'; marca.className = 'menu__estado erro'; }
@@ -3518,9 +3820,170 @@ function irPara(vista, opcoes = {}){
   if(rolar) scrollTo({ top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
 }
 
-/* preenchidas mais abaixo (AGENDA e MODALIDADES) */
-function pintarAgenda(){}
-function pintarModalidades(){}
+/* ---------------------------------------------------------------------
+   AGENDA — os jogos que aí vêm, por dia.
+   Só o futebol tem calendário ligado. Para as outras equipas a página
+   diz isso e aponta para as notícias, em vez de mostrar jogos inventados.
+   --------------------------------------------------------------------- */
+let filtroAgenda = 'todos';
+
+/* jogos de uma modalidade — hoje só há fonte para o futebol principal */
+function jogosDaModalidade(id){
+  const m = modalidade(id);
+  if(m?.jogos === 'principal') return JOGOS;
+  return [];
+}
+
+function pintarAgenda(){
+  const alvo = $('#agenda-lista');
+  if(!alvo) return;
+  $$('#agenda-filtro .separador').forEach(b => {
+    b.classList.toggle('is-on', b.dataset.filtro === filtroAgenda);
+    b.setAttribute('aria-pressed', b.dataset.filtro === filtroAgenda);
+  });
+
+  /* os de hoje que já acabaram ficam (com resultado); depois, o que vem */
+  const inicioDoDia = new Date(); inicioDoDia.setHours(0, 0, 0, 0);
+  const futebol = filtroAgenda === 'todos' || filtroAgenda === 'futebol';
+  const jogos = futebol
+    ? JOGOS.filter(j => new Date(j.data) >= inicioDoDia).sort((a, b) => new Date(a.data) - new Date(b.data)).slice(0, 30)
+    : [];
+
+  if(!JOGOS.length){
+    alvo.innerHTML = Array.from({ length: 5 }, () => '<div class="ag ag--osso" aria-hidden="true"><div class="osso"></div></div>').join('');
+    return;
+  }
+
+  const semFonte = {
+    modalidades: ['Modalidades', 'futsal'],
+    formacao: ['Formação', 'formacao'],
+    feminino: ['Futebol feminino', 'feminino']
+  }[filtroAgenda];
+
+  let html = '';
+  if(jogos.length) html += `<ol class="agenda">${agendaPorDia(jogos, { local:true })}</ol>`;
+  if(semFonte){
+    html += `<div class="estado">
+      <p class="estado__titulo">${semFonte[0]}: calendário ainda não ligado</p>
+      <p class="estado__texto">Por agora só o futebol da equipa principal tem uma fonte de jogos fiável.
+        Não mostramos datas que não conseguimos confirmar. As notícias destas equipas estão nas Modalidades.</p>
+      <button type="button" class="botao-texto" data-modalidade="${semFonte[1]}">Abrir modalidades ${ICONE_SETA}</button>
+    </div>`;
+  }else if(filtroAgenda === 'todos'){
+    html += `<p class="agenda__nota">Calendário do futebol da equipa principal. O das modalidades ainda não está ligado a uma fonte.</p>`;
+  }
+  if(!html) html = `<div class="estado"><p class="estado__titulo">Sem jogos marcados</p><p class="estado__texto">Assim que houver datas, aparecem aqui.</p></div>`;
+  alvo.innerHTML = html;
+  ligarItensAgenda(alvo);
+  alvo.querySelector('[data-modalidade]')?.addEventListener('click', e => {
+    modalidadeAtual = e.currentTarget.dataset.modalidade;
+    history.pushState({ vista:'modalidades' }, '', '/modalidades#' + modalidadeAtual);
+    irPara('modalidades', { historico:false });
+  });
+
+  const resumo = $('#agenda-resumo');
+  if(resumo){
+    const prox = porJogar()[0];
+    resumo.textContent = prox
+      ? `Próximo: ${prox.casa} – ${prox.fora}, ${rotuloDia(new Date(prox.data)).toLowerCase()} às ${horaJogo(prox, new Date(prox.data))}.`
+      : 'Hoje, amanhã e os dias seguintes, por hora de início.';
+  }
+}
+
+/* ---------------------------------------------------------------------
+   MODALIDADES — uma página por equipa do clube
+   --------------------------------------------------------------------- */
+let modalidadeAtual = 'futebol';
+
+function pintarModalidades(){
+  const seps = $('#mod-separadores');
+  const painel = $('#mod-painel');
+  if(!seps || !painel) return;
+
+  const pedida = decodeURIComponent((location.hash || '').slice(1));
+  if(pedida && modalidade(pedida)) modalidadeAtual = pedida;
+  const m = modalidade(modalidadeAtual) || CONFIG.modalidades[0];
+
+  seps.innerHTML = CONFIG.modalidades.map(x => `
+    <button type="button" role="tab" class="mod-sep ${x.id === m.id ? 'is-on' : ''}" data-modalidade="${x.id}"
+            aria-selected="${x.id === m.id}" aria-controls="mod-painel" style="--m-cor: var(--m-${x.id})">
+      <i class="mod-sep__ponto" aria-hidden="true"></i>${x.curto}
+    </button>`).join('');
+  seps.querySelectorAll('.mod-sep').forEach(b => b.addEventListener('click', () => {
+    modalidadeAtual = b.dataset.modalidade;
+    history.replaceState({ vista:'modalidades' }, '', '/modalidades#' + modalidadeAtual);
+    pintarModalidades();
+  }));
+  /* setas entre separadores, como pede o padrão de tabs (liga-se uma vez) */
+  if(!seps.dataset.ligado) seps.dataset.ligado = '1', seps.addEventListener('keydown', e => {
+    if(!['ArrowRight','ArrowLeft'].includes(e.key)) return;
+    const bts = [...seps.querySelectorAll('.mod-sep')];
+    const i = bts.indexOf(document.activeElement);
+    const prox = bts[(i + (e.key === 'ArrowRight' ? 1 : -1) + bts.length) % bts.length];
+    prox?.click(); seps.querySelector('.mod-sep.is-on')?.focus();
+  });
+
+  const noticias = m.id === 'futebol'
+    ? NOTICIAS.filter(n => temaDe(n) === 'futebol')
+    : noticiasDe(m.id);
+  const jogos = jogosDaModalidade(m.id);
+  const proximo = jogos.filter(j => !jogado(j) && new Date(j.data) > Date.now()).sort((a, b) => new Date(a.data) - new Date(b.data))[0];
+  const ultimo = jogos.filter(jogado).slice(-1)[0];
+
+  const cartaoJogo = (titulo, j) => {
+    if(!j) return `<div class="mod-jogo mod-jogo--vazio"><p class="mod-jogo__rotulo">${titulo}</p>
+      <p class="mod-jogo__vazio">${m.jogos ? 'Sem jogo marcado.' : 'Calendário ainda não ligado para esta modalidade — não inventamos datas.'}</p></div>`;
+    const d = new Date(j.data);
+    const centro = jogado(j) ? `<b class="mod-jogo__res">${j.golosCasa}<i>–</i>${j.golosFora}</b>` : `<b class="mod-jogo__hora">${horaJogo(j, d)}</b>`;
+    return `<button type="button" class="mod-jogo" data-jogo-data="${j.data}">
+      <p class="mod-jogo__rotulo">${titulo}</p>
+      <p class="mod-jogo__prova">${nomeProva(j.comp).completo} · ${rotuloDia(d)}</p>
+      <span class="mod-jogo__equipas">
+        <span class="${eSporting(j.casa) ? 'e-nos' : ''}"><img src="${emblemaEquipa(j.casa)}" alt="" width="32" height="32" loading="lazy">${j.casa}</span>
+        ${centro}
+        <span class="${eSporting(j.fora) ? 'e-nos' : ''}"><img src="${emblemaEquipa(j.fora)}" alt="" width="32" height="32" loading="lazy">${j.fora}</span>
+      </span>
+    </button>`;
+  };
+
+  const semana = Date.now() - 7 * 86400000;
+  const destaques = noticias.slice(0, 13);
+  painel.style.setProperty('--m-cor', `var(--m-${m.id})`);
+  painel.innerHTML = `
+    <header class="mod-cabeca">
+      <h3 class="mod-cabeca__nome">${m.nome}</h3>
+      <p class="mod-cabeca__n">${noticias.filter(n => n.data.getTime() > semana).length} notícias nos últimos 7 dias · ${noticias.length} no arquivo</p>
+    </header>
+    <div class="mod-jogos">
+      ${cartaoJogo('Próximo jogo', proximo)}
+      ${cartaoJogo('Último resultado', ultimo)}
+      ${m.id === 'futebol' && TABELA.length ? `<div class="mod-tabela"><p class="mod-jogo__rotulo">Classificação</p><div id="mod-tabela-casa"></div></div>` : ''}
+    </div>
+    <section class="mod-noticias" aria-label="Notícias de ${m.nome}">
+      ${!NOTICIAS.length
+        ? Componentes.esqueletoEditorial()
+        : destaques.length
+          ? composicaoEditorial(destaques)
+          : `<div class="estado"><p class="estado__titulo">Sem notícias de ${m.nome.toLowerCase()}</p>
+             <p class="estado__texto">Os jornais que acompanhamos ainda não publicaram nada desta equipa no período guardado. Volta mais tarde — o arquivo vai crescendo.</p></div>`}
+    </section>`;
+
+  painel.querySelectorAll('.mod-jogo[data-jogo-data]').forEach(b => b.addEventListener('click', () => {
+    const j = JOGOS.find(x => x.data === b.dataset.jogoData);
+    if(j) verJogo(j);
+  }));
+  const mini = $('#mod-tabela-casa');
+  if(mini){
+    const nos = TABELA.find(t => eSporting(t.equipa));
+    const linhas = [...TABELA.slice(0, 4), ...(nos && TABELA.indexOf(nos) > 3 ? [nos] : [])];
+    mini.innerHTML = `<table class="classif"><caption class="so-leitor">Liga Portugal</caption><tbody>${linhas.map(t => `
+      <tr class="${eSporting(t.equipa) ? 'eu' : ''}"><td class="classif__pos">${t.pos}</td>
+      <td><span class="eq"><img src="${emblemaEquipa(t.equipa)}" alt="" width="20" height="20" loading="lazy">${t.equipa}</span></td>
+      <td class="classif__pts">${t.p}</td></tr>`).join('')}</tbody></table>`;
+  }
+}
+
+addEventListener('hashchange', () => { if(vistaAtual === 'modalidades') pintarModalidades(); });
 
 /* voltar e avançar do browser */
 addEventListener('popstate', () => irPara(vistaDaRota(location.pathname), { historico:false }));
@@ -3650,6 +4113,10 @@ async function arranque(){
     b.addEventListener('click', () => irPara(b.dataset.vista)));
   ligarSubmenus();
   ligarBarraInferior();
+  $$('#agenda-filtro .separador').forEach(b => b.addEventListener('click', () => {
+    filtroAgenda = b.dataset.filtro;
+    pintarAgenda();
+  }));
   {
     const inicial = vistaDaRota(location.pathname);
     history.replaceState({ vista: inicial }, '', ROTAS[inicial] + location.search + location.hash);

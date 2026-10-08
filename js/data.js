@@ -69,6 +69,33 @@ const CONFIG = {
   filtroVideo: /v[íi]deo|assiste|em imagens|highlights|resumo do jogo|declara[çc][õo]es em v/i,
 
   /* ---------------------------------------------------------------------
+     MODALIDADES — cada equipa do clube.
+     `rx` decide de que modalidade é uma notícia (sobretudo pelo título).
+     `jogos` diz de onde vem o calendário: 'principal' é o do futebol
+     (Wikipédia / football-data); null quer dizer que ainda não há fonte
+     ligada — a página diz isso em vez de inventar jogos. Para ligar uma
+     fonte nova basta trocar o null por um id e tratá-lo em jogosDaModalidade.
+     --------------------------------------------------------------------- */
+  modalidades: [
+    { id:'futebol',     nome:'Futebol',          curto:'Futebol',     jogos:'principal' },
+    { id:'feminino',    nome:'Futebol Feminino', curto:'Feminino',    jogos:null,
+      rx:/feminin[ao]s?|equipa feminina|\bleoas\b/i },
+    { id:'futsal',      nome:'Futsal',           curto:'Futsal',      jogos:null, rx:/futsal/i },
+    { id:'andebol',     nome:'Andebol',          curto:'Andebol',     jogos:null, rx:/andebol/i },
+    { id:'basquetebol', nome:'Basquetebol',      curto:'Basquetebol', jogos:null, rx:/basquet|\bbasket/i },
+    { id:'hoquei',      nome:'Hóquei em Patins', curto:'Hóquei',      jogos:null, rx:/h[óo]quei/i },
+    { id:'voleibol',    nome:'Voleibol',         curto:'Voleibol',    jogos:null, rx:/volei/i },
+    { id:'atletismo',   nome:'Atletismo',        curto:'Atletismo',   jogos:null,
+      rx:/atletismo|maratona|corta-mato|\bestafeta/i },
+    { id:'formacao',    nome:'Formação',         curto:'Formação',    jogos:null,
+      rx:/forma[çc][ãa]o|sub-?\d\d|juniores|juvenis|iniciados|academia|equipa b\b/i }
+  ],
+  /* sub-23 e equipa B: um separador próprio nas notícias */
+  filtroSub23: /sub-?23|equipa b\b/i,
+  /* vida do clube: assembleias, eleições, contas, SAD */
+  filtroClube: /assembleia|s[óo]cios\b|elei[çc][õo]es|\bSAD\b|relat[óo]rio e contas|or[çc]amento|estatutos|museu|gala\b|anivers[áa]rio do clube/i,
+
+  /* ---------------------------------------------------------------------
      DIA DE JOGO
      O onze sai cerca de uma hora antes, sempre por notícia. Estes padrões
      servem para a apanhar no meio do resto.

@@ -49,8 +49,8 @@ const Componentes = (() => {
     return `há ${Math.floor(s/86400)} dias`;
   }
 
-  const dataCurta = d =>
-    d.toLocaleDateString('pt-PT',{day:'2-digit',month:'short'}).toUpperCase().replace('.','');
+  const MESES = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+  const dataCurta = d => `${String(d.getDate()).padStart(2,'0')} ${MESES[d.getMonth()]}`;
 
   const horaCurta = d =>
     d.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});

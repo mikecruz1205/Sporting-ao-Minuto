@@ -149,7 +149,7 @@ body.rolou .cabeca .marca-txt span{ opacity: 0; max-height: 0; margin-top: 0; }
 /* =========================================================================
    PALCO — o destaque
    ========================================================================= */
-.palco{ margin-bottom: 56px; }
+.palco{ margin-bottom: 0; }
 
 .palco .hero-caixa{
   position: relative; overflow: hidden; isolation: isolate;
@@ -790,10 +790,10 @@ body.rolou .cabeca .marca-txt span{ opacity: 0; max-height: 0; margin-top: 0; }
   .pagina__principal, .pagina__lado{ display: contents; }
   .pagina > * > *{ order: 20; }
   .pagina .seccao{ grid-column: 1 / -1; margin-top: 24px; }
-  .cartao--jogo  { order: 1; }
-  .cartao--vivo  { order: 2; }
-  .seccao--ultimas{ order: 3; margin-top: 16px; }
-  .seccao--mercado{ order: 4; }
+  .cartao--vivo  { order: 1; grid-column: 1 / -1; }
+  .seccao--ultimas{ order: 2; margin-top: 16px; }
+  .cartao--tabela{ order: 3; }
+  .seccao--mercado{ order: 1; margin-top: 0; }
   .seccao--videos { order: 30; }
   .seccao--desempenho{ order: 31; }
   .cartao--vivo .linha-tempo{ max-height: 380px; }
