@@ -7,7 +7,19 @@
 <meta name="description" id="meta-descricao" content="Notícias do Sporting CP ao minuto, de 11 jornais: jogos, resultados, classificação, plantel, mercado e modalidades.">
 <link rel="canonical" id="canonico" href="https://sporting-fan-ao-minuto.vercel.app/">
 <meta name="theme-color" content="#0a0c0b">
-<meta name="color-scheme" content="dark">
+<meta name="color-scheme" content="dark light">
+<script>
+/* tema antes da primeira pintura: a escolha guardada, senão a do sistema
+   (o botão e o resto estão em js/tema.js) */
+(function(){
+  var t; try{ t = localStorage.getItem('scp-tema'); }catch(e){}
+  if(t !== 'claro' && t !== 'escuro')
+    t = (window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches) ? 'claro' : 'escuro';
+  document.documentElement.setAttribute('data-tema', t);
+  var m = document.querySelector('meta[name="theme-color"]');
+  if(m) m.setAttribute('content', t === 'claro' ? '#f3f5f4' : '#0a0c0b');
+})();
+</script>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Sporting ao Minuto">
 <meta property="og:title" id="og-titulo" content="Sporting ao Minuto">
@@ -117,13 +129,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Manrope:wght@400..800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/base.css?v=90">
-<link rel="stylesheet" href="css/componentes.css?v=90">
-<link rel="stylesheet" href="css/style.css?v=90">
-<link rel="stylesheet" href="css/portal.css?v=90">
-<link rel="stylesheet" href="css/inicio.css?v=90">
-<link rel="stylesheet" href="css/app.css?v=90">
-<link rel="stylesheet" href="css/editorial.css?v=90">
+<link rel="stylesheet" href="css/base.css?v=92">
+<link rel="stylesheet" href="css/componentes.css?v=92">
+<link rel="stylesheet" href="css/style.css?v=92">
+<link rel="stylesheet" href="css/portal.css?v=92">
+<link rel="stylesheet" href="css/inicio.css?v=92">
+<link rel="stylesheet" href="css/app.css?v=92">
+<link rel="stylesheet" href="css/editorial.css?v=92">
 </head>
 <body class="trancado">
 <!-- ============================ ECRÃ DE CARREGAMENTO (modo aplicação) ============================ -->
@@ -138,7 +150,7 @@
 <a class="saltar" href="#vista-inicio">Saltar para o conteúdo</a>
 
 <!-- ============================ ACESSO ============================ -->
-<div class="acesso" id="acesso">
+<div class="acesso sempre-escuro" id="acesso">
   <!-- foto de fundo: põe o teu ficheiro em img/entrada.jpg.
        Se não existir, fica só o degradê verde. -->
   <div class="acesso__foto" id="acesso-foto"></div>
@@ -237,6 +249,7 @@
         <input type="search" id="procura" placeholder="Procurar notícias, jogadores…" autocomplete="off">
         <button class="ico" id="btn-procura" title="Procurar" aria-label="Procurar"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
       </div>
+      <button type="button" class="ico tema-botao" id="btn-tema" data-tema-botao aria-label="Mudar de tema"><svg class="icone tema-sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="icone tema-lua" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></svg></button>
       <button class="ico" id="btn-alertas" title="Últimas" aria-label="Últimas notícias">
         <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><i class="badge" id="badge-alertas">0</i>
       </button>
@@ -290,13 +303,17 @@
   </div>
   <button class="menu__item menu__item--topo menu__item--taca" data-vista="clube"><span class="menu__taca" aria-hidden="true"></span>Clube</button>
   <button type="button" class="menu__instalar" id="instalar-gaveta" hidden><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg><span data-rotulo>Instalar aplicação</span></button>
+  <div class="menu__conta">
+    <button type="button" class="menu__acao" data-tema-botao aria-label="Mudar de tema"><svg class="icone tema-sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="icone tema-lua" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></svg><span data-tema-rotulo>Tema claro</span></button>
+    <button type="button" class="menu__acao" id="btn-sair-gaveta"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg><span>Sair da conta</span></button>
+  </div>
   <span class="menu__estado" id="estado-dados">a ligar…</span>
 </nav>
 </header>
 
 
 <!-- ==================== DIA DE JOGO ==================== -->
-<section class="faixa-jogo" id="faixa-jogo" hidden aria-live="polite" aria-label="Jogo do Sporting">
+<section class="faixa-jogo sempre-escuro" id="faixa-jogo" hidden aria-live="polite" aria-label="Jogo do Sporting">
   <button type="button" class="faixa-jogo__interior" data-ir="aovivo">
     <span class="faixa-jogo__estado">
       <span class="faixa-jogo__pulso" aria-hidden="true"></span>
@@ -318,7 +335,7 @@
   <!-- ================= TOPO: o destaque e o próximo jogo, lado a lado ================= -->
   <div class="topo-inicio">
   <!-- ================= PALCO: o destaque, a toda a largura ================= -->
-  <section class="palco" aria-labelledby="tit-hero" aria-roledescription="carrossel">
+  <section class="palco sempre-escuro" aria-labelledby="tit-hero" aria-roledescription="carrossel">
     <h2 class="so-leitor" id="tit-hero">Notícias em destaque</h2>
     <div class="hero-caixa">
       <div id="hero" aria-live="polite"></div>
@@ -333,7 +350,7 @@
   </section>
 
     <!-- PRÓXIMO JOGO — cartaz -->
-    <section class="cartaz" id="cartao-proximo" aria-labelledby="tit-proximo">
+    <section class="cartaz sempre-escuro" id="cartao-proximo" aria-labelledby="tit-proximo">
       <header class="cartaz__topo">
         <h2 class="cartaz__titulo" id="tit-proximo">Próximo jogo</h2>
         <span class="cartaz__estado" id="proximo-estado"></span>
@@ -507,7 +524,7 @@
   </div>
 
   <!-- ================= LEVA O SPORTING CONTIGO ================= -->
-  <section class="levar" id="levar" aria-labelledby="tit-levar" hidden></section>
+  <section class="levar sempre-escuro" id="levar" aria-labelledby="tit-levar" hidden></section>
 
   <!-- a tabela antiga da coluna continua no documento (o pintarTabela escreve
        nela), mas a homepage mostra a versão nova em #tabela-casa -->
@@ -949,16 +966,17 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.min.js" defer></script>
-<script src="js/nuvem.js?v=90" defer></script>
-<script src="js/jogo.js?v=90" defer></script>
-<script src="js/fd.js?v=90" defer></script>
-<script src="js/componentes.js?v=90" defer></script>
-<script src="js/contas.js?v=90" defer></script>
-<script src="js/arte.js?v=90" defer></script>
-<script src="js/data.js?v=90" defer></script>
-<script src="js/wiki.js?v=90" defer></script>
-<script src="js/notificacoes.js?v=90" defer></script>
-<script src="js/pwa.js?v=90" defer></script>
-<script src="js/app.js?v=90" defer></script>
+<script src="js/nuvem.js?v=92" defer></script>
+<script src="js/jogo.js?v=92" defer></script>
+<script src="js/fd.js?v=92" defer></script>
+<script src="js/componentes.js?v=92" defer></script>
+<script src="js/contas.js?v=92" defer></script>
+<script src="js/arte.js?v=92" defer></script>
+<script src="js/data.js?v=92" defer></script>
+<script src="js/wiki.js?v=92" defer></script>
+<script src="js/tema.js?v=92" defer></script>
+<script src="js/notificacoes.js?v=92" defer></script>
+<script src="js/pwa.js?v=92" defer></script>
+<script src="js/app.js?v=92" defer></script>
 </body>
 </html>

@@ -56,3 +56,54 @@ body{
 
 /* números lado a lado sempre com a mesma largura */
 .ev__hora, .manchete time, .ag__hora, .classif, .contagem b, .cartaz__hora{ font-variant-numeric: tabular-nums; }
+
+/* =========================================================================
+   TEMA — botão sol/lua e troca sem "escorrer"
+   ========================================================================= */
+/* no escuro mostra-se o sol (passar a claro); no claro, a lua */
+.tema-lua{ display: none; }
+:root[data-tema="claro"] .tema-sol{ display: none; }
+:root[data-tema="claro"] .tema-lua{ display: block; }
+.tema-botao .icone{ width: 20px; height: 20px; transition: transform var(--t-lenta) var(--ease-saida); }
+.tema-botao:hover .icone{ transform: rotate(-18deg); }
+
+/* durante a troca de tema não há transições de cor (ver js/tema.js) */
+.sem-transicoes, .sem-transicoes *, .sem-transicoes *::before, .sem-transicoes *::after{ transition: none !important; }
+
+/* gaveta do telemóvel: tema e sair, no fim */
+.menu__conta{ display: none; }
+@media (max-width: 900px){
+  .menu__conta{ display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 18px 4px 0; }
+  .menu__acao{
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    min-height: 48px; border-radius: 12px;
+    background: var(--cartao-alto); border: 1px solid var(--linha);
+    font-size: 13.5px; font-weight: 700; color: var(--texto);
+  }
+  .menu__acao .icone{ width: 18px; height: 18px; color: var(--texto-2); }
+  .menu__acao:hover{ border-color: var(--linha-forte); }
+}
+/* telemóvel estreito: o "sair" passa para a gaveta e o tema fica no cabeçalho */
+@media (max-width: 480px){
+  .cabeca .botao-login{ display: none; }
+}
+
+/* =========================================================================
+   TEMA CLARO — afinações que os tokens sozinhos não resolvem
+   ========================================================================= */
+:root[data-tema="claro"] .cabeca{ border-bottom-color: var(--linha); }
+:root[data-tema="claro"] .emblema img{ filter: drop-shadow(0 1px 1px rgba(0,0,0,.15)); }
+:root[data-tema="claro"] .pagina__lado .cartao,
+:root[data-tema="claro"] .rcartao__ligacao,
+:root[data-tema="claro"] .mod-tile,
+:root[data-tema="claro"] #vista-inicio .caixa{ border-color: var(--linha); box-shadow: var(--sombra-cartao); }
+:root[data-tema="claro"] .cartao{ box-shadow: var(--sombra-cartao); }
+:root[data-tema="claro"] .menu-veu{ background: rgba(16,24,20,.35); }
+:root[data-tema="claro"] .temas, :root[data-tema="claro"] #vista-inicio .seccao__topo{ border-bottom-color: var(--linha); }
+:root[data-tema="claro"] .barra-inferior{ border-top-color: var(--linha); }
+:root[data-tema="claro"] .segmentos{ background: var(--fundo-2); }
+:root[data-tema="claro"] .segmento.is-on{ background: var(--cartao); box-shadow: 0 1px 3px rgba(16,24,20,.12); }
+:root[data-tema="claro"] .separador.is-on{ background: var(--cartao); box-shadow: 0 1px 3px rgba(16,24,20,.12); }
+:root[data-tema="claro"] .ev__novo{ color: #fff; background: var(--verde); }
+:root[data-tema="claro"] .aviso-app{ box-shadow: var(--sombra-flutuante); }
+:root[data-tema="claro"] ::-webkit-scrollbar-track{ background: var(--fundo-2); }

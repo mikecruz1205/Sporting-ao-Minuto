@@ -9,22 +9,34 @@
    passarem a existir escalas em vez de números soltos.
    ========================================================================= */
 
-:root{
-  /* ---------- cores ----------
-     Verde Sporting como acento — CTA, estados ativos, ao vivo, vitórias.
-     A profundidade vem dos degraus de carvão, não de cor. */
+/* =========================================================================
+   TEMAS — escuro (por omissão) e claro
+   -------------------------------------------------------------------------
+   Duas paletas próprias, não uma inversão. O tema vem de data-tema no
+   <html>, posto antes da primeira pintura (script no <head>): a escolha
+   guardada, ou a preferência do sistema.
+
+   .sempre-escuro — o destaque, o cartaz do jogo, a faixa ao vivo, o ecrã
+   de entrada: são "momentos de marca", escuros nos dois temas. A classe
+   volta a declarar a paleta escura, e tudo lá dentro herda-a.
+   ========================================================================= */
+:root, .sempre-escuro{
+  color-scheme: dark;
+
   --fundo:        #0a0c0b;   /* carvão: o fundo da página */
   --fundo-2:      #0f1211;
   --cartao:       #121514;   /* superfície 1 */
   --cartao-alto:  #181c1a;   /* superfície 2 / hover */
+  --cartao-mais:  #1d2220;   /* superfície 3 (segmento ativo) */
   --cartao-topo:  #121514;
   --linha:        #1f2422;   /* borda subtil */
   --linha-forte:  #2c3330;
 
-  --verde:        #0a9d5f;   /* CTA e ativos */
-  --verde-claro:  #2fd98a;   /* texto verde sobre escuro, ao vivo */
+  --verde:        #0a9d5f;   /* fundo de botões e ativos */
+  --verde-claro:  #2fd98a;   /* verde de texto, pontos, ao vivo */
   --verde-escuro: #063d26;
   --verde-vidro:  rgba(10,157,95,.12);
+  --sobre-verde:  #04150d;   /* texto em cima do verde */
 
   --texto:        #f2f5f3;
   --texto-2:      #a9b5af;
@@ -33,6 +45,21 @@
   --amarelo:      #f2c14e;
   --vermelho:     #e05252;
   --ouro:         #e8c56a;
+  --empate:       #3a4440;   /* fundo do "E" de empate */
+
+  /* véus: o branco transparente que dá relevo no escuro */
+  --veu-1: rgba(255,255,255,.035);
+  --veu-2: rgba(255,255,255,.06);
+  --veu-3: rgba(255,255,255,.1);
+  --veu-linha: rgba(255,255,255,.07);
+  --veu-linha-forte: rgba(255,255,255,.13);
+  /* vidro: cabeçalho, barra de baixo, submenus */
+  --vidro: rgba(10,12,11,.8);
+  --vidro-forte: rgba(10,12,11,.94);
+  --vidro-menu: rgba(18,21,20,.92);
+
+  --sombra-cartao: 0 1px 0 rgba(255,255,255,.03) inset, 0 10px 30px -12px rgba(0,0,0,.5);
+  --sombra-flutuante: 0 24px 48px -16px rgba(0,0,0,.7);
 
   /* cores de cada modalidade — só em pormenores (fios, pontos, etiquetas) */
   --m-futebol:     #2fd98a;
@@ -44,7 +71,66 @@
   --m-voleibol:    #b9a2ff;
   --m-atletismo:   #ff8a80;
   --m-formacao:    #a6e35a;
+  --m-mercado:     #7cc0f0;
+  --m-destaque:    #ff8080;
+}
 
+:root[data-tema="claro"]{
+  color-scheme: light;
+
+  --fundo:        #f3f5f4;
+  --fundo-2:      #eaeeec;
+  --cartao:       #ffffff;
+  --cartao-alto:  #f6f8f7;
+  --cartao-mais:  #eaefec;
+  --cartao-topo:  #ffffff;
+  --linha:        #e1e6e3;
+  --linha-forte:  #cbd4cf;
+
+  --verde:        #0a9d5f;
+  --verde-claro:  #087a49;   /* 5.3:1 sobre branco */
+  --verde-escuro: #d3ecdf;
+  --verde-vidro:  rgba(10,157,95,.1);
+  --sobre-verde:  #04150d;
+
+  --texto:        #121614;
+  --texto-2:      #46534d;
+  --texto-3:      #5d6a64;   /* 5.5:1 sobre branco, 5:1 sobre o fundo */
+
+  --amarelo:      #8f5f00;
+  --vermelho:     #c43a3a;
+  --ouro:         #9a7212;
+  --empate:       #d7ddda;
+
+  --veu-1: rgba(16,24,20,.03);
+  --veu-2: rgba(16,24,20,.055);
+  --veu-3: rgba(16,24,20,.09);
+  --veu-linha: rgba(16,24,20,.09);
+  --veu-linha-forte: rgba(16,24,20,.16);
+  --vidro: rgba(255,255,255,.84);
+  --vidro-forte: rgba(255,255,255,.96);
+  --vidro-menu: rgba(255,255,255,.97);
+
+  --sombra-cartao: 0 1px 2px rgba(16,24,20,.05), 0 10px 28px -14px rgba(16,24,20,.2);
+  --sombra-flutuante: 0 20px 44px -16px rgba(16,24,20,.28);
+
+  --m-futebol:     #087a49;
+  --m-feminino:    #a8418f;
+  --m-futsal:      #0b7f75;
+  --m-andebol:     #8f5f00;
+  --m-basquetebol: #b4511a;
+  --m-hoquei:      #1f6aa5;
+  --m-voleibol:    #6247c9;
+  --m-atletismo:   #c0392b;
+  --m-formacao:    #4a7f0f;
+  --m-mercado:     #1f6aa5;
+  --m-destaque:    #c0392b;
+}
+
+/* o que fica escuro também tem o texto do tema escuro */
+.sempre-escuro{ color: var(--texto); }
+
+:root{
   /* ---------- escala tipográfica (1.200 — terça menor) ---------- */
   --t-xs:   0.694rem;   /* 11px  — etiquetas, metadados */
   --t-sm:   0.833rem;   /* 13px  — texto secundário */

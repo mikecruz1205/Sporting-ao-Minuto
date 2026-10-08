@@ -10,19 +10,20 @@
    a hierarquia do texto. Bordas subtis, sombras quase invisíveis.
    ========================================================================= */
 
+/* nomes curtos usados nas folhas novas — apontam para os tokens do tema
+   (declarados também em .sempre-escuro, para lá dentro resolverem escuro) */
+:root, .sempre-escuro{
+  --carvao:        var(--fundo);
+  --sup-1:         var(--cartao);
+  --sup-2:         var(--cartao-alto);
+  --sup-3:         var(--cartao-mais);
+  --borda:         var(--veu-linha);
+  --borda-forte:   var(--veu-linha-forte);
+  --tx-1: var(--texto);
+  --tx-2: var(--texto-2);
+  --tx-3: var(--texto-3);
+}
 :root{
-  /* superfícies, do fundo para cima */
-  --carvao:        #0a0c0b;
-  --sup-1:         #111413;
-  --sup-2:         #161a18;
-  --sup-3:         #1d2220;
-  --borda:         rgba(255,255,255,.07);
-  --borda-forte:   rgba(255,255,255,.13);
-
-  /* texto */
-  --tx-1: #f2f5f3;
-  --tx-2: #a9b5af;
-  --tx-3: #7a8881;
 
   /* listas da camisola — usadas como textura, nunca como cor de texto */
   --lista-1: #0b2519;
@@ -34,7 +35,6 @@
   --margem:      40px;
 
   --ease-saida:  cubic-bezier(.22,1,.36,1);
-  --sombra-cartao: 0 1px 0 rgba(255,255,255,.03) inset, 0 10px 30px -12px rgba(0,0,0,.5);
 }
 
 body{ background: var(--carvao); }
@@ -47,14 +47,14 @@ body{ background: var(--carvao); }
    ========================================================================= */
 .cabeca{
   position: sticky; top: 0; z-index: calc(var(--z-navbar) + 1);
-  background: rgba(10,12,11,.92);
+  background: var(--vidro-forte);
   border-bottom: 1px solid var(--borda);
 }
 /* o desfoque só em ecrãs largos: em telemóvel o menu é uma gaveta
    position:fixed lá dentro, e um backdrop-filter no pai prendia-a */
 @media (min-width: 901px){
   @supports (backdrop-filter: blur(1px)){
-    .cabeca{ background: rgba(10,12,11,.78); backdrop-filter: saturate(150%) blur(16px); }
+    .cabeca{ background: var(--vidro); backdrop-filter: saturate(150%) blur(16px); }
   }
 }
 
@@ -94,10 +94,10 @@ body.rolou .cabeca .marca-txt span{ opacity: 0; max-height: 0; margin-top: 0; }
 .acoes-capsula{
   display: flex; align-items: center; gap: 2px;
   padding: 4px; border-radius: 999px;
-  background: rgba(255,255,255,.035); border: 1px solid var(--borda);
+  background: var(--veu-1); border: 1px solid var(--borda);
 }
 .acoes-capsula .ico{ width: 40px; height: 40px; color: var(--tx-2); }
-.acoes-capsula .ico:hover{ background: rgba(255,255,255,.06); color: var(--tx-1); }
+.acoes-capsula .ico:hover{ background: var(--veu-2); color: var(--tx-1); }
 .acoes-capsula .badge{ top: 3px; right: 3px; box-shadow: 0 0 0 2px var(--carvao); }
 .ico.conta{ width: auto; min-width: 40px; padding: 0 10px; gap: 8px; display: inline-flex; border-radius: 999px; }
 .ico.conta .quem{ font-size: 13px; font-weight: 600; color: var(--tx-1); }
@@ -116,7 +116,7 @@ body.rolou .cabeca .marca-txt span{ opacity: 0; max-height: 0; margin-top: 0; }
 }
 .cabeca .botao-login{ display: inline-flex; align-items: center; gap: 8px; }
 .cabeca .botao-login .icone{ width: 16px; height: 16px; }
-.cabeca .botao-login:hover{ color: var(--tx-1); border-color: rgba(255,255,255,.3); background: rgba(255,255,255,.04); }
+.cabeca .botao-login:hover{ color: var(--tx-1); border-color: var(--linha-forte); background: var(--veu-1); }
 
 /* ---- navegação (ecrãs largos) ---- */
 @media (min-width: 901px){
@@ -141,7 +141,7 @@ body.rolou .cabeca .marca-txt span{ opacity: 0; max-height: 0; margin-top: 0; }
     transform: scaleX(0); transition: transform .3s var(--ease-saida), background .2s;
   }
   .cabeca .menu__item:hover{ color: var(--tx-1); }
-  .cabeca .menu__item:hover::after{ transform: scaleX(.35); background: rgba(255,255,255,.35); }
+  .cabeca .menu__item:hover::after{ transform: scaleX(.35); background: var(--veu-linha-forte); }
   .cabeca .menu__item.is-on{ color: var(--tx-1); }
   .cabeca .menu__item.is-on::after{ transform: scaleX(1); background: var(--verde-claro); }
   .cabeca .menu__estado{ font-size: 11.5px; color: var(--tx-3); }
@@ -359,8 +359,8 @@ body.rolou .cabeca .marca-txt span{ opacity: 0; max-height: 0; margin-top: 0; }
   font-size: 12px; letter-spacing: .06em; min-height: 36px; padding: 0 16px;
   transition: color .2s, border-color .2s, background .2s;
 }
-#vista-inicio .filtro-cat:hover{ color: var(--tx-1); border-color: rgba(255,255,255,.3); }
-#vista-inicio .filtro-cat.is-on{ background: var(--tx-1); border-color: var(--tx-1); color: #0a0c0b; }
+#vista-inicio .filtro-cat:hover{ color: var(--tx-1); border-color: var(--linha-forte); }
+#vista-inicio .filtro-cat.is-on{ background: var(--tx-1); border-color: var(--tx-1); color: var(--fundo); }
 
 /* =========================================================================
    ETIQUETAS — mais pequenas e discretas
@@ -395,7 +395,7 @@ body.rolou .cabeca .marca-txt span{ opacity: 0; max-height: 0; margin-top: 0; }
 /* uma sombra por baixo para a imagem não parecer colada ao fundo */
 .capa::after{
   content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
-  border-radius: inherit; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+  border-radius: inherit; box-shadow: inset 0 0 0 1px var(--veu-linha);
 }
 
 /* =========================================================================
@@ -504,10 +504,10 @@ body.rolou .cabeca .marca-txt span{ opacity: 0; max-height: 0; margin-top: 0; }
 .manchete__meta{ display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--tx-3); letter-spacing: .04em; }
 .manchete__meta .ed__fonte{ font-size: 11px; }
 .manchete__cat{ width: 6px; height: 6px; border-radius: 50%; background: var(--verde-claro); flex: none; }
-.manchete__cat--mercado{ background: #7cc0f0; }
+.manchete__cat--mercado{ background: var(--m-mercado); }
 .manchete__cat--formacao{ background: var(--amarelo); }
-.manchete__cat--destaque{ background: #ff8080; }
-.manchete__cat--feminino{ background: #e29ade; }
+.manchete__cat--destaque{ background: var(--m-destaque); }
+.manchete__cat--feminino{ background: var(--m-feminino); }
 .manchete__cat--modalidades{ background: var(--tx-2); }
 .manchete__ligacao:hover .manchete__titulo{ color: var(--verde-claro); }
 .manchete__ligacao:focus-visible{ outline: 2px solid var(--verde-claro); outline-offset: 2px; }
@@ -730,7 +730,7 @@ body.rolou .cabeca .marca-txt span{ opacity: 0; max-height: 0; margin-top: 0; }
 
 .pagina__lado .tabela th{ font-size: 11px; color: var(--tx-3); border-bottom-color: var(--borda); }
 .pagina__lado .tabela td{ padding: 11px 6px; border-bottom-color: var(--borda); font-size: 14px; }
-.pagina__lado .tabela tbody tr:hover{ background: rgba(255,255,255,.03); }
+.pagina__lado .tabela tbody tr:hover{ background: var(--veu-1); }
 .pagina__lado .tabela tr.eu{ background: linear-gradient(90deg, rgba(10,157,95,.2), rgba(10,157,95,.04)); }
 .pagina__lado .tabela tr.eu td:first-child{ box-shadow: inset 2px 0 0 var(--verde-claro); }
 

@@ -4269,6 +4269,8 @@ async function arranque(){
     b.addEventListener('click', () => irPara(b.dataset.vista)));
   ligarSubmenus();
   ligarBarraInferior();
+  /* na gaveta do telemóvel o sair faz o mesmo que o do cabeçalho */
+  $('#btn-sair-gaveta')?.addEventListener('click', () => $('#btn-sair').click());
   $$('#agenda-filtro .separador').forEach(b => b.addEventListener('click', () => {
     filtroAgenda = b.dataset.filtro;
     pintarAgenda();

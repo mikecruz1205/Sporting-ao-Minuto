@@ -15,10 +15,10 @@
   border: 1px solid rgba(47,217,138,.28);
   white-space: nowrap;
 }
-.etiqueta--mercado    { background: rgba(90,169,230,.12); color:#7cc0f0; border-color: rgba(90,169,230,.3); }
+.etiqueta--mercado    { background: rgba(90,169,230,.12); color:var(--m-mercado); border-color: rgba(90,169,230,.3); }
 .etiqueta--formacao   { background: rgba(242,193,78,.12); color: var(--amarelo); border-color: rgba(242,193,78,.3); }
-.etiqueta--destaque   { background: rgba(224,82,82,.14);  color:#ff8080; border-color: rgba(224,82,82,.32); }
-.etiqueta--feminino   { background: rgba(214,124,208,.12);color:#e29ade; border-color: rgba(214,124,208,.3); }
+.etiqueta--destaque   { background: rgba(224,82,82,.14);  color:var(--m-destaque); border-color: rgba(224,82,82,.32); }
+.etiqueta--feminino   { background: rgba(214,124,208,.12);color:var(--m-feminino); border-color: rgba(214,124,208,.3); }
 .etiqueta--modalidades{ background: rgba(140,150,145,.14);color: var(--texto-2); border-color: var(--linha-forte); }
 
 /* =========================================================================
@@ -135,7 +135,7 @@
   text-transform: uppercase; color: var(--verde-claro);
   transition: gap var(--rapido);
 }
-.seccao__mais:hover{ gap: var(--e-2); color: #fff; }
+.seccao__mais:hover{ gap: var(--e-2); color: var(--texto); }
 /* área de toque maior sem mexer no alinhamento do título */
 .seccao__mais{ padding: var(--e-3) var(--e-2); margin: calc(var(--e-3) * -1) calc(var(--e-2) * -1); border-radius: var(--raio-sm); }
 .seccao__mais i{ font-style: normal; }

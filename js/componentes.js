@@ -127,7 +127,7 @@ const Componentes = (() => {
     /* sem fotografia não se inventa uma: o cartão fica só com texto */
     const semFoto = !n.imagem && !tipografico;
     return `
-    <article class="ed ed--${variante} ${tipografico ? 'ed--tipografico' : ''} ${semFoto ? 'ed--sem-foto' : ''}">
+    <article class="ed ed--${variante} ${tipografico ? 'ed--tipografico sempre-escuro' : ''} ${semFoto ? 'ed--sem-foto' : ''}">
       <a class="ed__ligacao" href="${ligacao(n.link)}" target="_blank" rel="noopener"
          data-link="${seguro(n.link)}">
         ${n.imagem ? capa(n, { grande: variante === 'principal' }) : ''}
