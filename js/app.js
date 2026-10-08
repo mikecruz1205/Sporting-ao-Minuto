@@ -44,9 +44,10 @@ const EMBLEMAS_SCP = [
   'img/crest.png', 'img/crest.jpg', 'img/crest.jpeg', 'img/crest.webp',
   '/emblema', 'img/crest.svg', 'img/teams/228.png'
 ];
+/* a fotografia é posta pelo montarFundoEntrada (o CSS já não a pede, senão
+   vinha duas vezes); o webp vai à frente porque é o que existe */
 const FUNDOS_ENTRADA = [
-  'img/entrada.jpg', 'img/entrada.jpeg', 'img/entrada.png',
-  'img/entrada.webp', '/fundo'
+  'img/entrada.webp', 'img/entrada.jpg', 'img/entrada.jpeg', 'img/entrada.png', '/fundo'
 ];
 
 /* devolve o primeiro caminho que carregue, ou null */
@@ -415,7 +416,7 @@ function etiquetaEvento(n){
   if(tema !== 'futebol') return { texto: modalidade(tema)?.curto || tema, classe:'m-' + tema };
   if(n.categoria === 'MERCADO')  return { texto:'Mercado', classe:'mercado' };
   if(n.categoria === 'DESTAQUE') return { texto:'Destaque', classe:'destaque' };
-  return { texto:'Equipa principal', classe:'equipa' };
+  return null;      // futebol do dia a dia: a etiqueta seria ruído em cada linha
 }
 
 async function lerFeed(f){
@@ -671,6 +672,20 @@ function pintarHome(){
 }
 let homeRevelada = false;
 
+/* Filas que deslizam para o lado (temas, separadores): quando há mais do
+   que cabe, a ponta desvanece — sem isso o último item parece cortado. */
+function marcarTransbordo(raiz = document){
+  raiz.querySelectorAll('.temas, .mod-separadores, .separadores, #pos-filtro, .jogos-filtro, .filtros-categoria').forEach(el => {
+    const mais = el.scrollWidth - el.clientWidth - el.scrollLeft > 4;
+    el.classList.toggle('tem-mais', mais);
+    if(!el.dataset.transbordo){
+      el.dataset.transbordo = '1';
+      el.addEventListener('scroll', () => marcarTransbordo(el.parentElement), { passive:true });
+    }
+  });
+}
+addEventListener('resize', () => marcarTransbordo());
+
 /* notícias de uma modalidade, das mais recentes para trás */
 const noticiasDe = id => NOTICIAS.filter(n => temaDe(n) === id);
 
@@ -924,6 +939,7 @@ function pintarFiltrosCategoria(){
       ${rotulo}${c !== 'todas' ? `<span class="tema__n">${contas[c]}</span>` : ''}
     </button>`).join('');
 
+  requestAnimationFrame(() => marcarTransbordo(alvo.parentElement));
   $$('#filtros-categoria .tema').forEach(b =>
     b.addEventListener('click', () => {
       categoriaHome = b.dataset.cat;
@@ -1085,7 +1101,7 @@ function pintarLinhaTempo(){
       <span class="ev__hora">${n.data.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'})}</span>
       <span class="ev__marca"><i class="ev__bola"></i><i class="ev__linha"></i></span>
       <span class="ev__txt">
-        <span class="ev__selos">${novo ? '<span class="ev__novo">Novo</span>' : ''}<span class="ev__tipo ev__tipo--${et.classe}">${et.texto}</span></span>
+        ${novo || et ? `<span class="ev__selos">${novo ? '<span class="ev__novo">Novo</span>' : ''}${et ? `<span class="ev__tipo ev__tipo--${et.classe}">${et.texto}</span>` : ''}</span>` : ''}
         <a href="${n.link}" target="_blank" rel="noopener"><b>${n.titulo}</b></a>
         <span class="ev__fonte">${n.fonte} · ${haQuanto(n.data)}</span>
       </span>
@@ -3973,6 +3989,7 @@ function jogosDaModalidade(id){
 function pintarAgenda(){
   const alvo = $('#agenda-lista');
   if(!alvo) return;
+  requestAnimationFrame(() => marcarTransbordo($('#vista-agenda')));
   $$('#agenda-filtro .separador').forEach(b => {
     b.classList.toggle('is-on', b.dataset.filtro === filtroAgenda);
     b.setAttribute('aria-pressed', b.dataset.filtro === filtroAgenda);
@@ -4045,6 +4062,7 @@ function pintarModalidades(){
             aria-selected="${x.id === m.id}" aria-controls="mod-painel" style="--m-cor: var(--m-${x.id})">
       <i class="mod-sep__ponto" aria-hidden="true"></i>${x.curto}
     </button>`).join('');
+  requestAnimationFrame(() => marcarTransbordo(seps.parentElement));
   seps.querySelectorAll('.mod-sep').forEach(b => b.addEventListener('click', () => {
     modalidadeAtual = b.dataset.modalidade;
     history.replaceState({ vista:'modalidades' }, '', '/modalidades#' + modalidadeAtual);

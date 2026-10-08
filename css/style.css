@@ -44,7 +44,6 @@ body.trancado .topo, body.trancado .menu, body.trancado .vista{ filter:blur(6px)
 /* fotografia de fundo — qualquer img/entrada.* serve (ver /fundo no servidor) */
 .acesso__foto{
   position:absolute; inset:0;
-  background-image:url('/fundo');
   background-size:cover; background-position:center 38%;
   opacity:0; transform:scale(1.06);
   transition:opacity 1.2s ease;

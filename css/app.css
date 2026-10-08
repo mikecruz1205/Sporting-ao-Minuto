@@ -570,3 +570,9 @@ button.levar__botao:active{ transform: scale(.98); }
 .jog:hover{ border-color: var(--verde-claro); }
 .jog__txt b{ font-size: 14px; }
 .ficha{ border-radius: 16px; }
+
+/* filas que deslizam: a ponta desvanece quando há mais (ver marcarTransbordo) */
+.tem-mais{
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 56px), transparent);
+          mask-image: linear-gradient(90deg, #000 calc(100% - 56px), transparent);
+}

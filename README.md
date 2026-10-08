@@ -230,14 +230,46 @@ Para trocar: apaga a antiga, mete a nova com o mesmo nome, `F5`.
 
 ## Navegação
 
-Só o menu de cima. Muda de vista sem recarregar a página:
+Cada vista tem o seu endereço — dá para partilhar, guardar e abrir direto:
 
-**INÍCIO** · **NOTÍCIAS** (com filtro por jornal) · **AO MINUTO** ·
-**RUMORES** (entradas, saídas com valores, somas e imprensa) ·
-**EQUIPA** (plantel + ficha + carreira) · **JOGOS** (época toda) ·
-**ESTATÍSTICAS** · **CLASSIFICAÇÃO** · **FORMAÇÃO** · **CLUBE**
+| Endereço | Vista |
+|---|---|
+| `/` | Início: destaque, próximo jogo, ao minuto, notícias, resultados, agenda, modalidades |
+| `/noticias` · `/noticias?q=termo` | Todas as notícias (com pesquisa já feita) |
+| `/ao-minuto` · `/mercado` | Linha do tempo · Mercado |
+| `/jogos` · `/agenda` · `/classificacao` · `/ao-vivo` | Jogos e resultados · Próximos jogos · Tabela · Jogo a decorrer |
+| `/plantel` · `/estatisticas` | Equipa |
+| `/modalidades` · `/modalidades#futsal` | Uma página por modalidade |
+| `/chat` · `/fantasy` · `/clube` | Comunidade e clube |
+| `/privacidade` · `/termos` | Textos legais |
 
-A lupa procura em todas as notícias. `Esc` fecha a procura e o leitor.
+No computador, o menu tem submenus (Notícias, Jogos, Equipa, Comunidade).
+No telemóvel há uma barra em baixo — Início, Jogos, Ao minuto, Notícias,
+Mais — e o "Ao minuto" passa a "Ao vivo" durante os jogos.
+
+Se acrescentares uma vista, o endereço tem de ir para três sítios: `ROTAS`
+no `js/app.js`, `ROTAS_DO_SITE` no `servidor.py` e os `rewrites` do
+`vercel.json`.
+
+---
+
+## Aplicação instalável, Android, notificações e SEO
+
+- **PWA** — `manifest.webmanifest`, `sw.js` (cache e modo offline),
+  `offline.html`, `js/pwa.js` (botão de instalar só quando o browser deixa;
+  instruções no iPhone). Ao mudar o `sw.js`, sobe a `VERSAO` lá dentro.
+- **Ícones e imagens da marca** — `python scripts/gerar_marca.py` gera
+  tudo (ícones, ecrãs de arranque do iOS, imagem de partilha) a partir do
+  `img/crest.svg`.
+- **Emblemas das equipas** — `python scripts/otimizar_imagens.py` (o
+  `atualizar_emblemas.py` já o chama).
+- **Android / Google Play** — ver `docs/ANDROID.md` (Trusted Web Activity) e
+  `scripts/preparar_android.py`.
+- **Notificações push** — ver `docs/NOTIFICACOES.md`; desligadas até haver
+  chave VAPID em `CONFIG.push.chavePublica`.
+- **SEO** — quando souberes o domínio de produção:
+  `python scripts/gerar_seo.py --dominio https://oteudominio.pt` (gera o
+  `sitemap.xml`, acerta o `robots.txt` e as imagens de partilha).
 
 ---
 

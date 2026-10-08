@@ -160,7 +160,7 @@
 .temas::-webkit-scrollbar{ display: none; }
 .tema{
   position: relative; flex: none; display: inline-flex; align-items: baseline; gap: 6px;
-  min-height: 44px; padding: 0 1px;
+  min-height: 44px; min-width: 44px; justify-content: center; padding: 0 1px;
   font-size: 14px; font-weight: 600; color: var(--tx-3); white-space: nowrap;
   transition: color var(--t-rapida);
 }
@@ -470,3 +470,10 @@
 @media (max-width: 820px){ .palco .partilhar{ top: 16px; right: 16px; } }
 /* na principal tipográfica, o emblema desce para o canto de baixo: em cima fica o partilhar */
 .ed--tipografico .ed__ligacao::before{ top: auto; bottom: 28px; }
+
+/* alvos de toque no telemóvel: 44px, mesmo quando o desenho é mais pequeno */
+@media (max-width: 820px){
+  .palco .hero-ponto{ min-height: 44px; padding-top: 21px; }
+  .palco__controlo{ padding-bottom: 12px; }
+  .cartaz .seta{ width: 44px; height: 44px; }
+}

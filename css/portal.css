@@ -891,3 +891,7 @@ body.rolou .cabeca .marca-txt span{ opacity: 0; max-height: 0; margin-top: 0; }
   .jogo__seg b.tique, .cartao--vivo .ev--novo .ev__bola{ animation: none !important; }
   .revela{ opacity: 1; transform: none; }
 }
+
+/* meta das notícias: a etiqueta e a hora não se separam em linhas soltas */
+.ed__meta{ flex-wrap: wrap; row-gap: 4px; }
+.ed__meta .etiqueta{ white-space: nowrap; }
