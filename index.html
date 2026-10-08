@@ -62,6 +62,12 @@
              matchMedia('(display-mode: fullscreen)').matches)) || navigator.standalone === true;
   if(!app) { window.fecharArranque = function(){}; return; }
   document.documentElement.classList.add('modo-app');
+  /* Na aplicação instalada não há zoom por pinça (no browser fica, por
+     acessibilidade). O iOS ignora o user-scalable=no desde o iOS 10, por
+     isso trava-se também o gesto (gesturestart é só do WebKit). */
+  var vp = document.querySelector('meta[name="viewport"]');
+  if(vp) vp.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover');
+  document.addEventListener('gesturestart', function(e){ e.preventDefault(); }, { passive: false });
   var inicio = Date.now();
   /* o app.js chama isto quando o site está pronto; fica pelo menos 700 ms
      (sem piscar) e nunca mais de 8 s (se alguma coisa encravar) */
@@ -129,13 +135,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Manrope:wght@400..800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/base.css?v=100">
-<link rel="stylesheet" href="css/componentes.css?v=100">
-<link rel="stylesheet" href="css/style.css?v=100">
-<link rel="stylesheet" href="css/portal.css?v=100">
-<link rel="stylesheet" href="css/inicio.css?v=100">
-<link rel="stylesheet" href="css/app.css?v=100">
-<link rel="stylesheet" href="css/editorial.css?v=100">
+<link rel="stylesheet" href="css/base.css?v=101">
+<link rel="stylesheet" href="css/componentes.css?v=101">
+<link rel="stylesheet" href="css/style.css?v=101">
+<link rel="stylesheet" href="css/portal.css?v=101">
+<link rel="stylesheet" href="css/inicio.css?v=101">
+<link rel="stylesheet" href="css/app.css?v=101">
+<link rel="stylesheet" href="css/editorial.css?v=101">
 </head>
 <body class="trancado">
 <!-- ============================ ECRÃ DE CARREGAMENTO (modo aplicação) ============================ -->
@@ -998,17 +1004,17 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.min.js" defer></script>
-<script src="js/nuvem.js?v=100" defer></script>
-<script src="js/jogo.js?v=100" defer></script>
-<script src="js/fd.js?v=100" defer></script>
-<script src="js/componentes.js?v=100" defer></script>
-<script src="js/contas.js?v=100" defer></script>
-<script src="js/arte.js?v=100" defer></script>
-<script src="js/data.js?v=100" defer></script>
-<script src="js/wiki.js?v=100" defer></script>
-<script src="js/tema.js?v=100" defer></script>
-<script src="js/notificacoes.js?v=100" defer></script>
-<script src="js/pwa.js?v=100" defer></script>
-<script src="js/app.js?v=100" defer></script>
+<script src="js/nuvem.js?v=101" defer></script>
+<script src="js/jogo.js?v=101" defer></script>
+<script src="js/fd.js?v=101" defer></script>
+<script src="js/componentes.js?v=101" defer></script>
+<script src="js/contas.js?v=101" defer></script>
+<script src="js/arte.js?v=101" defer></script>
+<script src="js/data.js?v=101" defer></script>
+<script src="js/wiki.js?v=101" defer></script>
+<script src="js/tema.js?v=101" defer></script>
+<script src="js/notificacoes.js?v=101" defer></script>
+<script src="js/pwa.js?v=101" defer></script>
+<script src="js/app.js?v=101" defer></script>
 </body>
 </html>
