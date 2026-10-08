@@ -6,3 +6,5 @@ Disallow: /api/
 Disallow: /rss
 Disallow: /ler
 Disallow: /offline.html
+
+Sitemap: https://sporting-fan-ao-minuto.vercel.app/sitemap.xml

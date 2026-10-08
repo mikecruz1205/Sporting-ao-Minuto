@@ -46,7 +46,10 @@ mesmo aí a PWA continua a ser a base.
 
 ## O que falta — e porquê não foi inventado
 
-1. **O domínio.** Tem de ser um domínio teu, onde o site está publicado.
+1. ~~**O domínio.**~~ Já definido: **`sporting-fan-ao-minuto.vercel.app`**
+   (o subdomínio do Vercel é teu, por isso serve para o `assetlinks.json`;
+   se um dia passares para um domínio próprio, volta a correr o script).
+   Tem de ser um domínio teu, onde o site está publicado.
    `app.mgira.pt` não serve: é o domínio da aplicação **mGira** (bicicletas
    partilhadas de Lisboa) — o `assetlinks.json` tem de ser servido pelo
    domínio, e esse não é nosso. O script recusa-o.
@@ -67,7 +70,7 @@ npm i -g @bubblewrap/cli
 
 # 3. gera a configuração (a primeira vez, uma impressão provisória da
 #    keystore local; depois troca pela da Play Console)
-python scripts/preparar_android.py --dominio <dominio> --pacote pt.sportingaominuto.app --sha256 <SHA-256>
+python scripts/preparar_android.py --dominio sporting-fan-ao-minuto.vercel.app --pacote pt.sportingaominuto.app --sha256 <SHA-256>
 
 # 4. constrói o pacote
 cd android
