@@ -2801,6 +2801,32 @@ function ligarEscolha(){
 let onzeOficial = null;      // { titulares, suplentes, fonte, link, data }
 let relogioJogo = null;
 
+/* A última coisa que aconteceu no jogo, numa linha, na faixa ao vivo.
+   Vem da ficha oficial quando há (football-data), senão das notícias —
+   e nesse caso vai dito, porque é uma leitura dos jornais. */
+function pintarLanceNaFaixa(e){
+  const alvo = $('#faixa-lance');
+  if(!alvo) return;
+  let texto = '';
+  if(Jogo.emJogo(e)){
+    const oficial = fichaFD?.lances?.slice(-1)[0];
+    if(oficial){
+      const min = oficial.minuto + (oficial.extra ? '+' + oficial.extra : '');
+      const quem = oficial.tipo === 'troca' ? `${oficial.entrou || ''} entra` : (oficial.quem || '');
+      texto = `${min}' · ${{golo:'Golo', amarelo:'Amarelo', vermelho:'Vermelho', troca:'Substituição'}[oficial.tipo] || 'Lance'}${quem ? ' — ' + quem : ''}`;
+    }else{
+      const l = Jogo.lances(NOTICIAS, e, PLANTEL).slice(-1)[0];
+      texto = l ? `${l.minuto}' · ${l.titulo}` : 'Sem lances publicados ainda';
+    }
+  }else if(e.fase === 'fim'){
+    texto = 'Jogo terminado';
+  }else{
+    texto = e.jogo.local || '';
+  }
+  alvo.textContent = texto;
+  alvo.title = texto;
+}
+
 /* durante o jogo, o "Ao minuto" da barra inferior passa a "Ao vivo" */
 function marcarBarraVivo(vivo){
   const b = $('#barra-vivo');
@@ -2855,6 +2881,7 @@ function pintarDiaDeJogo(){
   }
 
   pintarPlacar(e);
+  pintarLanceNaFaixa(e);
 
   /* Havendo token do football-data, o onze e os lances vêm de lá: são
      dados da ficha de jogo, não títulos de jornal lidos à força. Se não

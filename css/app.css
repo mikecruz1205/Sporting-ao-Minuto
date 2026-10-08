@@ -266,3 +266,77 @@ button.mod-jogo:hover{ border-color: color-mix(in srgb, var(--m-cor) 40%, transp
 .rcartoes, .temas, .separadores, .mod-separadores, .filtros-categoria,
 #pos-filtro, .jogos-filtro, .placares, .linha-tempo, .grelha-cartoes, .editorial{ position: relative; }
 
+
+/* =========================================================================
+   FAIXA AO VIVO — aparece no dia de jogo, colada por baixo do cabeçalho
+   ========================================================================= */
+.faixa-jogo{
+  position: sticky; top: var(--altura-topo, 92px); z-index: calc(var(--z-navbar) - 1);
+  background: rgba(12,15,14,.94);
+  border-bottom: 1px solid var(--borda);
+}
+@supports (backdrop-filter: blur(1px)){
+  .faixa-jogo{ background: rgba(12,15,14,.8); backdrop-filter: blur(14px) saturate(140%); }
+}
+/* um brilho verde à esquerda, mais forte com o jogo a decorrer */
+.faixa-jogo::before{
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, rgba(10,157,95,.18), transparent 45%);
+}
+.faixa-jogo--vivo{ border-bottom-color: rgba(47,217,138,.3); }
+.faixa-jogo--vivo::before{ background: linear-gradient(90deg, rgba(10,157,95,.34), transparent 55%); }
+
+.faixa-jogo__interior{
+  position: relative; width: 100%;
+  max-width: var(--largura); margin: 0 auto;
+  display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; gap: 24px;
+  min-height: 56px; padding: 8px var(--margem);
+  text-align: left; color: var(--tx-1);
+}
+.faixa-jogo__estado{ display: inline-flex; align-items: center; gap: 10px; }
+.faixa-jogo__estado b{
+  font-family: var(--f-num); font-weight: 800; font-size: 16px; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--tx-2); font-variant-numeric: tabular-nums;
+}
+.faixa-jogo--vivo .faixa-jogo__estado b{ color: var(--verde-claro); }
+.faixa-jogo__pulso{ width: 9px; height: 9px; border-radius: 50%; background: var(--tx-3); }
+.faixa-jogo--vivo .faixa-jogo__pulso{ background: var(--verde-claro); animation: pulsa 1.6s infinite; }
+
+.faixa-jogo__placar{ display: inline-flex; align-items: center; gap: 14px; }
+.faixa-jogo__eq{ display: inline-flex; align-items: center; gap: 10px; min-width: 0; }
+.faixa-jogo__eq img{ width: 24px; height: 24px; object-fit: contain; flex: none; }
+.faixa-jogo__eq span{ font-size: 14px; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; white-space: nowrap; }
+.faixa-jogo__placar b{
+  min-width: 64px; text-align: center; padding: 3px 10px; border-radius: 8px;
+  background: rgba(0,0,0,.35);
+  font-family: var(--f-num); font-weight: 800; font-size: 22px; color: #fff; font-variant-numeric: tabular-nums;
+}
+.faixa-jogo__lance{
+  font-size: 14px; color: var(--tx-2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.faixa-jogo__ir{
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 36px; padding: 0 14px; border-radius: 999px;
+  background: var(--verde); color: #04150d;
+  font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  transition: background var(--t-rapida);
+}
+.faixa-jogo__ir .icone{ width: 15px; height: 15px; transition: transform var(--t-media) var(--ease-saida); }
+.faixa-jogo__interior:hover .faixa-jogo__ir{ background: var(--verde-claro); }
+.faixa-jogo__interior:hover .faixa-jogo__ir .icone{ transform: translateX(3px); }
+.faixa-jogo__interior:focus-visible{ outline: 2px solid var(--verde-claro); outline-offset: -2px; }
+
+/* telemóvel: placar na primeira linha, último lance na segunda */
+@media (max-width: 820px){
+  .faixa-jogo__interior{
+    grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "estado placar ir" "lance lance lance";
+    gap: 4px 12px; padding: 8px 16px 10px;
+  }
+  .faixa-jogo__estado{ grid-area: estado; }
+  .faixa-jogo__placar{ grid-area: placar; justify-content: center; gap: 8px; }
+  .faixa-jogo__eq span{ display: none; }
+  .faixa-jogo__ir{ grid-area: ir; padding: 0 12px; }
+  .faixa-jogo__lance{ grid-area: lance; font-size: 13px; }
+}
+@media (prefers-reduced-motion: reduce){ .faixa-jogo--vivo .faixa-jogo__pulso{ animation: none; } }

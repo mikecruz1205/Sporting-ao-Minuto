@@ -30,7 +30,7 @@
 <link rel="stylesheet" href="css/componentes.css?v=69">
 <link rel="stylesheet" href="css/style.css?v=69">
 <link rel="stylesheet" href="css/portal.css?v=69">
-<link rel="stylesheet" href="css/inicio.css?v=80">
+<link rel="stylesheet" href="css/inicio.css?v=81">
 <link rel="stylesheet" href="css/app.css?v=69">
 </head>
 <body class="trancado">
@@ -192,19 +192,20 @@
 
 
 <!-- ==================== DIA DE JOGO ==================== -->
-<section class="faixa-jogo" id="faixa-jogo" hidden aria-live="polite">
-  <div class="faixa-jogo__interior">
-    <div class="faixa-jogo__estado">
+<section class="faixa-jogo" id="faixa-jogo" hidden aria-live="polite" aria-label="Jogo do Sporting">
+  <button type="button" class="faixa-jogo__interior" data-ir="aovivo">
+    <span class="faixa-jogo__estado">
       <span class="faixa-jogo__pulso" aria-hidden="true"></span>
       <b id="faixa-fase">—</b>
-    </div>
-    <div class="faixa-jogo__placar">
-      <span class="faixa-jogo__eq"><img id="faixa-casa-img" alt=""><span id="faixa-casa">—</span></span>
+    </span>
+    <span class="faixa-jogo__placar">
+      <span class="faixa-jogo__eq"><img id="faixa-casa-img" alt="" width="24" height="24"><span id="faixa-casa">—</span></span>
       <b id="faixa-resultado">vs</b>
-      <span class="faixa-jogo__eq"><span id="faixa-fora">—</span><img id="faixa-fora-img" alt=""></span>
-    </div>
-    <button class="faixa-jogo__ir" data-ir="aovivo">ACOMPANHAR <i aria-hidden="true">→</i></button>
-  </div>
+      <span class="faixa-jogo__eq faixa-jogo__eq--fora"><span id="faixa-fora">—</span><img id="faixa-fora-img" alt="" width="24" height="24"></span>
+    </span>
+    <span class="faixa-jogo__lance" id="faixa-lance"></span>
+    <span class="faixa-jogo__ir">Ver jogo <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+  </button>
 </section>
 
 <!-- ============================ INÍCIO ============================ -->
