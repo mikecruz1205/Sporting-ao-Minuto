@@ -4253,6 +4253,8 @@ async function arranque(){
 
   /* mostra já o arquivo guardado, enquanto os feeds respondem */
   if(lerArquivo()) pintarNoticias();
+  /* o site já tem o que mostrar: sai o ecrã de carregamento do modo aplicação */
+  window.fecharArranque?.();
 
   sincronizar();
   setInterval(sincronizar, CONFIG.refreshDadosMinutos * 60000);

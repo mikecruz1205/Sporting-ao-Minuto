@@ -576,3 +576,52 @@ button.levar__botao:active{ transform: scale(.98); }
   -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 56px), transparent);
           mask-image: linear-gradient(90deg, #000 calc(100% - 56px), transparent);
 }
+
+/* =========================================================================
+   ECRÃ DE ENTRADA — teclado do telemóvel e barra de estado
+   -------------------------------------------------------------------------
+   O ecrã é fixo e corta a fotografia (que tem zoom lento). O formulário
+   vive numa camada própria com scroll (.acesso__rolo): quando o teclado
+   do iPhone abre, é essa camada que desliza para mostrar o campo — e não
+   a página que está por baixo, que fica presa e escondida enquanto não se
+   entra. As margens respeitam a barra de estado e a barra de gestos.
+   ========================================================================= */
+.acesso{ display: block; }
+.acesso__rolo{
+  position: absolute; inset: 0; z-index: 1;
+  display: flex;
+  overflow-x: hidden; overflow-y: auto;
+  overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  padding:
+    max(24px, calc(env(safe-area-inset-top) + 16px)) 16px
+    max(24px, calc(env(safe-area-inset-bottom) + 16px));
+}
+/* margin:auto centra quando cabe e deixa deslizar quando não cabe
+   (o align-items:center cortava o topo da caixa) */
+.acesso__rolo > .acesso__caixa{ margin: auto; flex: none; }
+
+/* uma faixa por baixo da barra de estado: o texto que desliza não fica
+   por baixo do relógio e da bateria */
+.acesso::after{
+  content: ""; position: absolute; left: 0; right: 0; top: 0; z-index: 2;
+  height: env(safe-area-inset-top, 0px);
+  background: linear-gradient(180deg, rgba(6,8,7,.95), rgba(6,8,7,.75));
+  pointer-events: none;
+}
+
+/* a página por baixo não se mexe nem se desenha enquanto o ecrã de entrada
+   está aberto (o desfoque antigo era invisível, por trás de um fundo opaco) */
+body.trancado{ position: fixed; inset: 0; width: 100%; overflow: hidden; }
+body.trancado .cabeca, body.trancado .vista, body.trancado .faixa-jogo,
+body.trancado .barra-inferior, body.trancado .menu-abrir, body.trancado .ao-topo{
+  visibility: hidden; filter: none;
+}
+
+/* olho da palavra-passe: um ícone para mostrar, outro para esconder */
+.ver-palavra{ display: grid; place-items: center; width: 44px; height: 44px; }
+.ver-palavra .icone{ width: 20px; height: 20px; }
+.ver-palavra .olho-esconder{ display: none; }
+.ver-palavra.is-on .olho-ver{ display: none; }
+.ver-palavra.is-on .olho-esconder{ display: block; }
+/* o campo tem 44px e 15px de margem por baixo: o olho centra-se no campo, não no conjunto */
+.ver-palavra{ top: 0; right: 2px; transform: none; opacity: .75; border-radius: 10px; }
