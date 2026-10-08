@@ -129,13 +129,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Manrope:wght@400..800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/base.css?v=94">
-<link rel="stylesheet" href="css/componentes.css?v=94">
-<link rel="stylesheet" href="css/style.css?v=94">
-<link rel="stylesheet" href="css/portal.css?v=94">
-<link rel="stylesheet" href="css/inicio.css?v=94">
-<link rel="stylesheet" href="css/app.css?v=94">
-<link rel="stylesheet" href="css/editorial.css?v=94">
+<link rel="stylesheet" href="css/base.css?v=96">
+<link rel="stylesheet" href="css/componentes.css?v=96">
+<link rel="stylesheet" href="css/style.css?v=96">
+<link rel="stylesheet" href="css/portal.css?v=96">
+<link rel="stylesheet" href="css/inicio.css?v=96">
+<link rel="stylesheet" href="css/app.css?v=96">
+<link rel="stylesheet" href="css/editorial.css?v=96">
 </head>
 <body class="trancado">
 <!-- ============================ ECRÃ DE CARREGAMENTO (modo aplicação) ============================ -->
@@ -388,10 +388,10 @@
       <section class="cartao cartao--vivo" aria-labelledby="tit-aominuto">
         <div class="cartao__topo">
           <h2 id="tit-aominuto">Ao minuto</h2>
-          <span class="selo-vivo"><span class="ponto-vivo" aria-hidden="true"></span>Ao vivo</span>
+          <span class="selo-vivo" data-selo-vivo role="status"></span>
         </div>
         <div class="cartao__corpo">
-          <div class="segmentos" id="minuto-segmentos" role="group" aria-label="Filtrar eventos">
+          <div class="segmentos" id="minuto-segmentos" data-segmentos-minuto role="group" aria-label="Filtrar eventos">
             <button type="button" class="segmento is-on" data-valor="todos" aria-pressed="true">Tudo</button>
             <button type="button" class="segmento" data-valor="quente" aria-pressed="false">Destaques</button>
             <button type="button" class="segmento" data-valor="mercado" aria-pressed="false">Mercado</button>
@@ -566,11 +566,20 @@
   <button class="botao-largo botao-largo--fantasma" id="mais-antigas" hidden>Ver mais antigas</button>
 </main>
 
-<main class="vista" id="vista-aominuto">
-  <section class="cartao">
-    <div class="cartao__topo"><h2>AO MINUTO</h2><span class="ponto-vivo"></span></div>
-    <div class="cartao__corpo"><ol class="linha-tempo linha-tempo--grande" id="linha-tempo-total"></ol></div>
-  </section>
+<main class="vista" id="vista-aominuto" aria-labelledby="tit-aominuto-vista">
+  <header class="vista__cabeca vista__cabeca--com-selo">
+    <div>
+      <p class="seccao__sobre">De todos os jornais, por ordem de chegada</p>
+      <h2 class="vista__titulo" id="tit-aominuto-vista">Ao minuto</h2>
+    </div>
+    <span class="selo-vivo" data-selo-vivo role="status"></span>
+  </header>
+  <div class="segmentos segmentos--vista" data-segmentos-minuto role="group" aria-label="Filtrar atualizações">
+            <button type="button" class="segmento is-on" data-valor="todos" aria-pressed="true">Tudo</button>
+            <button type="button" class="segmento" data-valor="quente" aria-pressed="false">Destaques</button>
+            <button type="button" class="segmento" data-valor="mercado" aria-pressed="false">Mercado</button>
+  </div>
+  <ol class="linha-tempo linha-tempo--grande" id="linha-tempo-total"></ol>
 </main>
 
 <main class="vista" id="vista-rumores">
@@ -976,17 +985,17 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.min.js" defer></script>
-<script src="js/nuvem.js?v=94" defer></script>
-<script src="js/jogo.js?v=94" defer></script>
-<script src="js/fd.js?v=94" defer></script>
-<script src="js/componentes.js?v=94" defer></script>
-<script src="js/contas.js?v=94" defer></script>
-<script src="js/arte.js?v=94" defer></script>
-<script src="js/data.js?v=94" defer></script>
-<script src="js/wiki.js?v=94" defer></script>
-<script src="js/tema.js?v=94" defer></script>
-<script src="js/notificacoes.js?v=94" defer></script>
-<script src="js/pwa.js?v=94" defer></script>
-<script src="js/app.js?v=94" defer></script>
+<script src="js/nuvem.js?v=96" defer></script>
+<script src="js/jogo.js?v=96" defer></script>
+<script src="js/fd.js?v=96" defer></script>
+<script src="js/componentes.js?v=96" defer></script>
+<script src="js/contas.js?v=96" defer></script>
+<script src="js/arte.js?v=96" defer></script>
+<script src="js/data.js?v=96" defer></script>
+<script src="js/wiki.js?v=96" defer></script>
+<script src="js/tema.js?v=96" defer></script>
+<script src="js/notificacoes.js?v=96" defer></script>
+<script src="js/pwa.js?v=96" defer></script>
+<script src="js/app.js?v=96" defer></script>
 </body>
 </html>

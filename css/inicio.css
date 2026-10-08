@@ -196,18 +196,6 @@
 .ev__tipo--m-atletismo  { color: var(--m-atletismo);   border-color: color-mix(in srgb, var(--m-atletismo) 40%, transparent); }
 .ev__tipo--m-formacao   { color: var(--m-formacao);    border-color: color-mix(in srgb, var(--m-formacao) 40%, transparent); }
 
-/* o que entrou agora: um realce que se apaga sozinho */
-.cartao--vivo .ev--chegou .ev__txt{ animation: chega 2.4s var(--ease-saida); border-radius: 8px; }
-@keyframes chega{
-  0%   { background: rgba(47,217,138,.16); box-shadow: 0 0 0 6px rgba(47,217,138,.16); transform: translateY(-6px); }
-  25%  { transform: none; }
-  100% { background: transparent; box-shadow: 0 0 0 6px transparent; }
-}
-.cartao--vivo .ev__txt a{ border-radius: 6px; }
-.cartao--vivo .ev__txt a:hover b{ color: var(--verde-claro); }
-.cartao--vivo .ev:hover .ev__bola{ transform: scale(1.25); }
-.cartao--vivo .ev__bola{ transition: transform var(--t-rapida); }
-
 /* =========================================================================
    CLASSIFICAÇÃO COMPACTA
    ========================================================================= */

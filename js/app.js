@@ -422,6 +422,7 @@ function etiquetaEvento(n){
 async function lerFeed(f){
   const itens = await buscarRSS(f.url);
   if(!itens) return 0;
+  ultimaLeituraOk = Date.now();
 
   const novos = itens.map(it => {
     const titulo = limparTexto(it.querySelector('title')?.textContent);
@@ -471,6 +472,7 @@ async function carregarNoticias(){
   ultimaLeitura = Date.now();
   if(novas > 0) novasDesdeVista += novas;
   marcarAtualizacao(novas);
+  pintarSeloVivo();
 
   const badge = $('#badge-alertas');
   badge.textContent = novasDesdeVista || NOTICIAS.length;
@@ -479,6 +481,33 @@ async function carregarNoticias(){
 }
 
 let ultimaLeitura = 0;
+let ultimaLeituraOk = 0;     // a última vez que pelo menos um jornal respondeu
+
+/* O selo "Ao vivo" só aparece quando as atualizações estão mesmo a
+   acontecer: o site relê os jornais a cada minuto e o último feed
+   respondeu há menos de 3 minutos. Fora disso diz a hora da última
+   leitura, ou que não há ligação — nunca finge estar ao vivo. */
+function pintarSeloVivo(){
+  const ligado = navigator.onLine !== false;
+  const ativo = ligado && ultimaLeituraOk && Date.now() - ultimaLeituraOk < 3 * 60000;
+  const hora = ultimaLeituraOk
+    ? new Date(ultimaLeituraOk).toLocaleTimeString('pt-PT', { hour:'2-digit', minute:'2-digit' }) : '';
+  const texto = ativo ? 'Ao vivo'
+              : !ligado ? 'Sem ligação'
+              : hora ? `Atualizado às ${hora}` : 'A ligar…';
+  const ajuda = ativo
+    ? `Os jornais são relidos a cada ${CONFIG.refreshSegundos} segundos. Última leitura às ${hora}.`
+    : !ligado ? 'Sem ligação à internet: mostra-se o que já estava guardado.'
+    : 'As atualizações automáticas estão paradas de momento.';
+  $$('[data-selo-vivo]').forEach(el => {
+    el.classList.toggle('selo-vivo--ativo', !!ativo);
+    el.innerHTML = `<span class="${ativo ? 'ponto-vivo' : 'ponto-parado'}" aria-hidden="true"></span>${texto}`;
+    el.title = ajuda;
+  });
+}
+setInterval(pintarSeloVivo, 30000);
+addEventListener('online', pintarSeloVivo);
+addEventListener('offline', pintarSeloVivo);
 
 function marcarAtualizacao(novas){
   const el = $('#feed-estado');
@@ -1160,37 +1189,65 @@ function mostrarDestaque(i){
 }
 
 /* ---------------- ao minuto ---------------- */
-let vivoVisto = 0, avisoVivoTimer = null;
 /* até a primeira sincronização acabar, os jogos podem ser os guardados no código */
 let jogosSincronizados = false;
+/* Uma atualização do ao minuto. Na homepage é compacta (hora, título,
+   etiqueta e fonte); na vista completa leva também o resumo e, só nas
+   importantes, a imagem. */
+function itemMinuto(n, i, completo){
+  const classe = n.categoria === 'DESTAQUE' ? 'ev--quente' : n.categoria === 'MERCADO' ? 'ev--mercado' : '';
+  const minutos = (Date.now() - n.data.getTime()) / 60000;
+  const novo = minutos >= 0 && minutos < 30;
+  const chegou = vivoVisto && n.data.getTime() > vivoVisto;
+  const et = etiquetaEvento(n);
+  const importante = et && (et.classe === 'oficial' || et.classe === 'destaque');
+  const comImagem = completo && n.imagem && (importante || i === 0);
+  const resumo = completo ? Componentes.resumir(n.resumo, 170) : '';
+  const hora = n.data.toLocaleTimeString('pt-PT', { hour:'2-digit', minute:'2-digit' });
+  const ligacao = /^https?:\/\//i.test(n.link || '') ? Componentes.seguro(n.link) : '#';
+  return `<li class="ev ${classe} ${i === 0 ? 'ev--ultima' : ''} ${novo ? 'ev--novo' : ''} ${chegou ? 'ev--chegou' : ''}">
+    <a class="ev__ligacao" href="${ligacao}" target="_blank" rel="noopener" data-link="${Componentes.seguro(n.link)}">
+      <time class="ev__hora" datetime="${n.data.toISOString()}">${hora}</time>
+      <span class="ev__marca" aria-hidden="true"><i class="ev__bola"></i><i class="ev__linha"></i></span>
+      <span class="ev__txt">
+        <span class="ev__titulo">${Componentes.seguro(n.titulo)}</span>
+        ${resumo ? `<span class="ev__resumo">${Componentes.seguro(resumo)}</span>` : ''}
+        <span class="ev__meta">
+          ${novo ? '<span class="ev__novo">Novo</span>' : ''}
+          ${et ? `<span class="ev__tipo ev__tipo--${et.classe}">${et.texto}</span>` : ''}
+          <span class="ev__fonte-nome">${Componentes.seguro(n.fonte)}</span>
+          <span class="ev__quando">${haQuanto(n.data)}</span>
+        </span>
+      </span>
+      ${comImagem ? `<span class="ev__img">${Componentes.capa(n)}</span>` : ''}
+    </a>
+  </li>`;
+}
+
+/* a vista completa separa os dias, para se perceber o recuo no tempo */
+function minutoPorDia(lista){
+  let dia = '';
+  return lista.map((n, i) => {
+    const d = n.data.toDateString();
+    const cab = d !== dia ? `<li class="ev-dia"><span>${rotuloDia(n.data)}</span></li>` : '';
+    dia = d;
+    return cab + itemMinuto(n, i, true);
+  }).join('');
+}
+
+let vivoVisto = 0, avisoVivoTimer = null;
 function pintarLinhaTempo(){
   const filtro = $('#minuto-filtro').value;
   let l = NOTICIAS;
-  if(filtro === 'quente')  l = l.filter(n => n.categoria === 'DESTAQUE');
+  if(filtro === 'quente')  l = l.filter(n => n.categoria === 'DESTAQUE' || /\boficial\b/i.test(n.titulo));
   if(filtro === 'mercado') l = l.filter(n => n.categoria === 'MERCADO');
+  $$('[data-segmentos-minuto] .segmento').forEach(x => {
+    x.classList.toggle('is-on', x.dataset.valor === filtro);
+    x.setAttribute('aria-pressed', x.dataset.valor === filtro);
+  });
 
-  const evento = (n,i) => {
-    const classe = n.categoria === 'DESTAQUE' ? 'ev--quente'
-                 : n.categoria === 'MERCADO'  ? 'ev--mercado' : '';
-    /* menos de meia hora: ainda é novidade */
-    const novo = Date.now() - n.data.getTime() < 30 * 60000;
-    /* acabou de chegar desde a última pintura: entra com destaque */
-    const chegou = vivoVisto && n.data.getTime() > vivoVisto;
-    const et = etiquetaEvento(n);
-    return `<li class="ev ${classe} ${novo ? 'ev--novo' : ''} ${chegou ? 'ev--chegou' : ''}" style="animation-delay:${Math.min(i,10)*.03}s">
-      <span class="ev__hora">${n.data.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'})}</span>
-      <span class="ev__marca"><i class="ev__bola"></i><i class="ev__linha"></i></span>
-      <span class="ev__txt">
-        ${novo || et ? `<span class="ev__selos">${novo ? '<span class="ev__novo">Novo</span>' : ''}${et ? `<span class="ev__tipo ev__tipo--${et.classe}">${et.texto}</span>` : ''}</span>` : ''}
-        <a href="${n.link}" target="_blank" rel="noopener"><b>${n.titulo}</b></a>
-        <span class="ev__fonte">${n.fonte} · ${haQuanto(n.data)}</span>
-      </span>
-    </li>`;
-  };
-
-  $('#linha-tempo').innerHTML = l.length
-    ? l.slice(0,12).map(evento).join('')
-    : `<li class="estado"><p class="estado__texto">Sem eventos neste filtro.</p></li>`;
+  const vazio = `<li class="estado"><p class="estado__texto">${NOTICIAS.length ? 'Sem atualizações neste filtro.' : 'A ler os jornais…'}</p></li>`;
+  $('#linha-tempo').innerHTML = l.length ? l.slice(0, 12).map((n, i) => itemMinuto(n, i, false)).join('') : vazio;
 
   /* aviso discreto quando entram novidades */
   const maisRecente = NOTICIAS[0]?.data.getTime() || 0;
@@ -1203,9 +1260,8 @@ function pintarLinhaTempo(){
     avisoVivoTimer = setTimeout(() => { aviso.hidden = true; }, 6000);
   }
   if(maisRecente) vivoVisto = Math.max(vivoVisto, maisRecente);
-  $('#linha-tempo-total').innerHTML = l.length
-    ? l.slice(0,80).map(evento).join('')
-    : `<li class="vazio">sem eventos</li>`;
+  $('#linha-tempo-total').innerHTML = l.length ? minutoPorDia(l.slice(0, 80)) : vazio;
+  pintarSeloVivo();
 }
 
 /* =========================================================================
@@ -1244,7 +1300,7 @@ function ligarLeitor(){
     ev.preventDefault();
     const link = a.dataset.link;
     const cartao = a.closest('.nl, .ed, .manchete, .ncartao, .hero, .compacto, .ev');
-    const titulo = cartao?.querySelector('.nl__titulo, .ed__titulo, .ncartao__titulo, .hero__titulo, b')?.textContent?.trim() || link;
+    const titulo = cartao?.querySelector('.nl__titulo, .ed__titulo, .ev__titulo, .ncartao__titulo, .hero__titulo, b')?.textContent?.trim() || link;
     const fonte  = cartao?.querySelector('.nl__fonte, .ed__fonte, .ncartao__fonte, .hero__fonte, .ev__fonte-nome, .compacto__txt span')?.textContent?.trim() || '';
     if(!/^https?:\/\//i.test(link)) return;
     registarLeitura(link, titulo, fonte);
@@ -4376,14 +4432,11 @@ async function arranque(){
     b.addEventListener('click', () => irPara(b.dataset.ir)));
 
   $('#minuto-filtro').addEventListener('change', pintarLinhaTempo);
-  $$('#minuto-segmentos .segmento').forEach(b => b.addEventListener('click', () => {
+  $$('[data-segmentos-minuto] .segmento').forEach(b => b.addEventListener('click', () => {
     $('#minuto-filtro').value = b.dataset.valor;
-    $$('#minuto-segmentos .segmento').forEach(x => {
-      x.classList.toggle('is-on', x === b);
-      x.setAttribute('aria-pressed', x === b);
-    });
-    pintarLinhaTempo();
+    pintarLinhaTempo();      // acende o segmento certo nos dois sítios
   }));
+  pintarSeloVivo();
   ligarCabeca();
 
   $$('#pos-filtro .pilula').forEach(b => b.addEventListener('click', () => {
