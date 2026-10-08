@@ -1651,6 +1651,34 @@ function pintarTabela(){
     : '';
 
   pintarChampions(naChampions);
+  pintarResumoLiga(!naChampions && comecou);
+}
+
+/* o Sporting na Liga, num relance: posição, pontos, distância, forma */
+function pintarResumoLiga(mostrar){
+  const alvo = $('#liga-resumo');
+  if(!alvo) return;
+  const nos = TABELA.find(t => eSporting(t.equipa));
+  alvo.hidden = !mostrar || !nos;
+  if(alvo.hidden) return;
+  const lider = TABELA[0];
+  const distancia = nos === lider
+    ? (TABELA[1] ? `${nos.p - TABELA[1].p} pts à frente do 2.º` : 'Na liderança')
+    : `A ${lider.p - nos.p} pts do 1.º`;
+  const forma = formaSporting();
+  const caixa = (rotulo, valor) => `<div class="liga-resumo__c"><b>${valor}</b><span>${rotulo}</span></div>`;
+  alvo.innerHTML = `
+    <div class="liga-resumo__pos">
+      <img src="${emblemaEquipa(nos.equipa)}" alt="" width="56" height="56">
+      <div><b>${nos.pos}.º</b><span>${distancia}</span></div>
+    </div>
+    <div class="liga-resumo__nums">
+      ${caixa('Pontos', nos.p)}
+      ${caixa('Jogos', nos.j)}
+      ${caixa('V · E · D', `${nos.v}·${nos.e}·${nos.d}`)}
+      ${caixa('Golos', `${nos.gm}–${nos.gs}`)}
+    </div>
+    ${forma.length ? `<div class="liga-resumo__forma"><span>Últimos ${forma.length}</span><span class="forma__chips">${chipsForma(forma)}</span></div>` : ''}`;
 }
 
 /* O cartão de cima na Champions: como está a correr ao Sporting */
@@ -3644,6 +3672,7 @@ async function sincronizar(){
     pintarProximoJogo(); pintarCalendario(); pintarResultados();
     pintarJogosTodos(); pintarEstatisticas(); pintarDiaDeJogo();
     pintarTabelaCasa(); pintarModalidadesCasa();
+    pintarResumoLiga(provaTabela !== 'champions' && TABELA.some(t => t.j > 0));   // a forma precisa dos jogos
     if(vistaAtual === 'agenda') pintarAgenda();
     if(vistaAtual === 'modalidades') pintarModalidades();
   }catch(e){ falhas.push('plantel/jogos'); }
