@@ -96,11 +96,31 @@
   --z-acesso: 200;
 
   /* ---------- tipos de letra ----------
-     Barlow Condensed: títulos e números (resultados, contagens, tabelas),
-     sempre em algarismos de largura fixa. Inter: tudo o que se lê. */
+     Duas famílias, cada uma com um papel:
+     Manrope — a voz do site: manchetes, textos, menus, metadados.
+       Moderna, aberta, com acentos portugueses bem desenhados.
+     Barlow Condensed — o letreiro desportivo: rótulos curtos de secção
+       (ÚLTIMAS NOTÍCIAS), resultados, horas, contagens, classificação.
+       Nunca para manchetes longas — fica comprimido demais. */
   --f-tit: 'Barlow Condensed', 'Arial Narrow', sans-serif;
   --f-num: 'Barlow Condensed', 'Arial Narrow', sans-serif;
-  --f-ui:  'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-ui:  'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* ---------- escala tipográfica (responsiva) ---------- */
+  --fs-display:   clamp(2rem, 1.3rem + 2.6vw, 3.3rem);      /* manchete do destaque */
+  --fs-manchete:  clamp(1.45rem, 1.1rem + 1.25vw, 2.1rem);  /* notícia principal */
+  --fs-titulo-lg: clamp(1.08rem, .98rem + .45vw, 1.3rem);   /* notícia em lista */
+  --fs-titulo:    clamp(1rem, .96rem + .2vw, 1.075rem);     /* cartões e timeline */
+  --fs-resumo:    .9375rem;                                 /* 15px */
+  --fs-meta:      .8125rem;                                 /* 13px */
+  --fs-rotulo:    .6875rem;                                 /* 11px, maiúsculas */
+  --fs-seccao:    clamp(1.6rem, 1.2rem + 1.4vw, 2.4rem);    /* ÚLTIMAS NOTÍCIAS */
+  --fs-vista:     clamp(2.1rem, 1.4rem + 2.6vw, 3.4rem);    /* título de vista */
+  --peso-manchete: 800;
+  --peso-titulo:   700;
+  --tracking-manchete: -0.022em;
+  --tracking-titulo:   -0.012em;
+  --tracking-rotulo:   .09em;
 
   /* ---------- tempos ---------- */
   --t-rapida: 150ms;

@@ -1,0 +1,58 @@
+/* =========================================================================
+   EDITORIAL — tipografia, lista de notícias, timeline do ao minuto, filtros
+   -------------------------------------------------------------------------
+   Carrega por último. Os tamanhos vêm da escala do base.css (--fs-*),
+   as cores dos tokens do tema (claro/escuro).
+   ========================================================================= */
+
+/* =========================================================================
+   TIPOGRAFIA
+   ========================================================================= */
+body{
+  font-family: var(--f-ui);
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* manchetes: Manrope forte, espaçamento ligeiramente apertado, sem cortes
+   estranhos (pretty evita palavras sozinhas na última linha) */
+.palco .hero__titulo{
+  font-family: var(--f-ui); font-weight: var(--peso-manchete);
+  font-size: var(--fs-display); line-height: 1.06; letter-spacing: var(--tracking-manchete);
+  max-width: 20ch; text-wrap: balance;
+}
+.ed__titulo, .manchete__titulo, .mod-tile__titulo, .ev__txt b{
+  font-family: var(--f-ui); font-weight: var(--peso-titulo);
+  letter-spacing: var(--tracking-titulo); text-wrap: pretty;
+}
+.ed--principal .ed__titulo{
+  font-family: var(--f-ui); font-weight: var(--peso-manchete);
+  font-size: var(--fs-manchete); line-height: 1.12; letter-spacing: -0.02em;
+}
+.ed--tipografico .ed__titulo{ font-size: clamp(1.7rem, 1.2rem + 1.7vw, 2.5rem); line-height: 1.08; max-width: 22ch; }
+.ed--secundaria .ed__titulo{ font-size: var(--fs-titulo); line-height: 1.32; }
+.ed--curta .ed__titulo{ font-size: var(--fs-titulo); line-height: 1.32; }
+.ed__resumo{ font-size: var(--fs-resumo); }
+
+/* rótulos e títulos de secção continuam no letreiro desportivo */
+#vista-inicio .seccao__titulo{ font-size: var(--fs-seccao); }
+.vista__titulo{ font-size: var(--fs-vista); }
+
+/* etiquetas de categoria: pequenas, em maiúsculas, espaçamento moderado */
+.etiqueta{
+  font-family: var(--f-ui); font-weight: 800;
+  font-size: var(--fs-rotulo); letter-spacing: var(--tracking-rotulo);
+}
+
+/* metadados: discretos mas legíveis */
+.ed__meta, .ed__fonte, .manchete__meta, .ev__fonte, .rcartao__topo, .ag__meta{ font-family: var(--f-ui); }
+.ed__fonte{ font-weight: 700; letter-spacing: .06em; }
+
+/* navegação: pesos e espaçamentos consistentes */
+.cabeca .menu__item--topo, .cabeca .menu__pai, .cabeca .menu__item{ font-family: var(--f-ui); font-weight: 700; letter-spacing: .06em; }
+.cabeca .menu__sub .menu__item{ font-weight: 700; letter-spacing: -0.005em; }
+.barra-inferior__item{ font-family: var(--f-ui); font-weight: 700; }
+
+/* números lado a lado sempre com a mesma largura */
+.ev__hora, .manchete time, .ag__hora, .classif, .contagem b, .cartaz__hora{ font-variant-numeric: tabular-nums; }

@@ -2021,7 +2021,7 @@ function desenharRadar(attrs){
   const curto = {fin:'FIN',passe:'PAS',drible:'DRB',defesa:'DEF',fisico:'FIS',vel:'VEL'};
   ks.forEach((k,i) => { const [x,y]=pt(i,R+16);
     svg += `<text x="${x.toFixed(1)}" y="${(y+3).toFixed(1)}" text-anchor="middle"
-             font-size="11" font-weight="600" fill="#9aa8a1" font-family="Inter,sans-serif">${curto[k]}</text>`; });
+             font-size="11" font-weight="700" style="fill:var(--texto-2);font-family:var(--f-ui)">${curto[k]}</text>`; });
   const el = $('#radar');
   if(el) el.innerHTML = svg;
 }
