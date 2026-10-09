@@ -267,6 +267,9 @@ no `js/app.js`, `ROTAS_DO_SITE` no `servidor.py` e os `rewrites` do
   `scripts/preparar_android.py`.
 - **Notificações push** — ver `docs/NOTIFICACOES.md`; desligadas até haver
   chave VAPID em `CONFIG.push.chavePublica`.
+- **Fantasy, dados desportivos e A BOLA** — ver `docs/DADOS_E_FANTASY.md`
+  (fontes testadas, modelo da base de dados em `supabase/migrations/`,
+  regras, testes em `supabase/testes/`, variáveis de ambiente, operação).
 - **SEO** — quando souberes o domínio de produção:
   `python scripts/gerar_seo.py --dominio https://oteudominio.pt` (gera o
   `sitemap.xml`, acerta o `robots.txt` e as imagens de partilha).
