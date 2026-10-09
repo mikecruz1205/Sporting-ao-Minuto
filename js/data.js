@@ -41,7 +41,14 @@ const CONFIG = {
     { id:"bnr",     nome:"BOLA NA REDE",       url:"https://bolanarede.pt/feed/" },
     { id:"f365",    nome:"FUTEBOL 365",        url:"https://futebol365.pt/feed/" },
     { id:"cm",      nome:"CORREIO DA MANHÃ",   url:"https://www.cmjornal.pt/rss" },
-    { id:"publico", nome:"PÚBLICO",            url:"https://feeds.feedburner.com/PublicoRSS" }
+    { id:"publico", nome:"PÚBLICO",            url:"https://feeds.feedburner.com/PublicoRSS" },
+    /* A BOLA não publica RSS (o /rss/sporting só redireciona para a página
+       da secção). Usa-se o sitemap de notícias que o próprio jornal anuncia
+       no robots.txt: XML estruturado com título, data e endereço de cada
+       artigo dos últimos dias. Só isso entra — sem imagens nem texto do
+       artigo; a notícia abre sempre no site d'A BOLA.
+       Secção oficial: https://www.abola.pt/futebol/sporting-448 */
+    { id:"abola",   nome:"A BOLA",             url:"https://www.abola.pt/sitemap-news.xml", formato:"sitemap" }
   ],
 
   /* uma notícia só entra se falar do clube.

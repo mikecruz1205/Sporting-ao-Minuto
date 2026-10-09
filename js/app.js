@@ -336,6 +336,9 @@ async function buscarRSS(url){
       if(doc.querySelector('parsererror')) continue;
       const itens = [...doc.querySelectorAll('item, entry')];
       if(itens.length) return itens;
+      /* sitemap de notícias (Google News): cada <url> com <news:news> */
+      const urls = [...doc.getElementsByTagName('url')].filter(u => u.getElementsByTagName('news:news').length);
+      if(urls.length) return urls;
     }catch(e){ /* proxy seguinte */ }
   }
   return null;
@@ -425,6 +428,17 @@ async function lerFeed(f){
   ultimaLeituraOk = Date.now();
 
   const novos = itens.map(it => {
+    /* sitemap de notícias: só título, data e endereço — sem resumo nem imagem */
+    if(it.localName === 'url'){
+      const dt = it.getElementsByTagName('news:publication_date')[0]?.textContent;
+      return {
+        titulo: limparTexto(it.getElementsByTagName('news:title')[0]?.textContent),
+        link: (it.getElementsByTagName('loc')[0]?.textContent || '').trim(),
+        resumo: '', imagem: null,
+        data: dt ? new Date(dt) : new Date(),
+        fonte: f.nome, canal: f.id
+      };
+    }
     const titulo = limparTexto(it.querySelector('title')?.textContent);
     const link = (it.querySelector('link')?.textContent
                || it.querySelector('link')?.getAttribute('href') || '').trim();
@@ -437,6 +451,8 @@ async function lerFeed(f){
       fonte: f.nome, canal: f.id
     };
   })
+  /* data inválida (feed mal formado) não pode ir parar ao topo nem ao fundo */
+  .filter(n => !isNaN(n.data))
   .filter(n => n.titulo.length > 14 && n.link.startsWith('http'))
   /* o clube tem de estar no TÍTULO — se procurarmos também no resumo
      entram notícias de outros clubes que só mencionam o Sporting de passagem */
@@ -447,12 +463,19 @@ async function lerFeed(f){
 
   novos.forEach(n => n.categoria = classificar(n));
 
+  /* Duplicados: o mesmo endereço, ou o mesmo título (a mesma notícia
+     publicada em várias secções ou copiada por outro jornal). Fica sempre
+     a primeira que chegou — com a fonte e o link originais. */
   const mapa = new Map(NOTICIAS.map(n => [chaveNome(n.titulo).slice(0,60), n]));
+  const links = new Set(NOTICIAS.map(n => n.link));
   novos.forEach(n => {
     const k = chaveNome(n.titulo).slice(0,60);
-    /* se já estava no arquivo, o texto fresco ganha ao guardado */
+    if(links.has(n.link) && !mapa.has(k)) return;
+    links.add(n.link);
+    /* se já estava no arquivo, o texto fresco ganha ao guardado — mas só
+       quando vem da mesma fonte; de outro jornal não troca nada */
     if(!mapa.has(k)) mapa.set(k, n);
-    else mapa.set(k, {...mapa.get(k), titulo:n.titulo, resumo:n.resumo});
+    else if(mapa.get(k).canal === n.canal) mapa.set(k, {...mapa.get(k), titulo:n.titulo, resumo:n.resumo || mapa.get(k).resumo});
   });
   const antes = NOTICIAS.length;
   NOTICIAS = [...mapa.values()].sort((a,b) => b.data - a.data).slice(0, LIMITE_ARQUIVO);
@@ -4143,8 +4166,8 @@ const TITULOS = {
 
 /* descrição de cada vista — vai para a meta description e para a partilha */
 const DESCRICOES = {
-  inicio:'Notícias do Sporting CP ao minuto, de 11 jornais: jogos, resultados, classificação, plantel, mercado e modalidades.',
-  noticias:'Todas as notícias do Sporting CP, de minuto a minuto, de 11 jornais portugueses.',
+  inicio:'Notícias do Sporting CP ao minuto, de 12 jornais: jogos, resultados, classificação, plantel, mercado e modalidades.',
+  noticias:'Todas as notícias do Sporting CP, de minuto a minuto, de 12 jornais portugueses.',
   aominuto:'A linha do tempo do Sporting CP: cada notícia, rumor e lance à hora a que acontece.',
   rumores:'Mercado do Sporting CP: entradas, saídas, renovações e rumores na imprensa.',
   jogos:'Calendário e resultados do Sporting CP na Liga Portugal, Liga dos Campeões e taças.',

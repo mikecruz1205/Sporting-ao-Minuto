@@ -53,7 +53,7 @@ sozinho, não consegue por causa das regras de origem cruzada.
 
 | O quê | Fonte | Atualiza |
 |---|---|---|
-| Notícias, ao minuto, rumores, formação | RSS diretos de 11 fontes: **Leonino** (dedicado ao Sporting), Record, Maisfutebol, Notícias ao Minuto, zerozero, RTP, Observador, Bola na Rede, Futebol 365, Correio da Manhã, Público | 60 s |
+| Notícias, ao minuto, rumores, formação | RSS diretos de 11 fontes: **Leonino** (dedicado ao Sporting), Record, Maisfutebol, Notícias ao Minuto, zerozero, RTP, Observador, Bola na Rede, Futebol 365, Correio da Manhã, Público — e **A BOLA** pelo sitemap de notícias (não tem RSS; só título, data e link) | 60 s |
 | Classificação | API do Wikipédia | 15 min |
 | Plantel (nº, posição, país) | API do Wikipédia | 15 min |
 | Presenças e golos | API do Wikipédia | 15 min |

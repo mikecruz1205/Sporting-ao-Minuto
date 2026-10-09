@@ -122,7 +122,8 @@ body{
 .f-leonino{ --fonte: #0b7a43; }  .f-record{ --fonte: #c8102e; }  .f-mf{ --fonte: #1d4ed8; }
 .f-nam{ --fonte: #b45309; }      .f-zz{ --fonte: #0369a1; }      .f-rtp{ --fonte: #6d28d9; }
 .f-obs{ --fonte: #be185d; }      .f-bnr{ --fonte: #0f766e; }     .f-f365{ --fonte: #c2410c; }
-.f-cm{ --fonte: #4338ca; }       .f-publico{ --fonte: #475569; } .f-outra{ --fonte: #3f4a45; }
+.f-cm{ --fonte: #4338ca; }       .f-publico{ --fonte: #475569; } .f-abola{ --fonte: #7f1d1d; }
+.f-outra{ --fonte: #3f4a45; }
 
 .fonte-tag{
   display: inline-flex; align-items: center; gap: 7px; min-width: 0;

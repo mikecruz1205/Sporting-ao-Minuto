@@ -15,6 +15,7 @@ DOMINIOS_PERMITIDOS = (
     "futebol365.pt", "www.futebol365.pt",
     "www.cmjornal.pt", "cmjornal.pt",
     "feeds.feedburner.com",
+    "www.abola.pt", "abola.pt",
 )
 
 
@@ -62,16 +63,20 @@ class handler(BaseHTTPRequestHandler):
             self.responder(
                 200,
                 para_texto(corpo),
-                "application/xml; charset=utf-8"
+                "application/xml; charset=utf-8",
+                # a CDN do Vercel guarda a resposta 2 minutos: com muitos
+                # leitores, cada jornal recebe um pedido e não um por pessoa
+                cache="public, s-maxage=120, stale-while-revalidate=300"
             )
 
         except Exception as e:
             self.responder(502, "erro: " + str(e))
 
 
-    def responder(self, codigo, corpo, tipo="text/plain; charset=utf-8"):
+    def responder(self, codigo, corpo, tipo="text/plain; charset=utf-8", cache="no-store"):
         self.send_response(codigo)
         self.send_header("Content-Type", tipo)
+        self.send_header("Cache-Control", cache)
         self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(corpo.encode("utf-8"))

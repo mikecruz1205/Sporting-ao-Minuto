@@ -152,7 +152,7 @@ const Componentes = (() => {
      cores oficiais das marcas.
      --------------------------------------------------------------------- */
   const SIGLAS = { leonino:'L', record:'R', mf:'MF', nam:'NM', zz:'zz', rtp:'RTP',
-                   obs:'O', bnr:'BR', f365:'365', cm:'CM', publico:'P' };
+                   obs:'O', bnr:'BR', f365:'365', cm:'CM', publico:'P', abola:'AB' };
   const classeFonte = n => SIGLAS[n.canal] ? 'f-' + n.canal : 'f-outra';
   const sigla = n => SIGLAS[n.canal] ||
     String(n.fonte || '?').trim().split(/\s+/).map(p => p[0]).join('').slice(0, 3).toUpperCase();
