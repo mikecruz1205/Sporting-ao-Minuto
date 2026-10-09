@@ -135,14 +135,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Manrope:wght@400..800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/base.css?v=114">
-<link rel="stylesheet" href="css/componentes.css?v=114">
-<link rel="stylesheet" href="css/style.css?v=114">
-<link rel="stylesheet" href="css/portal.css?v=114">
-<link rel="stylesheet" href="css/inicio.css?v=114">
-<link rel="stylesheet" href="css/app.css?v=114">
-<link rel="stylesheet" href="css/fantasy.css?v=114">
-<link rel="stylesheet" href="css/editorial.css?v=114">
+<link rel="stylesheet" href="css/base.css?v=117">
+<link rel="stylesheet" href="css/componentes.css?v=117">
+<link rel="stylesheet" href="css/style.css?v=117">
+<link rel="stylesheet" href="css/portal.css?v=117">
+<link rel="stylesheet" href="css/inicio.css?v=117">
+<link rel="stylesheet" href="css/app.css?v=117">
+<link rel="stylesheet" href="css/fantasy.css?v=117">
+<link rel="stylesheet" href="css/editorial.css?v=117">
 </head>
 <body class="trancado">
 <!-- ============================ ECRÃ DE CARREGAMENTO (modo aplicação) ============================ -->
@@ -698,6 +698,16 @@
       </table>
     </div>
   </section>
+
+  <!-- ARQUIVO — épocas anteriores (js/arquivo.js, a partir do Wikipédia) -->
+  <section class="cartao arquivo" id="arquivo" aria-labelledby="tit-arquivo" style="margin-top:16px">
+    <div class="cartao__topo">
+      <h2 id="tit-arquivo">ARQUIVO DE ÉPOCAS</h2>
+      <label class="chip chip--fonte"><span class="so-leitor">Época</span>
+        <select id="arquivo-epoca" aria-label="Escolher época"></select></label>
+    </div>
+    <div class="cartao__corpo" id="arquivo-corpo" aria-live="polite"></div>
+  </section>
 </main>
 
 <main class="vista" id="vista-classificacao">
@@ -990,18 +1000,19 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.min.js" defer></script>
-<script src="js/nuvem.js?v=114" defer></script>
-<script src="js/jogo.js?v=114" defer></script>
-<script src="js/fd.js?v=114" defer></script>
-<script src="js/componentes.js?v=114" defer></script>
-<script src="js/contas.js?v=114" defer></script>
-<script src="js/arte.js?v=114" defer></script>
-<script src="js/data.js?v=114" defer></script>
-<script src="js/wiki.js?v=114" defer></script>
-<script src="js/tema.js?v=114" defer></script>
-<script src="js/notificacoes.js?v=114" defer></script>
-<script src="js/pwa.js?v=114" defer></script>
-<script src="js/fantasy.js?v=114" defer></script>
-<script src="js/app.js?v=114" defer></script>
+<script src="js/nuvem.js?v=117" defer></script>
+<script src="js/jogo.js?v=117" defer></script>
+<script src="js/fd.js?v=117" defer></script>
+<script src="js/componentes.js?v=117" defer></script>
+<script src="js/contas.js?v=117" defer></script>
+<script src="js/arte.js?v=117" defer></script>
+<script src="js/data.js?v=117" defer></script>
+<script src="js/wiki.js?v=117" defer></script>
+<script src="js/tema.js?v=117" defer></script>
+<script src="js/notificacoes.js?v=117" defer></script>
+<script src="js/pwa.js?v=117" defer></script>
+<script src="js/arquivo.js?v=117" defer></script>
+<script src="js/fantasy.js?v=117" defer></script>
+<script src="js/app.js?v=117" defer></script>
 </body>
 </html>

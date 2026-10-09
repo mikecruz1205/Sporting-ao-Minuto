@@ -350,5 +350,12 @@ const Wiki = (() => {
     };
   }
 
-  return { classificacao, classificacaoChampions, sincronizarSporting };
+  /* qualquer época, para o arquivo: "2024–25 Sporting CP season" */
+  async function epoca(titulo){
+    const doc = await pagina(titulo);
+    const e = lerEstatisticas(doc);
+    return { jogos: lerJogos(doc), stats: e.jogadores, provas: e.provas };
+  }
+
+  return { classificacao, classificacaoChampions, sincronizarSporting, epoca };
 })();

@@ -4234,6 +4234,7 @@ function irPara(vista, opcoes = {}){
   vistaAtual = vista;
   if(vista === 'chat') pintarChat();
   if(vista === 'formacao') window.Fantasy?.abrir();
+  if(vista === 'estatisticas') window.Arquivo?.abrir();
   if(vista === 'aovivo') pintarDiaDeJogo();
   if(vista === 'agenda') pintarAgenda();
   if(vista === 'modalidades') pintarModalidades();

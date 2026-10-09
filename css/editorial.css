@@ -495,3 +495,38 @@ body{
   .imp__ligacao{ padding: 14px 16px; }
   .atalho{ min-height: 40px; }
 }
+
+/* =========================================================================
+   ARQUIVO DE ÉPOCAS (vista Estatísticas)
+   ========================================================================= */
+.arquivo .chip--fonte{ position: relative; min-height: 40px; padding: 0 12px; }
+.arquivo .chip--fonte select{ position: static; opacity: 1; width: auto; height: auto; background: transparent; border: 0; color: inherit; font: inherit; font-weight: 700; cursor: pointer; }
+.arq-total{ display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1px; margin-bottom: 14px; border-radius: 14px; overflow: hidden; background: var(--linha); border: 1px solid var(--linha); }
+.arq-total > div{ display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; background: var(--cartao); }
+.arq-total span{ font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--texto-3); }
+.arq-total b{ font-family: var(--f-num); font-weight: 800; font-size: 22px; color: var(--texto); font-variant-numeric: tabular-nums; }
+.arq-prova{ border-top: 1px solid var(--linha); }
+.arq-prova summary{ display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; cursor: pointer; }
+.arq-prova summary b{ font-family: var(--f-tit); font-weight: 800; font-size: 17px; letter-spacing: .04em; color: var(--texto); }
+.arq-prova summary span{ font-size: 12.5px; color: var(--texto-2); font-variant-numeric: tabular-nums; text-align: right; }
+.arq-jogos{ list-style: none; display: flex; flex-direction: column; gap: 4px; padding-bottom: 12px; }
+.arq-jogo{ display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 40px; padding: 4px 10px; border-radius: 10px; background: var(--veu-1); border-left: 3px solid var(--linha-forte); }
+.arq-jogo--v{ border-left-color: var(--verde-claro); }
+.arq-jogo--e{ border-left-color: var(--texto-3); }
+.arq-jogo--d{ border-left-color: var(--vermelho); }
+.arq-jogo time{ font-size: 12.5px; color: var(--texto-3); text-transform: uppercase; }
+.arq-jogo__equipas{ display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 14px; color: var(--texto-2); }
+.arq-jogo__equipas span{ overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.arq-jogo__equipas .nos{ color: var(--texto); font-weight: 700; }
+.arq-jogo__equipas b{ flex: none; font-family: var(--f-num); font-size: 16px; color: var(--texto); font-variant-numeric: tabular-nums; }
+.arq-jogo small{ font-size: 11.5px; color: var(--texto-3); white-space: nowrap; }
+.arq-sub{ margin: 18px 0 10px; font-family: var(--f-tit); font-weight: 800; font-size: 17px; letter-spacing: .04em; text-transform: uppercase; color: var(--texto); }
+.arq-tabela{ max-height: 420px; overflow-y: auto; border-radius: 12px; border: 1px solid var(--linha); }
+.arq-tabela table{ width: 100%; }
+.arq-tabela td:nth-child(n+2), .arq-tabela th:nth-child(n+2){ text-align: right; font-variant-numeric: tabular-nums; }
+.arq-fonte{ margin-top: 14px; font-size: 12.5px; line-height: 1.5; color: var(--texto-3); }
+@media (max-width: 640px){
+  .arq-total{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .arq-jogo{ grid-template-columns: 48px minmax(0, 1fr); }
+  .arq-jogo small{ grid-column: 2; }
+}
