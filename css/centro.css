@@ -1,0 +1,250 @@
+/* =========================================================================
+   CENTRO DE JOGO — placar, separadores, lances, estatísticas, equipas
+   e o cartão "jogo agora" da página inicial
+   ========================================================================= */
+
+/* no Centro de jogo a faixa do topo repetia o placar */
+body[data-vista="aovivo"] .faixa-jogo{ display: none !important; }
+
+.cj{ display: grid; gap: 16px; }
+
+/* ---------------- placar ---------------- */
+.cj-placar{
+  position: relative; overflow: hidden;
+  padding: 18px 18px 16px; border-radius: var(--raio-lg);
+  background:
+    radial-gradient(120% 140% at 50% -40%, rgba(10,157,95,.35), transparent 60%),
+    linear-gradient(180deg, #111715, #0b0f0d);
+  border: 1px solid rgba(255,255,255,.07);
+  box-shadow: var(--sombra-cartao);
+}
+.cj-placar__topo{
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px;
+  font-size: 12.5px; font-weight: 700; letter-spacing: .02em; color: var(--texto-2);
+}
+.cj-prova{ color: var(--verde-claro); text-transform: uppercase; letter-spacing: .08em; font-size: 11.5px; }
+.cj-placar__jogo{
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px;
+  margin: 18px 0 12px;
+}
+.cj-eq{ display: grid; justify-items: center; gap: 8px; text-align: center; min-width: 0; }
+.cj-eq__escudo{
+  display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08);
+}
+.cj-eq__escudo img{ width: 44px; height: 44px; object-fit: contain; }
+.cj-eq__nome{ font: 800 clamp(15px, 1.2vw + 11px, 20px)/1.15 var(--f-tit); text-transform: uppercase; letter-spacing: .03em; color: var(--texto); overflow-wrap: anywhere; }
+.cj-eq.e-nos .cj-eq__nome{ color: var(--verde-claro); }
+.cj-centro{ display: grid; justify-items: center; gap: 6px; min-width: 110px; }
+.cj-res, .cj-hora{ font: 800 clamp(40px, 5vw + 16px, 64px)/1 var(--f-num); color: #fff; font-variant-numeric: tabular-nums; }
+.cj-res i{ font-style: normal; color: var(--texto-3); margin: 0 .12em; }
+.cj-hora{ font-size: clamp(32px, 3vw + 18px, 48px); }
+.cj-fase, .cj-intervalo{ font-size: 12px; color: var(--texto-2); }
+
+/* estado: pílula */
+.cj-estado{
+  display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 999px;
+  font-size: 12px; font-weight: 800; letter-spacing: .03em; white-space: nowrap;
+  background: rgba(255,255,255,.07); color: var(--texto-2);
+}
+.cj-estado:empty{ display: none; }
+.cj-estado--direto{ background: rgba(47,217,138,.16); color: #45e59a; }
+.cj-estado--intervalo{ background: rgba(242,193,78,.14); color: #f2c14e; }
+.cj-estado--terminado{ background: rgba(255,255,255,.1); color: #fff; }
+.cj-estado--adiado, .cj-estado--suspenso, .cj-estado--interrompido,
+.cj-estado--cancelado, .cj-estado--abandonado{ background: rgba(232,106,106,.14); color: #ff9b9b; }
+.cj-estado--sem_direto, .cj-estado--por_confirmar{ background: rgba(242,193,78,.12); color: #f6d47c; }
+.cj-pulso{ width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: pulsa 1.6s infinite; }
+@media (prefers-reduced-motion: reduce){ .cj-pulso{ animation: none; } }
+
+.cj-placar__fonte, .cj-placar__local{ text-align: center; font-size: 12.5px; color: var(--texto-2); }
+.cj-placar__local{ margin-top: 2px; color: var(--texto-3); }
+.cj-a-ler{ color: var(--verde-claro); }
+.cj-selo{ display: inline-block; padding: 1px 7px; border-radius: 6px; font-size: 11.5px; font-weight: 800; }
+.cj-selo--atraso{ background: rgba(242,193,78,.16); color: #f6d47c; }
+.cj-selo--velho{ background: rgba(232,106,106,.16); color: #ffb0b0; }
+
+.cj-aviso{
+  margin-top: 14px; padding: 12px 14px; border-radius: 12px;
+  background: rgba(242,193,78,.08); border: 1px solid rgba(242,193,78,.28);
+  font-size: 14px; line-height: 1.5; color: #f3e3bd;
+}
+.cj-aviso b{ color: #fff; }
+.cj-aviso--velho{ background: rgba(232,106,106,.08); border-color: rgba(232,106,106,.3); color: #ffd0d0; }
+.cj-aviso__ligacoes{ display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: 8px; }
+.cj-aviso__ligacoes a, .cj-aviso__ligacoes button{
+  min-height: 32px; padding: 0; background: none; border: 0;
+  color: #2fd98a; font-weight: 700; font-size: 14px; text-decoration: underline; text-underline-offset: 3px;
+}
+
+/* ---------------- separadores (colados ao topo) ---------------- */
+.cj__corpo{ display: grid; gap: 14px; }
+@media (min-width: 1024px){
+  .cj__corpo{ grid-template-columns: minmax(0, 1fr) 320px; align-items: start; }
+  .cj-fixo, .cj-painel{ grid-column: 1; }
+  .cj-noticias{ grid-column: 2; grid-row: 1 / span 6; position: sticky; top: calc(var(--altura-topo, 64px) + 12px); }
+}
+.cj-fixo{
+  position: sticky; top: var(--altura-topo, 64px); z-index: 5;
+  background: var(--fundo); padding-top: 4px; margin-top: -4px;
+  box-shadow: 0 -16px 0 var(--fundo);    /* tapa a fresta entre o cabeçalho e os separadores */
+}
+.cj-mini{
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  max-height: 0; overflow: hidden; opacity: 0;
+  transition: max-height var(--normal), opacity var(--normal), padding var(--normal);
+  font-size: 14px; font-weight: 700; color: var(--texto);
+}
+.cj.compacto .cj-mini{ max-height: 48px; opacity: 1; padding: 6px 0; }
+.cj-mini b{ font: 800 20px/1 var(--f-num); }
+.cj-mini__eq{ display: inline-flex; align-items: center; gap: 6px; }
+.cj-mini__eq img{ width: 20px; height: 20px; object-fit: contain; }
+.cj-mini .cj-estado{ padding: 3px 8px; font-size: 11px; }
+
+.cj-abas{
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 4px;
+  border-radius: 14px; background: var(--cartao); border: 1px solid var(--linha);
+}
+.cj-aba{
+  min-height: 44px; padding: 0 6px; border: 0; border-radius: 10px; background: none;
+  font-weight: 700; font-size: 14px; color: var(--texto-2);
+}
+.cj-aba:hover{ color: var(--texto); background: var(--veu-1); }
+.cj-aba.is-on{ background: var(--verde); color: var(--sobre-verde); }
+@media (max-width: 420px){ .cj-aba{ font-size: 12.5px; padding: 0 2px; } }
+
+.cj-painel{
+  padding: 16px; border-radius: var(--raio-lg); background: var(--cartao);
+  border: 1px solid var(--linha); min-height: 180px;
+}
+.cj-painel[hidden]{ display: none; }
+.cj-painel:focus-visible{ outline: 2px solid var(--verde-claro); outline-offset: 2px; }
+.cj-origem{ margin-bottom: 12px; font-size: 12.5px; color: var(--texto-3); line-height: 1.5; }
+.cj-nota{ margin-top: 10px; font-size: 13px; line-height: 1.5; color: var(--texto-3); }
+.cj-nota a{ color: var(--verde-claro); font-weight: 700; }
+.cj-sub{ margin: 22px 0 10px; font-size: 15px; font-weight: 800; color: var(--texto); }
+
+.cj-vazio{ display: grid; gap: 6px; justify-items: center; text-align: center; padding: 28px 12px; }
+.cj-vazio__titulo{ font-size: 16px; font-weight: 800; color: var(--texto); }
+.cj-vazio p:not(.cj-vazio__titulo){ max-width: 46ch; font-size: 14px; line-height: 1.55; color: var(--texto-2); }
+
+/* ---------------- lances ---------------- */
+.cj-linha{ display: grid; gap: 2px; list-style: none; margin: 0; padding: 0; }
+.lc{
+  display: grid; grid-template-columns: 52px 34px 1fr; align-items: center; gap: 10px;
+  padding: 10px 8px; border-radius: 12px;
+}
+.lc:nth-child(odd){ background: var(--veu-1); }
+.lc__min{ font: 800 16px/1 var(--f-num); color: var(--texto); text-align: right; font-variant-numeric: tabular-nums; }
+.lc__ico{ display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--veu-2); color: var(--texto-2); }
+.lc__ico .icone{ width: 18px; height: 18px; }
+.lc__txt{ display: grid; gap: 2px; font-size: 14.5px; line-height: 1.4; color: var(--texto-2); min-width: 0; }
+.lc__txt b{ color: var(--texto); }
+.lc__tipo{ font-size: 12px; font-weight: 800; letter-spacing: .02em; text-transform: uppercase; color: var(--texto-3); }
+.lc--golo .lc__ico, .lc--penalti .lc__ico{ background: rgba(47,217,138,.16); color: var(--verde-claro); }
+.lc--nos.lc--golo .lc__tipo, .lc--nos.lc--penalti .lc__tipo{ color: var(--verde-claro); }
+.lc--autogolo .lc__ico, .lc--penalti_falhado .lc__ico{ background: rgba(232,106,106,.14); color: var(--vermelho); }
+.cj-ico-amarelo{ fill: #f2c14e; stroke: #b08622; }
+.cj-ico-vermelho{ fill: #e05252; stroke: #9e2f2f; }
+.lc--marco{ grid-template-columns: 52px 34px 1fr; }
+.lc--marco .lc__txt b{ font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--texto-2); }
+
+/* ---------------- estatísticas ---------------- */
+.cj-comp-cab{ display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; font-weight: 800; color: var(--texto-2); }
+.cj-comp-cab .e-nos{ color: var(--verde-claro); }
+.cj-comp{ display: grid; gap: 14px; list-style: none; margin: 0; padding: 0; }
+.cj-comp__linha{ display: grid; grid-template-columns: 64px 1fr 64px; align-items: center; row-gap: 6px; }
+.cj-comp__rot{ text-align: center; font-size: 13.5px; font-weight: 600; color: var(--texto-2); }
+.cj-comp__v{ font: 800 18px/1 var(--f-num); color: var(--texto-2); font-variant-numeric: tabular-nums; }
+.cj-comp__v:last-of-type{ text-align: right; }
+.cj-comp__v.lidera{ color: var(--texto); }
+.cj-comp__barra{ grid-column: 1 / -1; display: flex; gap: 4px; height: 6px; }
+.cj-comp__barra i{ flex: 0 0 var(--p); border-radius: 6px; background: var(--linha-forte); }
+.cj-comp__barra i:first-child{ border-radius: 6px 0 0 6px; }
+.cj-comp__barra i:last-child{ border-radius: 0 6px 6px 0; }
+.cj-comp__barra i.e-nos{ background: var(--verde); }
+
+.cj-lados{ display: inline-flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--veu-1); margin-bottom: 10px; }
+.cj-lados button{ min-height: 40px; padding: 0 14px; border: 0; border-radius: 9px; background: none; font-weight: 700; color: var(--texto-2); }
+.cj-lados button.is-on{ background: var(--cartao-mais); color: var(--texto); box-shadow: inset 0 0 0 1px var(--linha-forte); }
+
+.cj-tabela-rolo{ overflow-x: auto; border-radius: 12px; border: 1px solid var(--linha); }
+.cj-tabela{ width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.cj-tabela th, .cj-tabela td{ padding: 9px 10px; text-align: center; white-space: nowrap; border-bottom: 1px solid var(--linha); }
+.cj-tabela thead th{ font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: var(--texto-3); background: var(--veu-1); }
+.cj-tabela tbody th{ text-align: left; font-weight: 700; color: var(--texto); position: sticky; left: 0; background: var(--cartao); }
+.cj-tabela tbody th small{ color: var(--texto-3); font-weight: 600; margin-left: 4px; }
+.cj-tabela td{ color: var(--texto-2); font-variant-numeric: tabular-nums; }
+.cj-tabela tr:last-child th, .cj-tabela tr:last-child td{ border-bottom: 0; }
+.cj-tabela--class tr.destaque td, .cj-tabela--class tr.destaque th{ background: var(--verde-vidro); color: var(--texto); }
+.cj-tabela--class tr.e-nos th{ color: var(--verde-claro); }
+.cj-tabela--class i{ margin-left: 5px; font-style: normal; font-size: 11px; font-weight: 800; }
+.cj-tabela--class .sobe{ color: var(--verde-claro); }
+.cj-tabela--class .desce{ color: var(--vermelho); }
+
+/* ---------------- equipas ---------------- */
+.cj-onzes{ display: grid; gap: 14px; }
+@media (min-width: 720px){ .cj-onzes{ grid-template-columns: 1fr 1fr; } }
+.cj-onze{ padding: 14px; border-radius: 14px; background: var(--veu-1); border: 1px solid var(--linha); }
+.cj-onze h4{ display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 800; color: var(--texto); }
+.cj-onze h4 img{ width: 22px; height: 22px; object-fit: contain; }
+.cj-onze.e-nos h4{ color: var(--verde-claro); }
+.cj-onze h5{ margin: 14px 0 6px; font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--texto-3); }
+.cj-onze__meta{ margin-top: 4px; font-size: 13px; color: var(--texto-2); }
+.cj-onze__lista{ display: grid; gap: 2px; list-style: none; margin: 0; padding: 0; }
+.cj-onze__lista li{ display: grid; grid-template-columns: 30px 1fr auto; gap: 8px; align-items: center; padding: 6px 4px; font-size: 14px; color: var(--texto); border-bottom: 1px solid var(--linha); }
+.cj-onze__lista li:last-child{ border-bottom: 0; }
+.cj-onze__lista small{ color: var(--texto-3); font-weight: 700; font-size: 11.5px; }
+.cj-onze__n{ font: 800 15px/1 var(--f-num); color: var(--texto-3); text-align: right; }
+.cj-onze__lista--banco li{ color: var(--texto-2); }
+.cj-onze__trocas{ display: grid; gap: 4px; list-style: none; margin: 0; padding: 0; font-size: 13.5px; color: var(--texto-2); }
+.cj-onze__trocas span{ display: inline-block; min-width: 34px; font: 800 14px/1 var(--f-num); color: var(--texto); }
+.cj-onze__trocas i{ color: var(--texto-3); }
+
+/* ---------------- notícias do jogo ---------------- */
+.cj-noticias{ padding: 16px; border-radius: var(--raio-lg); background: var(--cartao); border: 1px solid var(--linha); }
+.cj-noticias h3{ font-size: 16px; font-weight: 800; color: var(--texto); }
+.cj-noticias .cj-nota{ margin: 4px 0 10px; }
+.cj-noticias__lista{ display: grid; gap: 2px; list-style: none; margin: 0; padding: 0; }
+.cj-noticias__lista li{ display: grid; gap: 3px; padding: 10px 0; border-bottom: 1px solid var(--linha); }
+.cj-noticias__lista li:last-child{ border-bottom: 0; }
+.cj-noticias__lista a{ font-size: 14.5px; font-weight: 700; line-height: 1.4; color: var(--texto); }
+.cj-noticias__lista a:hover{ color: var(--verde-claro); }
+.cj-noticias__lista span{ font-size: 12px; color: var(--texto-3); }
+
+/* ---------------- tema claro: o placar fica escuro, o resto acompanha ---------------- */
+:root[data-tema="claro"] .cj-fixo{ background: var(--fundo); }
+
+/* ---------------- página inicial: o jogo que está a acontecer ---------------- */
+.jogo-agora{
+  margin-bottom: 20px; padding: 18px; border-radius: var(--raio-lg);
+  background:
+    radial-gradient(90% 140% at 0% 0%, rgba(10,157,95,.32), transparent 60%),
+    linear-gradient(180deg, #111715, #0b0f0d);
+  border: 1px solid rgba(255,255,255,.08); color: var(--texto);
+}
+.jogo-agora[hidden]{ display: none; }
+.ja__topo{ display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.ja__prova{ font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--texto-2); }
+.ja__jogo{ display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; margin: 16px 0 8px; }
+.ja__eq{ display: flex; align-items: center; gap: 10px; min-width: 0; font: 800 clamp(16px, 1.4vw + 10px, 22px)/1.1 var(--f-tit); text-transform: uppercase; }
+.ja__eq:last-of-type{ flex-direction: row-reverse; text-align: right; }
+.ja__eq img{ width: 44px; height: 44px; object-fit: contain; flex: none; }
+.ja__eq b{ overflow-wrap: anywhere; }
+.ja__eq.e-nos b{ color: var(--verde-claro); }
+.ja__res{ font: 800 clamp(38px, 4vw + 18px, 58px)/1 var(--f-num); color: #fff; }
+.ja__res i{ font-style: normal; color: var(--texto-3); margin: 0 .1em; }
+.ja__golos{ text-align: center; font-size: 13.5px; color: var(--texto-2); }
+.ja__nota{ margin-top: 8px; font-size: 13.5px; line-height: 1.5; color: #f3e3bd; }
+.ja__base{ display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; }
+.ja__fonte{ font-size: 12.5px; color: var(--texto-2); }
+.ja__ir{ width: auto; }
+@media (max-width: 560px){
+  .ja__eq{ flex-direction: column !important; text-align: center !important; font-size: 15px; }
+  .ja__ir{ width: 100%; justify-content: center; }
+}
+
+.cj-atualizar{
+  min-height: 28px; padding: 0 2px; border: 0; background: none;
+  color: var(--verde-claro); font-weight: 700; font-size: 12.5px; text-decoration: underline; text-underline-offset: 3px;
+}

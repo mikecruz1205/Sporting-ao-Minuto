@@ -25,6 +25,9 @@ import urllib.parse
 import urllib.request
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "api"))
+import _jogo  # noqa: E402  (centro de jogo, partilhado com o Vercel)
+
 PORTA = int(sys.argv[1]) if len(sys.argv) > 1 else 8123
 RAIZ = os.path.dirname(os.path.abspath(__file__))
 PASTA_CACHE = os.path.join(RAIZ, "cache")
@@ -89,6 +92,8 @@ class Manipulador(SimpleHTTPRequestHandler):
             self.servir_rss()
         elif self.path.startswith("/ler") or self.path.startswith("/api/ler"):
             self.servir_artigo()
+        elif self.path.startswith("/api/jogo"):
+            self.servir_jogo()
         elif self.path.startswith("/api/fd"):
             self.servir_football_data()
         elif self.path.startswith("/api/api") or self.path.startswith("/api?"):
@@ -251,6 +256,24 @@ class Manipulador(SimpleHTTPRequestHandler):
             pass
 
         self.responder(corpo, "application/json; charset=utf-8")
+
+    # ------------------------------------------------------------------
+    def servir_jogo(self):
+        """Centro de jogo — a mesma logica do api/jogo.py (api/_jogo.py)."""
+        try:
+            _jogo.validar_pedido(self.parametro("data"), self.parametro("casa"),
+                                 self.parametro("fora"), self.parametro("id") or None)
+            dados, segundos = _jogo.obter(self.parametro("data"), self.parametro("casa"),
+                                          self.parametro("fora"), self.parametro("id") or None)
+            codigo = 200
+        except ValueError as e:
+            dados, segundos, codigo = {"erro": str(e)}, 0, 400
+        corpo = json.dumps(dados, ensure_ascii=False).encode("utf-8")
+        self.send_response(codigo)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(corpo)))
+        self.end_headers()
+        self.wfile.write(corpo)
 
     # ------------------------------------------------------------------
     def servir_football_data(self):

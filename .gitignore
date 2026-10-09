@@ -13,3 +13,5 @@ cache/
 
 # token do football-data.org — nao vai para o repositorio
 chave-football-data.txt
+api/__pycache__/
+__pycache__/

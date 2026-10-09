@@ -144,6 +144,7 @@
 <link rel="stylesheet" href="css/fantasy.css?v=118">
 <link rel="stylesheet" href="css/editorial.css?v=118">
 <link rel="stylesheet" href="css/entrada.css?v=118">
+<link rel="stylesheet" href="css/centro.css?v=118">
 </head>
 <body class="trancado">
 <!-- ============================ ECRÃ DE CARREGAMENTO (modo aplicação) ============================ -->
@@ -478,7 +479,7 @@
       <button class="menu__item" data-vista="jogos">Calendário e resultados<small>Todos os jogos da época</small></button>
       <button class="menu__item" data-vista="agenda">Agenda<small>Hoje, amanhã e os próximos dias</small></button>
       <button class="menu__item" data-vista="classificacao">Classificação<small>Liga Portugal e Liga dos Campeões</small></button>
-      <button class="menu__item" data-vista="aovivo" id="menu-aovivo" hidden>Ao vivo<small>Placar, onze e lances do jogo</small></button>
+      <button class="menu__item" data-vista="aovivo" id="menu-aovivo">Centro de jogo<small>Resultado, lances, estatísticas e equipas</small></button>
     </div>
   </div>
   <div class="menu__grupo" data-grupo="equipa">
@@ -527,6 +528,9 @@
 
 <!-- ============================ INÍCIO ============================ -->
 <main class="vista is-on" id="vista-inicio">
+
+  <!-- JOGO AGORA — só quando o jogo do dia já devia ter começado (js/app.js pintarJogoAgora) -->
+  <section class="jogo-agora sempre-escuro" id="jogo-agora" hidden aria-live="polite" aria-label="Jogo de hoje"></section>
 
   <!-- ================= TOPO: o destaque e o próximo jogo, lado a lado ================= -->
   <div class="topo-inicio">
@@ -975,36 +979,36 @@
   </section>
 </main>
 
-<main class="vista" id="vista-aovivo">
-  <div class="pagina">
-    <div class="pagina__principal">
+<!-- ============================ CENTRO DE JOGO ============================
+     Tudo o que aqui aparece vem de js/centro.js, que pede /api/jogo (uma só
+     camada no servidor, com a fonte e a hora de cada dado). Sem fonte com
+     dados em direto, diz-se isso — o site não simula jogos. -->
+<main class="vista" id="vista-aovivo" aria-labelledby="cj-titulo">
+  <h2 class="so-leitor" id="cj-titulo">Centro de jogo</h2>
+  <div class="cj">
+    <section class="cj-placar sempre-escuro" id="cj-placar" aria-live="polite" aria-atomic="false"></section>
 
-      <section class="cartao cartao--placar">
-        <div class="cartao__corpo" id="placar"></div>
-      </section>
+    <div class="cj__corpo">
+      <div class="cj-fixo">
+      <div class="cj-mini" id="cj-mini" aria-hidden="true"></div>
+      <div class="cj-abas" role="tablist" aria-label="Secções do jogo">
+        <button type="button" role="tab" class="cj-aba is-on" id="cj-aba-lances" aria-selected="true" aria-controls="cj-lances" data-cj-aba="lances">Lances</button>
+        <button type="button" role="tab" class="cj-aba" id="cj-aba-estatisticas" aria-selected="false" aria-controls="cj-estatisticas" data-cj-aba="estatisticas" tabindex="-1">Estatísticas</button>
+        <button type="button" role="tab" class="cj-aba" id="cj-aba-equipas" aria-selected="false" aria-controls="cj-equipas" data-cj-aba="equipas" tabindex="-1">Equipas</button>
+        <button type="button" role="tab" class="cj-aba" id="cj-aba-classificacao" aria-selected="false" aria-controls="cj-classificacao" data-cj-aba="classificacao" tabindex="-1">Classificação</button>
+      </div>
+      </div>
+      <section class="cj-painel" id="cj-lances" role="tabpanel" aria-labelledby="cj-aba-lances" tabindex="0"></section>
+      <section class="cj-painel" id="cj-estatisticas" role="tabpanel" aria-labelledby="cj-aba-estatisticas" tabindex="0" hidden></section>
+      <section class="cj-painel" id="cj-equipas" role="tabpanel" aria-labelledby="cj-aba-equipas" tabindex="0" hidden></section>
+      <section class="cj-painel" id="cj-classificacao" role="tabpanel" aria-labelledby="cj-aba-classificacao" tabindex="0" hidden></section>
 
-      <section class="seccao">
-        <div class="seccao__topo">
-          <h2 class="seccao__titulo">Lances</h2>
-          <span class="sub-inline" id="lances-nota">—</span>
-        </div>
-        <ol class="lances" id="lances"></ol>
-      </section>
+      <aside class="cj-noticias" aria-labelledby="cj-noticias-tit">
+        <h3 id="cj-noticias-tit">Notícias sobre o jogo</h3>
+        <p class="cj-nota">Artigos dos jornais com o nome dos adversários. São notícias, não dados em direto: chegam com o atraso de quem escreve.</p>
+        <ul class="cj-noticias__lista" id="cj-noticias"></ul>
+      </aside>
     </div>
-
-    <aside class="pagina__lado">
-      <section class="cartao">
-        <div class="cartao__topo">
-          <h2>ONZE INICIAL</h2>
-          <span class="tag" id="onze-origem">—</span>
-        </div>
-        <div class="cartao__corpo">
-          <ol class="onze" id="onze-oficial"></ol>
-          <div class="sub sub--banco">BANCO</div>
-          <ol class="onze onze--banco" id="banco-oficial"></ol>
-        </div>
-      </section>
-    </aside>
   </div>
 </main>
 
@@ -1186,7 +1190,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.min.js" defer></script>
 <script src="js/nuvem.js?v=118" defer></script>
-<script src="js/jogo.js?v=118" defer></script>
 <script src="js/fd.js?v=118" defer></script>
 <script src="js/componentes.js?v=118" defer></script>
 <script src="js/contas.js?v=118" defer></script>
@@ -1199,6 +1202,7 @@
 <script src="js/arquivo.js?v=118" defer></script>
 <script src="js/fantasy.js?v=118" defer></script>
 <script src="js/entrada.js?v=118" defer></script>
+<script src="js/centro.js?v=118" defer></script>
 <script src="js/app.js?v=118" defer></script>
 </body>
 </html>

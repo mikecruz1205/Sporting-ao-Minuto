@@ -1091,9 +1091,8 @@ function pintarNoticias(){
   pintarDestaque();
   pintarLinhaTempo();
   pintarHome();
-  /* (o intervalo da faixa do jogo é posto uma vez no arranque — aqui
-     acumulava um novo a cada leitura dos jornais) */
-  pintarDiaDeJogo();
+  /* as notícias do jogo, no Centro de jogo, acompanham as leituras */
+  if(vistaAtual === 'aovivo') CentroJogo.repintar();
 }
 
 /* A fonte é um seletor nativo dentro de um chip: ocupa o espaço de um
@@ -1357,8 +1356,10 @@ function nomeProva(comp){
 /* em que pé está um jogo, em palavras */
 function estadoDoJogo(j){
   if(jogado(j)) return { texto:'Terminado', classe:'fim' };
-  const e = Jogo.estado(JOGOS);
-  if(e && e.jogo?.data === j.data && Jogo.emJogo(e)) return { texto:`Ao vivo · ${Jogo.rotuloMinuto(e)}`, classe:'vivo' };
+  if(situacaoFoco && chaveDoJogo(j) === chaveDoJogo(jogoEmFoco)){
+    const r = CentroJogo.rotulo(situacaoFoco);
+    if(r.aoVivo) return { texto: r.texto, classe:'vivo' };
+  }
   const d = new Date(j.data), hoje = new Date();
   const dia = x => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
   const dias = Math.round((dia(d) - dia(hoje)) / 86400000);
@@ -1370,16 +1371,7 @@ function estadoDoJogo(j){
 /* "Ver jogo": no dia vai para o ao vivo; noutro dia, para a lista de
    jogos já com a linha desse jogo à vista */
 function verJogo(j){
-  const e = Jogo.estado(JOGOS);
-  if(e && e.fase !== 'longe' && e.jogo?.data === j.data){ irPara('aovivo'); return; }
-  irPara('jogos');
-  const i = JOGOS.indexOf(j);
-  requestAnimationFrame(() => {
-    const li = document.querySelector(`#jogos-lista li[data-jogo="${i}"]`);
-    if(!li) return;
-    li.scrollIntoView({ block:'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
-    li.classList.remove('pisca'); void li.offsetWidth; li.classList.add('pisca');
-  });
+  irPara('aovivo', { jogo: j });
 }
 
 function pintarProximoJogo(){
@@ -3005,364 +2997,166 @@ function ligarEscolha(){
   });
 }
 /* =========================================================================
-   7c-bis. DIA DE JOGO — faixa, placar, onze e lances
+   7c-bis. DIA DE JOGO — faixa do topo e Centro de jogo (ver js/centro.js)
+   -------------------------------------------------------------------------
+   O jogo "em foco" é o que, segundo o calendário, está entre 3 h antes e
+   4 h depois do início; fora disso, o próximo. A faixa e a página inicial
+   ouvem o CentroJogo: o minuto e o "Em direto" só aparecem se uma fonte os
+   der — aqui não há relógio a estimar o minuto. Antes do início há uma
+   contagem decrescente, que é só isso: o tempo até à hora marcada.
    ========================================================================= */
-let onzeOficial = null;      // { titulares, suplentes, fonte, link, data }
-let relogioJogo = null;
+const H_MS = 3600000;
+let jogoEmFoco = null;        // o jogo da faixa e da página inicial
+let situacaoFoco = null;      // o que o CentroJogo sabe dele
+let largarFoco = null;
+let jogoVisto = null;         // o jogo aberto no Centro de jogo
+const chaveDoJogo = j => j ? `${j.data}|${j.casa}|${j.fora}` : '';
 
-/* A última coisa que aconteceu no jogo, numa linha, na faixa ao vivo.
-   Vem da ficha oficial quando há (football-data), senão das notícias —
-   e nesse caso vai dito, porque é uma leitura dos jornais. */
-function pintarLanceNaFaixa(e){
-  const alvo = $('#faixa-lance');
-  if(!alvo) return;
-  let texto = '';
-  if(Jogo.emJogo(e)){
-    const oficial = fichaFD?.lances?.slice(-1)[0];
-    if(oficial){
-      const min = oficial.minuto + (oficial.extra ? '+' + oficial.extra : '');
-      const quem = oficial.tipo === 'troca' ? `${oficial.entrou || ''} entra` : (oficial.quem || '');
-      texto = `${min}' · ${{golo:'Golo', amarelo:'Amarelo', vermelho:'Vermelho', troca:'Substituição'}[oficial.tipo] || 'Lance'}${quem ? ' — ' + quem : ''}`;
-    }else{
-      const l = Jogo.lances(NOTICIAS, e, PLANTEL).slice(-1)[0];
-      texto = l ? `${l.minuto}' · ${l.titulo}` : 'Sem lances publicados ainda';
-    }
-  }else if(e.fase === 'fim'){
-    texto = 'Jogo terminado';
-  }else{
-    texto = e.jogo.local || '';
-  }
-  alvo.textContent = texto;
-  alvo.title = texto;
+function escolherJogoEmFoco(){
+  const agora = Date.now();
+  const perto = JOGOS.filter(j => j.data && !j.modalidade)
+    .map(j => ({ j, t: new Date(j.data).getTime() - agora }))
+    .filter(x => x.t < 3 * H_MS && x.t > -4 * H_MS)
+    .sort((a, b) => a.t - b.t)[0];
+  return perto ? perto.j : (porJogar()[0] || null);
 }
 
-/* durante o jogo, o "Ao minuto" da barra inferior passa a "Ao vivo" */
-function marcarBarraVivo(vivo){
-  const b = $('#barra-vivo');
-  if(!b) return;
-  b.classList.toggle('a-jogar', vivo);
-  b.dataset.vista = vivo ? 'aovivo' : 'aominuto';
-  $('#barra-vivo-rotulo').textContent = vivo ? 'Ao vivo' : 'Ao minuto';
-}
-
-function pintarDiaDeJogo(){
-  const e = Jogo.estado(JOGOS);
-  const faixa = $('#faixa-jogo');
-  const noMenu = $('#menu-aovivo');
-  if(!faixa || !noMenu) return;
-
-  /* longe de jogo: faixa e aba escondidas */
-  if(!e || e.fase === 'longe'){
-    faixa.hidden = true;
-    noMenu.hidden = true;
-    marcarBarraVivo(false);
-    document.body.classList.remove('dia-de-jogo');
-    clearInterval(relogioJogo); relogioJogo = null;
+function seguirJogoEmFoco(){
+  const j = escolherJogoEmFoco();
+  if(j && chaveDoJogo(j) === chaveDoJogo(jogoEmFoco)){
+    jogoEmFoco = j;
+    if(situacaoFoco) situacaoFoco = { ...situacaoFoco, falta: new Date(j.data) - Date.now() };
+    pintarFaixa(situacaoFoco);
     return;
   }
+  largarFoco?.();
+  jogoEmFoco = j; situacaoFoco = null; largarFoco = null;
+  if(!j){ pintarFaixa(null); pintarJogoAgora(null); return; }
+  if(vistaAtual === 'aovivo' && !jogoVisto) CentroJogo.abrir(j);
+  largarFoco = CentroJogo.observar(j, sit => {
+    situacaoFoco = sit;
+    pintarFaixa(sit);
+    pintarJogoAgora(sit);
+    pintarProximoJogo();
+  });
+}
 
+/* durante o jogo, o "Ao minuto" da barra de baixo passa a levar ao jogo */
+function marcarBarraVivo(jogo, aoVivo){
+  const b = $('#barra-vivo');
+  if(!b) return;
+  b.classList.toggle('a-jogar', !!aoVivo);
+  b.dataset.vista = jogo ? 'aovivo' : 'aominuto';
+  $('#barra-vivo-rotulo').textContent = aoVivo ? 'Ao vivo' : jogo ? 'Jogo' : 'Ao minuto';
+}
+
+function pintarFaixa(sit){
+  const faixa = $('#faixa-jogo');
+  if(!faixa) return;
+  const longe = !sit || (sit.falta > CONFIG.antecedenciaJogo * 60000);
+  if(longe){
+    faixa.hidden = true;
+    marcarBarraVivo(false, false);
+    document.body.classList.remove('dia-de-jogo', 'a-jogar');
+    return;
+  }
+  const j = sit.jogo;
+  const r = CentroJogo.rotulo(sit);
   faixa.hidden = false;
-  noMenu.hidden = false;
   document.body.classList.add('dia-de-jogo');
-  document.body.classList.toggle('a-jogar', Jogo.emJogo(e));
-  marcarBarraVivo(Jogo.emJogo(e));
+  document.body.classList.toggle('a-jogar', !!r.aoVivo);
+  faixa.classList.toggle('faixa-jogo--vivo', !!r.aoVivo);
+  marcarBarraVivo(true, r.aoVivo);
 
-  const j = e.jogo;
   $('#faixa-casa').textContent = j.casa;
   $('#faixa-fora').textContent = j.fora;
   $('#faixa-casa-img').src = emblemaEquipa(j.casa);
   $('#faixa-fora-img').src = emblemaEquipa(j.fora);
+  const res = sit.resultado && sit.resultado.casa != null ? sit.resultado : null;
+  $('#faixa-resultado').textContent = res ? `${res.casa} - ${res.fora}` : 'vs';
 
-  const golos = jogado(j) ? `${j.golosCasa} - ${j.golosFora}` : 'vs';
-  $('#faixa-resultado').textContent = golos;
-
-  if(Jogo.emJogo(e)){
-    $('#faixa-fase').textContent = Jogo.rotuloMinuto(e);
-    faixa.classList.add('faixa-jogo--vivo');
-  }else if(e.fase === 'fim'){
-    $('#faixa-fase').textContent = 'TERMINADO';
-    faixa.classList.remove('faixa-jogo--vivo');
+  let fase;
+  if(sit.tipo === 'agendado' && sit.falta > 0){
+    const h = Math.floor(sit.falta / H_MS), m = Math.floor(sit.falta % H_MS / 60000);
+    fase = h > 0 ? `FALTAM ${h}H${String(m).padStart(2, '0')}` : `FALTAM ${Math.max(1, m)} MIN`;
   }else{
-    const h = Math.floor(e.faltam / 3600000);
-    const m = Math.floor(e.faltam % 3600000 / 60000);
-    $('#faixa-fase').textContent = h > 0 ? `FALTAM ${h}H${String(m).padStart(2,'0')}` : `FALTAM ${m} MIN`;
-    faixa.classList.remove('faixa-jogo--vivo');
+    fase = r.texto.toUpperCase();
   }
+  $('#faixa-fase').textContent = fase;
 
-  pintarPlacar(e);
-  pintarLanceNaFaixa(e);
-
-  /* Havendo token do football-data, o onze e os lances vêm de lá: são
-     dados da ficha de jogo, não títulos de jornal lidos à força. Se não
-     houver, ou se a ficha ainda não estiver preenchida, fica o que
-     sempre houve — a leitura das notícias. */
-  usarFichaOficial(e).then(usou => {
-    if(!usou){ pintarOnzeOficial(e); pintarLances(e); }
-  });
-
-  /* durante o jogo o minuto anda sozinho */
-  if(Jogo.emJogo(e) && !relogioJogo){
-    relogioJogo = setInterval(() => pintarDiaDeJogo(), 20000);
-  }
+  /* a última coisa que a fonte registou; sem fonte, a hora prevista */
+  const lista = sit.dados?.disponivel ? (sit.dados.eventos?.lista || []) : [];
+  const ultimo = lista[lista.length - 1];
+  const NOMES = { golo:'Golo', penalti:'Golo (g.p.)', autogolo:'Autogolo', penalti_falhado:'Penálti falhado',
+                  amarelo:'Amarelo', segundo_amarelo:'2.º amarelo', vermelho:'Vermelho', substituicao:'Substituição', var:'VAR' };
+  let texto = '';
+  if(ultimo) texto = `${ultimo.minuto}${ultimo.acrescimo ? '+' + ultimo.acrescimo : ''}' · ${NOMES[ultimo.tipo] || 'Lance'}${
+    ultimo.jogador ? ' — ' + ultimo.jogador : ultimo.entrou ? ' — entra ' + ultimo.entrou : ''}`;
+  else if(sit.tipo === 'sem_direto') texto = `Início às ${horaJogo(j, new Date(j.data))} · sem dados em direto`;
+  else if(sit.tipo === 'terminado') texto = sit.fonte ? `Fonte: ${sit.fonte}` : '';
+  else texto = j.local || '';
+  $('#faixa-lance').textContent = texto;
+  $('#faixa-lance').title = texto;
 }
 
-/* ---------------------------------------------------------------------
-   Ficha oficial do jogo (football-data.org)
-   Devolve true se conseguiu desenhar alguma coisa, para quem chama saber
-   se ainda precisa de recorrer às notícias.
-   --------------------------------------------------------------------- */
-let fichaFD = null;
-
-async function usarFichaOficial(e){
-  let ficha = null;
-  try{
-    const agora = await FD.jogoAgora();
-    if(agora?.id) ficha = await FD.ficha(agora.id);
-  }catch(err){ return false; }
-
-  if(!ficha) return false;
-  fichaFD = ficha;
-
-  const temOnze   = ficha.titulares.length >= 10;
-  const temLances = ficha.lances.length > 0;
-  if(!temOnze && !temLances) return false;
-
-  if(temOnze) desenharOnzeFD(ficha);
-  if(temLances) desenharLancesFD(ficha);
-
-  /* o que a ficha ainda não tem, vai buscar-se às notícias */
-  if(!temOnze) pintarOnzeOficial(e);
-  if(!temLances) pintarLances(e);
-  return true;
-}
-
-function desenharOnzeFD(f){
-  $('#onze-origem').textContent =
-    'oficial · football-data' + (f.formacao ? ' · ' + f.formacao : '');
-  $('#onze-oficial').classList.remove('onze--provavel');
-
-  const linha = p => `
-    <li data-nome="${Componentes.seguro(p.nome)}">
-      <span class="onze__n">${p.n ?? '–'}</span>
-      <span class="onze__nome">${Componentes.seguro(p.nome)}</span>
-      <span class="onze__papel">${Componentes.seguro(p.pos)}</span>
-    </li>`;
-
-  $('#onze-oficial').innerHTML = f.titulares.map(linha).join('');
-  $('#banco-oficial').innerHTML = f.suplentes.length
-    ? f.suplentes.map(linha).join('')
-    : '<li class="onze--vazio"><span class="onze__nome">banco por confirmar</span></li>';
-
-  $$('#onze-oficial li[data-nome], #banco-oficial li[data-nome]').forEach(li =>
-    li.addEventListener('click', () => abrirFichaDoNome(li.dataset.nome)));
-}
-
-function desenharLancesFD(f){
-  const alvo = $('#lances');
+/* o jogo que já começou (ou devia ter começado), no topo da página inicial */
+function pintarJogoAgora(sit){
+  const alvo = $('#jogo-agora');
   if(!alvo) return;
-
-  $('#lances-nota').textContent = `${f.lances.length} lances · ficha oficial`;
-
-  alvo.innerHTML = f.lances.map(l => {
-    const minuto = l.minuto + (l.extra ? '+' + l.extra : '');
-    /* a assistência é a informação que nenhuma outra fonte nos dava */
-    const quem = l.tipo === 'golo'
-      ? `<b>${Componentes.seguro(l.quem || '—')}</b>${
-          l.assistiu ? ` <span class="lance__assist">assistência de ${Componentes.seguro(l.assistiu)}</span>` : ''}${
-          l.detalhe ? ` <i>${l.detalhe}</i>` : ''}`
-      : l.tipo === 'troca'
-        ? `<b>${Componentes.seguro(l.entrou || '—')}</b> <span class="lance__assist">por ${Componentes.seguro(l.saiu || '—')}</span>`
-        : `<b>${Componentes.seguro(l.quem || '—')}</b>`;
-
-    return `
-    <li class="lance lance--${l.tipo} ${l.nosso ? 'lance--nosso' : 'lance--deles'}">
-      <span class="lance__min">${minuto}'</span>
-      <span class="lance__ico" aria-hidden="true">${l.icone}</span>
-      <span class="lance__txt">${quem}</span>
-      ${l.resultado ? `<span class="lance__res">${l.resultado}</span>` : ''}
-    </li>`;
-  }).join('');
-}
-
-function pintarPlacar(e){
-  const alvo = $('#placar');
-  if(!alvo) return;
-  const j = e.jogo;
-  const d = new Date(j.data);
-
+  if(!sit || sit.falta > 0){ alvo.hidden = true; alvo.innerHTML = ''; return; }
+  const j = sit.jogo;
+  const r = CentroJogo.rotulo(sit);
+  const res = sit.resultado && sit.resultado.casa != null ? sit.resultado : null;
+  const prova = nomeProva(j.comp);
+  const eq = nome => `<span class="ja__eq ${eSporting(nome) ? 'e-nos' : ''}"><img src="${emblemaEquipa(nome)}" alt="" width="44" height="44"><b>${Componentes.seguro(nome)}</b></span>`;
+  const ev = sit.dados?.disponivel ? (sit.dados.eventos?.lista || []) : [];
+  const golos = ev.filter(e => ['golo', 'penalti', 'autogolo'].includes(e.tipo));
+  alvo.hidden = false;
   alvo.innerHTML = `
-    <div class="placar ${Jogo.emJogo(e) ? 'placar--vivo' : ''}">
-      <div class="placar__comp">${Componentes.seguro(j.comp)}</div>
-      <div class="placar__equipas">
-        <div class="placar__eq">
-          <img src="${emblemaEquipa(j.casa)}" alt="">
-          <b>${Componentes.seguro(j.casa)}</b>
-        </div>
-        <div class="placar__meio">
-          <div class="placar__golos">${jogado(j) ? `${j.golosCasa} - ${j.golosFora}` : '—'}</div>
-          <div class="placar__minuto">${Jogo.rotuloMinuto(e) ||
-            d.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'})}</div>
-        </div>
-        <div class="placar__eq">
-          <img src="${emblemaEquipa(j.fora)}" alt="">
-          <b>${Componentes.seguro(j.fora)}</b>
-        </div>
-      </div>
-      <div class="placar__onde">${Componentes.seguro(j.local || '')}</div>
-      ${Jogo.emJogo(e) ? `<p class="placar__aviso">
-        O minuto é calculado pelo relógio, a partir da hora de início — não
-        conta descontos nem paragens. O resultado e os lances vêm das
-        notícias dos jornais, por isso chegam com algum atraso.</p>` : ''}
-    </div>`;
+    <div class="ja__topo">
+      <span class="cj-estado ${r.classe}">${r.aoVivo ? '<i class="cj-pulso" aria-hidden="true"></i>' : ''}${Componentes.seguro(r.texto)}</span>
+      <span class="ja__prova">${Componentes.seguro(prova.completo)}</span>
+    </div>
+    <div class="ja__jogo">${eq(j.casa)}<span class="ja__res">${res ? `${res.casa}<i>–</i>${res.fora}` : horaJogo(j, new Date(j.data))}</span>${eq(j.fora)}</div>
+    ${golos.length ? `<p class="ja__golos">${golos.map(g => `${g.minuto}' ${Componentes.seguro(g.jogador || '')}`).join(' · ')}</p>` : ''}
+    ${sit.tipo === 'sem_direto' ? '<p class="ja__nota">Dados em direto indisponíveis: nenhuma fonte em direto está ligada. Não mostramos minuto nem resultado estimados.</p>' : ''}
+    <div class="ja__base"><p class="ja__fonte">${CentroJogo.linhaFonte(sit)}</p>
+    <button type="button" class="botao-cta ja__ir" data-ir-jogo>Centro de jogo ${ICONE_SETA}</button></div>`;
+  alvo.querySelector('[data-ir-jogo]').addEventListener('click', () => verJogo(j));
 }
 
-/* O onze oficial sai perto do jogo, mas de manhã já saem os prováveis.
-   Vale a pena mostrar os dois — desde que se diga qual é qual. */
+/* O onze sai numa notícia perto do jogo. Não se tiram nomes do texto (não
+   seria um dado fiável): aponta-se para a notícia, que se lê na fonte. */
 const ONZE_OFICIAL = /onze oficial|eis o onze|j[áa] h[áa] onze|onze escolhido|comunicado o onze|equipa inicial|onze do sporting para|escala[çc][ãa]o oficial/i;
-
-/* procura nas notícias a que anuncia o onze e tira de lá os nomes */
-function procurarOnzeOficial(e){
-  const inicio = new Date(e.jogo.data).getTime();
-
-  const candidatas = NOTICIAS
+function procurarOnzeOficial(j){
+  const inicio = new Date(j.data).getTime();
+  return NOTICIAS
     .filter(n => CONFIG.filtroOnze.test(n.titulo))
-    /* desde a manhã do jogo até um pouco depois do apito inicial */
-    .filter(n => {
-      const dt = n.data.getTime() - inicio;
-      return dt > -14 * 3600000 && dt < 3 * 3600000;
-    })
-    .map(n => ({
-      ...n,
-      /* oficial se o disser, ou se saiu já perto do apontapé */
-      oficial: ONZE_OFICIAL.test(n.titulo) || (n.data.getTime() - inicio) > -2.5 * 3600000
-    }))
-    /* o oficial ganha sempre ao provável; entre iguais, o mais recente */
-    .sort((a,b) => (b.oficial - a.oficial) || (b.data - a.data));
-
-  return candidatas[0] || null;
+    .filter(n => { const dt = n.data.getTime() - inicio; return dt > -14 * H_MS && dt < 3 * H_MS; })
+    .map(n => ({ ...n, oficial: ONZE_OFICIAL.test(n.titulo) || (n.data.getTime() - inicio) > -2.5 * H_MS }))
+    .sort((a, b) => (b.oficial - a.oficial) || (b.data - a.data))[0] || null;
 }
 
-async function pintarOnzeOficial(e){
-  const alvo = $('#onze-oficial');
-  const banco = $('#banco-oficial');
-  if(!alvo) return;
-
-  const noticia = procurarOnzeOficial(e);
-  if(!noticia){
-    $('#onze-origem').textContent = 'ainda não saiu';
-    alvo.innerHTML = `<li class="onze--vazio"><span class="onze__nome">
-      O onze costuma ser conhecido cerca de uma hora antes. Assim que algum
-      jornal o publicar, aparece aqui.</span></li>`;
-    banco.innerHTML = '';
-    return;
-  }
-
-  /* já foi lido? */
-  if(onzeOficial?.link === noticia.link){
-    desenharOnze(onzeOficial);
-    return;
-  }
-
-  $('#onze-origem').textContent = 'a ler…';
-
-  /* primeiro tenta-se com o resumo; se não chegar, vai-se ao artigo */
-  let texto = noticia.titulo + ' ' + (noticia.resumo || '');
-  let reparticao = Jogo.repartirOnze(texto, PLANTEL);
-
-  if(reparticao.titulares.length < 9){
-    try{
-      const r = await fetch('/ler?url=' + encodeURIComponent(noticia.link));
-      if(r.ok){
-        const html = await r.text();
-        const corpo = html.replace(/<script[\s\S]*?<\/script>/gi,'')
-                          .replace(/<style[\s\S]*?<\/style>/gi,'')
-                          .replace(/<[^>]+>/g,' ');
-        reparticao = Jogo.repartirOnze(corpo, PLANTEL);
-      }
-    }catch(err){ /* fica o que se conseguiu do resumo */ }
-  }
-
-  onzeOficial = { ...reparticao, fonte: noticia.fonte, link: noticia.link,
-                  data: noticia.data, oficial: noticia.oficial };
-  desenharOnze(onzeOficial);
+/* notícias que falam do adversário, à volta da hora do jogo */
+function noticiasDoJogo(j, adversario){
+  const palavras = chaveNome(adversario).split(' ').filter(p => p.length > 3 && !['clube', 'futebol', 'sporting'].includes(p));
+  if(!palavras.length) return [];
+  const inicio = new Date(j.data).getTime();
+  return NOTICIAS
+    .filter(n => { const dt = n.data.getTime() - inicio; return dt > -36 * H_MS && dt < 12 * H_MS; })
+    .filter(n => { const t = semAcentos(n.titulo); return palavras.some(p => t.includes(p)); })
+    .sort((a, b) => b.data - a.data);
 }
 
-function desenharOnze(o){
-  const alvo = $('#onze-oficial');
-  const banco = $('#banco-oficial');
-
-  if(!o.titulares.length){
-    $('#onze-origem').textContent = 'não consegui ler';
-    alvo.innerHTML = `<li class="onze--vazio"><span class="onze__nome">
-      Encontrei a notícia do onze mas não consegui tirar de lá os nomes.
-      <a href="${Componentes.seguro(o.link)}" target="_blank" rel="noopener">Abrir no jornal ↗</a>
-    </span></li>`;
-    banco.innerHTML = '';
-    return;
-  }
-
-  /* de manhã só há prováveis: mais vale dizê-lo do que dar a entender
-     que é o onze a sério */
-  $('#onze-origem').textContent = o.oficial
-    ? `oficial · ${o.fonte}`
-    : `provável · ${o.fonte}`;
-  $('#onze-oficial').classList.toggle('onze--provavel', !o.oficial);
-
-  const linha = p => `
-    <li data-nome="${Componentes.seguro(p.nome)}">
-      <span class="onze__n">${p.n ?? '–'}</span>
-      <span class="onze__nome">${Componentes.seguro(ALCUNHAS[p.nome] || p.nome)}</span>
-      <span class="onze__papel">${Componentes.seguro(p.pos)}</span>
-    </li>`;
-
-  /* Os nomes saem pela ordem da prosa do jornal, que não é a do campo.
-     Põe-se guarda-redes primeiro e avançados no fim, como numa ficha. */
-  const ORDEM = { GR:0, DEF:1, MED:2, AVA:3 };
-  /* o plantel já guarda o grupo em .pos; PAPEL_GRUPO só serve se algum dia
-     lá vier o papel miúdo (DC, MC, PL…) */
-  const grau = p => ORDEM[p.pos] ?? ORDEM[PAPEL_GRUPO[p.pos]] ?? 9;
-  const porCampo = (a,b) => grau(a) - grau(b);
-
-  alvo.innerHTML = [...o.titulares].sort(porCampo).map(linha).join('');
-  banco.innerHTML = o.suplentes.length
-    ? [...o.suplentes].sort(porCampo).map(linha).join('')
-    : '<li class="onze--vazio"><span class="onze__nome">banco por confirmar</span></li>';
-
-  $$('#onze-oficial li[data-nome], #banco-oficial li[data-nome]').forEach(li =>
-    li.addEventListener('click', () => abrirFichaDoNome(li.dataset.nome)));
+/* "SC Braga" e "Braga" são a mesma equipa; "Sporting CP" só é ele próprio */
+function mesmaEquipaNome(a, b){
+  const limpa = n => chaveNome(APELIDOS_EQUIPA[chaveNome(n)] || n).replace(/\b(sc|fc|cd|sl|gd|cf|ud|sad)\b/g, ' ').replace(/\s+/g, ' ').trim();
+  if(eSporting(a) || eSporting(b)) return eSporting(a) && eSporting(b);
+  const x = limpa(a), y = limpa(b);
+  return !!x && !!y && (x === y || x.includes(y) || y.includes(x));
 }
 
-function pintarLances(e){
-  const alvo = $('#lances');
-  if(!alvo) return;
-
-  const lista = Jogo.lances(NOTICIAS, e, PLANTEL);
-  $('#lances-nota').textContent = Jogo.emJogo(e)
-    ? `${lista.length} lances · das notícias`
-    : 'o jogo ainda não começou';
-
-  if(!lista.length){
-    alvo.innerHTML = `<li>${Componentes.vazio(
-      Jogo.emJogo(e) ? 'Ainda sem lances' : 'À espera do apito inicial',
-      Jogo.emJogo(e)
-        ? 'Assim que os jornais publicarem golos, cartões ou substituições, aparecem aqui.'
-        : 'Quando o jogo começar, os lances vão aparecendo aqui.',
-      tacaSVG('liga','var(--texto-3)'))}</li>`;
-    return;
-  }
-
-  alvo.innerHTML = lista.map(l => `
-    <li class="lance lance--${l.tipo}">
-      <span class="lance__minuto">${l.minuto}'</span>
-      <span class="lance__icone" aria-hidden="true">${l.icone}</span>
-      <span class="lance__txt">
-        <a href="${Componentes.seguro(l.link)}" target="_blank" rel="noopener">
-          ${Componentes.seguro(l.titulo)}</a>
-        <span>${Componentes.seguro(l.fonte)}${l.jogador
-          ? ' · ' + Componentes.seguro(ALCUNHAS[l.jogador.nome] || l.jogador.nome) : ''}</span>
-      </span>
-    </li>`).join('');
-}
+let FONTE_TABELA = 'Wikipédia';
 
 /* =========================================================================
    7d. CHAT — comentários sobre os jogos, com fotografias
@@ -3802,7 +3596,9 @@ async function sincronizar(){
   try{
     /* Havendo token, a classificação vem do football-data, que atualiza
        logo a seguir aos jogos; senão vai ao Wikipédia como sempre foi. */
-    TABELA = (await FD.classificacao()) || (await Wiki.classificacao());
+    const doFD = await FD.classificacao();
+    TABELA = doFD || (await Wiki.classificacao());
+    FONTE_TABELA = doFD ? 'football-data.org' : 'Wikipédia';
     /* a Champions é uma página à parte: se falhar, fica o retrato guardado
        e a Liga não deixa de atualizar por causa disso */
     try{
@@ -3840,7 +3636,7 @@ async function sincronizar(){
     }
 
     pintarProximoJogo(); pintarCalendario(); pintarResultados();
-    pintarJogosTodos(); pintarEstatisticas(); pintarDiaDeJogo();
+    pintarJogosTodos(); pintarEstatisticas(); seguirJogoEmFoco();
     pintarTabelaCasa(); pintarModalidadesCasa();
     pintarResumoLiga(provaTabela !== 'champions' && TABELA.some(t => t.j > 0));   // a forma precisa dos jogos
     if(vistaAtual === 'agenda') pintarAgenda();
@@ -4034,7 +3830,7 @@ const ROTAS = {
 const TITULOS = {
   inicio:'Sporting ao Minuto — notícias, jogos e ao minuto do Sporting CP',
   noticias:'Notícias', aominuto:'Ao minuto', rumores:'Mercado', jogos:'Jogos',
-  agenda:'Agenda', classificacao:'Classificação', aovivo:'Ao vivo', equipa:'Plantel',
+  agenda:'Agenda', classificacao:'Classificação', aovivo:'Centro de jogo', equipa:'Plantel',
   estatisticas:'Estatísticas', modalidades:'Modalidades', chat:'Chat',
   formacao:'Fantasy', clube:'O clube'
 };
@@ -4048,7 +3844,7 @@ const DESCRICOES = {
   jogos:'Calendário e resultados do Sporting CP na Liga Portugal, Liga dos Campeões e taças.',
   agenda:'Os próximos jogos do Sporting CP, por dia e hora.',
   classificacao:'Classificação da Liga Portugal e da Liga dos Campeões, com a forma do Sporting CP.',
-  aovivo:'O jogo do Sporting CP ao vivo: resultado, onze inicial e lances.',
+  aovivo:'Centro de jogo do Sporting CP: resultado, lances, estatísticas, equipas e classificação, com a fonte de cada dado.',
   equipa:'O plantel do Sporting CP: jogadores, números, posições, valores e estatísticas.',
   estatisticas:'Estatísticas do Sporting CP: golos, jogos e números da época, por competição.',
   modalidades:'Futsal, andebol, basquetebol, hóquei, voleibol, atletismo, feminino e formação do Sporting CP.',
@@ -4102,10 +3898,15 @@ function irPara(vista, opcoes = {}){
   const { historico = true, rolar = true } = opcoes;
   if(!$('#vista-' + vista)) vista = 'inicio';
   vistaAtual = vista;
+  document.body.dataset.vista = vista;
   if(vista === 'chat') pintarChat();
   if(vista === 'formacao') window.Fantasy?.abrir();
   if(vista === 'estatisticas') window.Arquivo?.abrir();
-  if(vista === 'aovivo') pintarDiaDeJogo();
+  if(vista === 'aovivo'){
+    /* sem jogo escolhido, o Centro segue o jogo em foco (e muda com ele) */
+    if(!opcoes.manterJogo) jogoVisto = opcoes.jogo || null;
+    CentroJogo.abrir(jogoVisto || jogoEmFoco || porJogar()[0] || JOGOS.filter(jogado).slice(-1)[0]);
+  }
   if(vista === 'agenda') pintarAgenda();
   if(vista === 'modalidades') pintarModalidades();
 
@@ -4405,9 +4206,15 @@ async function arranque(){
 
   /* skeletons já visíveis enquanto os feeds não respondem */
   pintarHome();
-  pintarDiaDeJogo();
-  /* a faixa entra e sai sozinha conforme a hora do jogo */
-  setInterval(pintarDiaDeJogo, 30000);
+  CentroJogo.iniciar({
+    emblema: emblemaEquipa, nomeProva, irPara,
+    tabela: () => TABELA, fonteTabela: () => FONTE_TABELA, jogos: () => JOGOS,
+    mesmaEquipa: mesmaEquipaNome, noticiaOnze: procurarOnzeOficial, noticiasDoJogo
+  });
+  seguirJogoEmFoco();
+  /* a faixa entra e sai sozinha conforme a hora do jogo (os pedidos à
+     fonte são do CentroJogo, ao ritmo que o servidor indicar) */
+  setInterval(seguirJogoEmFoco, 30000);
 
   /* mostra já o arquivo guardado, enquanto os feeds respondem */
   if(lerArquivo()) pintarNoticias();

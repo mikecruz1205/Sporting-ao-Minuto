@@ -3,3 +3,5 @@
 chave-api.txt
 chave-football-data.txt
 cache/
+__pycache__/
+tests/
