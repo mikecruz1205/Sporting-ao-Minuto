@@ -354,7 +354,7 @@ const Fantasy = (() => {
      GRAVAR — o servidor valida tudo outra vez
      ===================================================================== */
   async function guardar(){
-    if(!eu){ avisar('erro', 'Entra na tua conta para guardar a equipa.'); return; }
+    if(!eu){ window.Entrada?.exigirConta('Entra ou cria uma conta para guardares a tua equipa Fantasy.', 'formacao'); return; }
     if(problemas().length || aGuardar) return;
     aGuardar = true; pintar();
     const nome = $('#fan-nome-equipa')?.value?.trim() || null;

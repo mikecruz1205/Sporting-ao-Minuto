@@ -23,40 +23,58 @@ const Nuvem = (() => {
 
   let cliente = null;
   let ligado = false;
-  let perfil = null;          // { id, utilizador, nome_mostrado }
+  let perfil = null;          // { id, utilizador, nome_mostrado, criado_em }
+
+  /* ---------------------------------------------------------------------
+     "Manter a sessão iniciada"
+     Ligado: a sessão fica no localStorage e sobrevive a fechar o browser.
+     Desligado: fica no sessionStorage, que morre com o separador. O
+     Supabase lê e escreve por este armazém; a escolha é guardada à parte.
+     --------------------------------------------------------------------- */
+  const CHAVE_LEMBRAR = 'scp-lembrar';
+  const lembrarAtivo = () => { try{ return localStorage.getItem(CHAVE_LEMBRAR) !== '0'; }catch(e){ return true; } };
+  const armazem = {
+    getItem(k){ try{ return sessionStorage.getItem(k) ?? localStorage.getItem(k); }catch(e){ return null; } },
+    setItem(k, v){
+      try{
+        const [usa, limpa] = lembrarAtivo() ? [localStorage, sessionStorage] : [sessionStorage, localStorage];
+        usa.setItem(k, v); limpa.removeItem(k);
+      }catch(e){}
+    },
+    removeItem(k){ try{ localStorage.removeItem(k); sessionStorage.removeItem(k); }catch(e){} }
+  };
+  function guardarSessaoLocal(lembrar){
+    try{ localStorage.setItem(CHAVE_LEMBRAR, lembrar === false ? '0' : '1'); }catch(e){}
+  }
 
   /* ---------------------------------------------------------------------
      Arranque
      --------------------------------------------------------------------- */
+  const ouvintes = new Set();
   async function iniciar(){
     if(!window.supabase?.createClient){ ligado = false; return false; }
     try{
       cliente = window.supabase.createClient(URL_PROJETO, CHAVE_PUBLICA, {
-        auth: { persistSession: true, autoRefreshToken: true }
+        auth: { persistSession: true, autoRefreshToken: true, storage: armazem }
       });
       const { data } = await cliente.auth.getSession();
       if(data?.session) await carregarPerfil(data.session.user.id);
       ligado = true;
+      /* sessão que expira ou termina noutro separador: quem está a ouvir
+         (o cabeçalho, o chat, a Fantasy) fica a saber */
+      cliente.auth.onAuthStateChange((evento, sessao) => {
+        if(evento === 'SIGNED_OUT' && perfil){ perfil = null; ouvintes.forEach(f => f(null)); }
+        else if(evento === 'SIGNED_IN' && sessao && !perfil){
+          carregarPerfil(sessao.user.id).then(p => ouvintes.forEach(f => f(p)));
+        }
+      });
       return true;
     }catch(e){
       ligado = false;
       return false;
     }
   }
-
-  /* Com "manter a sessão iniciada" desligado, a sessão fica só na memória
-     do separador: fecha o separador, acabou. */
-  let sessaoPersistente = true;
-  function guardarSessaoLocal(lembrar){
-    sessaoPersistente = lembrar !== false;
-    if(!sessaoPersistente){
-      addEventListener('beforeunload', () => {
-        try{ Object.keys(localStorage)
-          .filter(k => k.startsWith('sb-') && k.includes('auth-token'))
-          .forEach(k => localStorage.removeItem(k)); }catch(e){}
-      });
-    }
-  }
+  const aoMudarSessao = f => { ouvintes.add(f); return () => ouvintes.delete(f); };
 
   async function carregarPerfil(id){
     const { data } = await cliente.from('perfis').select('*').eq('id', id).maybeSingle();
@@ -68,15 +86,25 @@ const Nuvem = (() => {
      Contas
      --------------------------------------------------------------------- */
   const REGRA_UTILIZADOR = /^[a-zA-Z0-9._-]{3,20}$/;
+  /* contas novas e palavras-passe novas: 8 (as contas antigas, de quando o
+     mínimo era 6, continuam a entrar com a que têm) */
+  const MINIMO_NOVA = 8;
 
-  function validar(utilizador, palavra){
+  function validarUtilizador(utilizador){
     const u = (utilizador || '').trim();
-    if(!u) return 'Escreve um nome de utilizador.';
+    if(!u) return 'Escreve o teu nome de utilizador.';
     if(!REGRA_UTILIZADOR.test(u))
-      return 'Entre 3 e 20 caracteres, só letras, números, ponto, traço ou underscore.';
-    if(!palavra) return 'Escreve uma palavra-passe.';
-    if(palavra.length < 6) return 'A palavra-passe tem de ter pelo menos 6 caracteres.';
+      return 'Entre 3 e 20 caracteres, só letras, números, ponto, traço ou _.';
     return null;
+  }
+  function validarNova(palavra){
+    if(!palavra) return 'Escreve uma palavra-passe.';
+    if(palavra.length < MINIMO_NOVA) return `A palavra-passe tem de ter pelo menos ${MINIMO_NOVA} caracteres.`;
+    if(new TextEncoder().encode(palavra).length > 72) return 'A palavra-passe é demasiado longa (máximo 72 caracteres).';
+    return null;
+  }
+  function validar(utilizador, palavra){
+    return validarUtilizador(utilizador) || validarNova(palavra);
   }
 
   /* o nome está livre? usado enquanto se escreve no registo */
@@ -87,64 +115,154 @@ const Nuvem = (() => {
     return !data;
   }
 
-  async function registar(utilizador, palavra){
-    if(!ligado) return { erro: 'Sem ligação ao servidor.' };
-    const mau = validar(utilizador, palavra);
-    if(mau) return { erro: mau };
+  /* devolve { erro, campo } para o formulário saber onde pôr a mensagem */
+  async function registar(utilizador, palavra, lembrar = true){
+    if(!ligado) return { erro: 'Sem ligação ao servidor. Verifica a internet e tenta outra vez.' };
+    const mu = validarUtilizador(utilizador);
+    if(mu) return { erro: mu, campo: 'utilizador' };
+    const mp = validarNova(palavra);
+    if(mp) return { erro: mp, campo: 'palavra' };
+    guardarSessaoLocal(lembrar);
 
     const nome = utilizador.trim();
     const id = nome.toLowerCase();
 
-    /* o nome já está a ser usado? */
-    const { data: existe } = await cliente
-      .from('perfis').select('utilizador').eq('utilizador', id).maybeSingle();
-    if(existe) return { erro: 'Esse nome de utilizador já está a ser usado. Escolhe outro.' };
+    try{
+      /* o nome já está a ser usado? */
+      const { data: existe } = await cliente
+        .from('perfis').select('utilizador').eq('utilizador', id).maybeSingle();
+      if(existe) return { erro: 'Esse nome de utilizador já está a ser usado. Escolhe outro.', campo: 'utilizador' };
 
-    const { data, error } = await cliente.auth.signUp({
-      email: emailDe(id), password: palavra
-    });
-    if(error){
-      if(/already registered/i.test(error.message))
-        return { erro: 'Esse nome de utilizador já está a ser usado. Escolhe outro.' };
-      return { erro: traduzir(error.message) };
+      const { data, error } = await cliente.auth.signUp({
+        email: emailDe(id), password: palavra
+      });
+      if(error){
+        if(/already registered|already exists/i.test(error.message))
+          return { erro: 'Esse nome de utilizador já está a ser usado. Escolhe outro.', campo: 'utilizador' };
+        return { erro: traduzir(error) };
+      }
+      if(!data.session)
+        return { erro: 'A conta foi criada mas o servidor pede confirmação por email, que estas contas não têm. ' +
+                       'Avisa o administrador do site.' };
+
+      const { error: erroPerfil } = await cliente.from('perfis')
+        .insert({ id: data.user.id, utilizador: id, nome_mostrado: nome });
+      if(erroPerfil) return { erro: traduzir(erroPerfil) };
+
+      await carregarPerfil(data.user.id);
+      return { ok: true, nome };
+    }catch(e){
+      return { erro: traduzir(e) };
     }
-    if(!data.session)
-      return { erro: 'A conta foi criada mas falta confirmar o email. ' +
-                     'Desliga a confirmação de email nas definições do Supabase.' };
-
-    const { error: erroPerfil } = await cliente.from('perfis')
-      .insert({ id: data.user.id, utilizador: id, nome_mostrado: nome });
-    if(erroPerfil) return { erro: traduzir(erroPerfil.message) };
-
-    await carregarPerfil(data.user.id);
-    return { ok: true, nome };
   }
 
   async function entrar(utilizador, palavra, lembrar = true){
-    if(!ligado) return { erro: 'Sem ligação ao servidor.' };
-    guardarSessaoLocal(lembrar);
+    if(!ligado) return { erro: 'Sem ligação ao servidor. Verifica a internet e tenta outra vez.' };
     const u = (utilizador || '').trim().toLowerCase();
-    if(!u || !palavra) return { erro: 'Preenche os dois campos.' };
+    if(!u) return { erro: 'Escreve o teu nome de utilizador.', campo: 'utilizador' };
+    if(!palavra) return { erro: 'Escreve a tua palavra-passe.', campo: 'palavra' };
+    guardarSessaoLocal(lembrar);
 
-    const { data, error } = await cliente.auth.signInWithPassword({
-      email: emailDe(u), password: palavra
-    });
-    if(error) return { erro: 'Utilizador ou palavra-passe errados.' };
+    try{
+      const { data, error } = await cliente.auth.signInWithPassword({
+        email: emailDe(u), password: palavra
+      });
+      /* a mesma mensagem para nome inexistente e palavra-passe errada:
+         não se diz a ninguém que contas existem */
+      if(error) return { erro: /invalid login|credentials/i.test(error.message)
+        ? 'Nome de utilizador ou palavra-passe errados.' : traduzir(error) };
 
-    await carregarPerfil(data.user.id);
-    return { ok: true, nome: perfil?.nome_mostrado || u };
+      await carregarPerfil(data.user.id);
+      return { ok: true, nome: perfil?.nome_mostrado || u };
+    }catch(e){
+      return { erro: traduzir(e) };
+    }
   }
 
   async function sair(){
-    if(cliente) await cliente.auth.signOut();
+    try{ if(cliente) await cliente.auth.signOut(); }catch(e){}
     perfil = null;
   }
 
-  function traduzir(msg){
-    if(/password/i.test(msg) && /6/.test(msg)) return 'A palavra-passe tem de ter pelo menos 6 caracteres.';
+  /* ---------------------------------------------------------------------
+     Recuperação (ver supabase/migrations/20261009180000_contas_recuperacao.sql)
+     As contas não têm email: recupera-se com o código guardado.
+     --------------------------------------------------------------------- */
+  const ERROS_RECUPERAR = {
+    codigo_invalido: 'O nome de utilizador ou o código não estão certos.',
+    demasiadas_tentativas: 'Demasiadas tentativas falhadas. Espera 15 minutos e tenta outra vez.',
+    palavra_curta: `A palavra-passe nova tem de ter pelo menos ${MINIMO_NOVA} caracteres.`,
+    palavra_longa: 'A palavra-passe é demasiado longa (máximo 72 caracteres).'
+  };
+  async function recuperar(utilizador, codigo, nova){
+    if(!ligado) return { erro: 'Sem ligação ao servidor. Verifica a internet e tenta outra vez.' };
+    const mu = validarUtilizador(utilizador);
+    if(mu) return { erro: mu, campo: 'utilizador' };
+    const limpo = (codigo || '').replace(/[^A-Za-z0-9]/g, '');
+    if(limpo.length !== 16) return { erro: 'O código tem 16 letras e números (XXXX-XXXX-XXXX-XXXX).', campo: 'codigo' };
+    const mp = validarNova(nova);
+    if(mp) return { erro: mp, campo: 'palavra' };
+    try{
+      const { data, error } = await cliente.rpc('conta_recuperar', {
+        p_utilizador: utilizador.trim(), p_codigo: limpo, p_nova: nova
+      });
+      if(error) return { erro: traduzir(error) };
+      if(data !== 'ok') return { erro: ERROS_RECUPERAR[data] || 'Não foi possível mudar a palavra-passe.' };
+      return { ok: true };
+    }catch(e){
+      return { erro: traduzir(e) };
+    }
+  }
+
+  async function gerarCodigo(){
+    if(!ligado || !perfil) return { erro: 'Entra na tua conta primeiro.' };
+    try{
+      const { data, error } = await cliente.rpc('conta_gerar_codigo');
+      if(error) return { erro: traduzir(error) };
+      return { ok: true, codigo: data };
+    }catch(e){ return { erro: traduzir(e) }; }
+  }
+
+  async function estadoRecuperacao(){
+    if(!ligado || !perfil) return null;
+    try{
+      const { data, error } = await cliente.rpc('conta_estado_recuperacao');
+      if(error) return null;
+      const r = Array.isArray(data) ? data[0] : data;
+      return { temCodigo: !!r?.tem_codigo, criadoEm: r?.criado_em ? new Date(r.criado_em) : null };
+    }catch(e){ return null; }
+  }
+
+  /* confirma a atual (entrando outra vez com ela) e só depois muda */
+  async function mudarPalavra(atual, nova){
+    if(!ligado || !perfil) return { erro: 'Entra na tua conta primeiro.' };
+    if(!atual) return { erro: 'Escreve a palavra-passe atual.', campo: 'atual' };
+    const mp = validarNova(nova);
+    if(mp) return { erro: mp, campo: 'nova' };
+    if(atual === nova) return { erro: 'A palavra-passe nova tem de ser diferente da atual.', campo: 'nova' };
+    try{
+      const { error: e1 } = await cliente.auth.signInWithPassword({ email: emailDe(perfil.utilizador), password: atual });
+      if(e1) return { erro: /invalid login|credentials/i.test(e1.message) ? 'A palavra-passe atual não está certa.' : traduzir(e1), campo: 'atual' };
+      const { error: e2 } = await cliente.auth.updateUser({ password: nova });
+      if(e2) return { erro: traduzir(e2) };
+      return { ok: true };
+    }catch(e){ return { erro: traduzir(e) }; }
+  }
+
+  /* mensagens do Supabase e da rede, em português de Portugal */
+  function traduzir(e){
+    const msg = String(e?.message || e || '');
+    if(/failed to fetch|networkerror|load failed|network request failed/i.test(msg))
+      return 'Sem ligação ao servidor. Verifica a internet e tenta outra vez.';
+    if(/rate limit|too many/i.test(msg)) return 'Demasiadas tentativas. Espera um pouco e tenta outra vez.';
+    if(/weak|pwned|leaked/i.test(msg)) return 'Essa palavra-passe é fraca ou já apareceu numa fuga de dados. Escolhe outra.';
+    if(/should be at least|password.*characters/i.test(msg)) return `A palavra-passe tem de ter pelo menos ${MINIMO_NOVA} caracteres.`;
+    if(/same.*password|different from the old/i.test(msg)) return 'A palavra-passe nova tem de ser diferente da atual.';
+    if(/reauthenticat/i.test(msg)) return 'Por segurança, sai e volta a entrar antes de mudares a palavra-passe.';
     if(/invalid/i.test(msg) && /email/i.test(msg)) return 'Nome de utilizador inválido.';
-    if(/rate limit/i.test(msg)) return 'Demasiadas tentativas. Espera um pouco.';
-    return msg;
+    if(/duplicate key|unique/i.test(msg)) return 'Esse nome de utilizador já está a ser usado. Escolhe outro.';
+    if(/jwt|session/i.test(msg)) return 'A sessão expirou. Entra outra vez.';
+    return 'Algo correu mal do lado do servidor. Tenta outra vez daqui a pouco.';
   }
 
   /* ---------------------------------------------------------------------
@@ -278,7 +396,9 @@ const Nuvem = (() => {
   }
 
   return {
-    iniciar, registar, entrar, sair, validar, nomeLivre,
+    iniciar, registar, entrar, sair, validar, validarUtilizador, validarNova, nomeLivre,
+    recuperar, gerarCodigo, estadoRecuperacao, mudarPalavra, aoMudarSessao,
+    MINIMO_NOVA,
     guardarSubscricaoPush, apagarSubscricaoPush,
     guardarEquipa, lerEquipa, ranking,
     lerMensagens, enviarMensagem, apagarMensagem, enviarFoto, ouvirChat,

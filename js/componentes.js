@@ -396,6 +396,6 @@ const Componentes = (() => {
     seguro, destacar, haQuanto, dataCurta, horaCurta, resumir,
     cartaoNoticia, cartaoEditorial, manchete, itemLista, capa, hero, itemCompacto, categoriaClasse, imagemGrande,
     esqueletoCartao, esqueletoEditorial, esqueletoHero, esqueletoCompacto, esqueletoLista, esqueletoMinuto, erroLeitura, vazio,
-    etiquetaFonte, siglaFonte
+    etiquetaFonte, siglaFonte, sigla, classeFonte
   };
 })();

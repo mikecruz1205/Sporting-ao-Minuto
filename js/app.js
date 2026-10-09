@@ -44,12 +44,6 @@ const EMBLEMAS_SCP = [
   'img/crest.png', 'img/crest.jpg', 'img/crest.jpeg', 'img/crest.webp',
   '/emblema', 'img/crest.svg', 'img/teams/228.png'
 ];
-/* a fotografia é posta pelo montarFundoEntrada (o CSS já não a pede, senão
-   vinha duas vezes); o webp vai à frente porque é o que existe */
-const FUNDOS_ENTRADA = [
-  'img/entrada.webp', 'img/entrada.jpg', 'img/entrada.jpeg', 'img/entrada.png', '/fundo'
-];
-
 /* devolve o primeiro caminho que carregue, ou null */
 function primeiraImagem(caminhos){
   return new Promise(resolve => {
@@ -67,7 +61,7 @@ function primeiraImagem(caminhos){
 }
 
 async function montarEmblema(){
-  const alvos = [$('#emblema'), $('#acesso-emblema'), $('#emblema-rodape')].filter(Boolean);
+  const alvos = [$('#emblema'), $('#emblema-rodape')].filter(Boolean);
   alvos.forEach(a => a.innerHTML = EMBLEMA_SVG);
 
   const caminho = await primeiraImagem(EMBLEMAS_SCP);
@@ -83,186 +77,52 @@ async function montarEmblema(){
 
 }
 
-async function montarFundoEntrada(){
-  const caminho = await primeiraImagem(FUNDOS_ENTRADA);
-  if(!caminho) return;
-  const foto = $('#acesso-foto');
-  if(!foto) return;
-  foto.style.backgroundImage = `url('${caminho}')`;
-  foto.classList.add('tem');
-  $('#acesso')?.classList.add('com-foto');
-}
-
 /* =========================================================================
-   1b. ACESSO — registo e entrada (ver js/contas.js)
+   1b. ENTRADA — boas-vindas, contas e modo visitante (ver js/entrada.js)
    ========================================================================= */
 let UTILIZADOR_ATUAL = null;
-
-function abrirSite(animar){
-  const ecra = $('#acesso');
-  if(!ecra) return;
-  if(animar){
-    ecra.classList.add('fechado');
-    setTimeout(() => ecra.remove(), 520);
-  }else{
-    ecra.remove();
-  }
-  document.body.classList.remove('trancado');
-  $('#quem').textContent = UTILIZADOR_ATUAL ? '@' + UTILIZADOR_ATUAL : '';
-}
-
-function treme(){
-  const caixa = $('.acesso__caixa');
-  caixa.classList.remove('treme');
-  void caixa.offsetWidth;
-  caixa.classList.add('treme');
-}
-
-function mostrarAba(qual){
-  const entrar = qual === 'entrar';
-  $('#form-entrar').hidden = !entrar;
-  $('#form-criar').hidden  = entrar;
-  $('#aba-entrar').classList.toggle('is-on', entrar);
-  $('#aba-criar').classList.toggle('is-on', !entrar);
-  $('#aba-entrar').setAttribute('aria-selected', entrar);
-  $('#aba-criar').setAttribute('aria-selected', !entrar);
-  setTimeout(() => $(entrar ? '#entrar-utilizador' : '#criar-utilizador').focus(), 60);
-}
-
-/* As contas vivem na nuvem. Se não houver ligação, cai-se nas contas
-   locais do js/contas.js para o site continuar a abrir — só que aí o chat
-   e o ranking partilhado ficam de fora. */
 const naNuvem = () => Nuvem.ligado;
 
-function ligarAcesso(){
-  /* já havia sessão? */
-  if(naNuvem() && Nuvem.perfil){
-    UTILIZADOR_ATUAL = Nuvem.perfil.nome_mostrado;
-    abrirSite(false);
-    return;
-  }
-  if(!naNuvem()){
-    const sessao = Contas.sessao();
-    if(sessao){
-      UTILIZADOR_ATUAL = sessao.nome;
-      abrirSite(false);
-      return;
-    }
-  }
+/* quem entra ou sai: o que depende da conta volta a desenhar-se */
+function contaMudou(nome){
+  UTILIZADOR_ATUAL = nome;
+  carregarFormacaoGuardada();
+  if(vistaAtual === 'chat') pintarChat();
+  if(vistaAtual === 'formacao') window.Fantasy?.abrir();
+}
 
-  /* avisa se estiver a trabalhar sem ligação */
-  if(!naNuvem()){
-    const nota = $('.acesso__nota');
-    if(nota) nota.innerHTML = '<b style="color:var(--amarelo)">Sem ligação ao servidor.</b> '
-      + 'Podes entrar com uma conta local, mas o chat e o ranking partilhado '
-      + 'ficam indisponíveis.';
-  }
-
-  /* sem contas locais ainda? abre logo no registo */
-  if(!naNuvem() && Contas.quantas() === 0) mostrarAba('criar');
-
-  $('#aba-entrar').addEventListener('click', () => mostrarAba('entrar'));
-  $('#aba-criar').addEventListener('click',  () => mostrarAba('criar'));
-  $$('.acesso__ligacao').forEach(b =>
-    b.addEventListener('click', () => mostrarAba(b.dataset.aba)));
-
-  /* olho para ver a palavra-passe */
-  $$('.ver-palavra').forEach(b => b.addEventListener('click', () => {
-    const campo = document.getElementById(b.dataset.alvo);
-    const escondida = campo.type === 'password';
-    campo.type = escondida ? 'text' : 'password';
-    b.setAttribute('aria-label', escondida ? 'Esconder palavra-passe' : 'Mostrar palavra-passe');
-    b.classList.toggle('is-on', escondida);
-    campo.focus();
-  }));
-
-  /* nome livre ou já usado, à medida que se escreve */
-  const campoNovo = $('#criar-utilizador');
-  campoNovo.addEventListener('input', () => {
-    const v = campoNovo.value.trim();
-    const estado = $('#estado-utilizador');
-    if(!v){ estado.textContent = ''; estado.className = 'acesso__estado'; return; }
-    const erro = Contas.validarUtilizador(v);
-    if(erro){ estado.textContent = erro; estado.className = 'acesso__estado mau'; return; }
-
-    if(!naNuvem()){
-      const usado = Contas.existe(v);
-      estado.textContent = usado ? 'Já está a ser usado.' : 'Está livre.';
-      estado.className = 'acesso__estado ' + (usado ? 'mau' : 'bom');
-      return;
-    }
-
-    /* na nuvem a pergunta vai ao servidor — espera-se que a pessoa pare
-       de escrever, senão era um pedido por cada tecla */
-    estado.textContent = 'a verificar…';
-    estado.className = 'acesso__estado';
-    clearTimeout(campoNovo._espera);
-    campoNovo._espera = setTimeout(async () => {
-      if(campoNovo.value.trim() !== v) return;      // já mudou entretanto
-      const livre = await Nuvem.nomeLivre(v);
-      if(campoNovo.value.trim() !== v) return;
-      estado.textContent = livre ? 'Está livre.' : 'Já está a ser usado.';
-      estado.className = 'acesso__estado ' + (livre ? 'bom' : 'mau');
-    }, 400);
+/* a página de boas-vindas mostra o que há lá dentro — só com dados reais */
+function pintarPreviaEntrada(){
+  if(!window.Entrada || $('#acesso')?.hidden) return;
+  const ultimo = JOGOS.filter(jogado).slice(-1)[0] || null;
+  Entrada.pintarPrevia({
+    jogo: jogosSincronizados || porJogar().length ? (porJogar()[0] || null) : undefined,
+    ultimo,
+    emblema: emblemaEquipa,
+    nomeProva,
+    quando: j => {
+      const d = new Date(j.data);
+      return { hora: horaJogo(j, d), dia: rotuloDia(d) };
+    },
+    noticias: NOTICIAS.length ? NOTICIAS.slice(0, 3).map(n => ({ titulo: n.titulo, sigla: Componentes.sigla(n), classe: Componentes.classeFonte(n) })) : undefined
   });
+}
 
-  /* ---- criar conta ---- */
-  $('#form-criar').addEventListener('submit', async e => {
-    e.preventDefault();
-    const erroEl = $('#erro-criar');
-    erroEl.textContent = '';
-
-    const botao = e.target.querySelector('button[type=submit]');
-    botao.disabled = true; botao.textContent = 'A CRIAR…';
-    try{
-      const palavra = $('#criar-palavra').value;
-      const r = naNuvem()
-        ? await Nuvem.registar(campoNovo.value, palavra)
-        : await Contas.registar(campoNovo.value, palavra);
-      if(r.erro){ erroEl.textContent = r.erro; treme(); return; }
-
-      /* conta criada: entra já, sem obrigar a escrever outra vez */
-      if(!naNuvem()) await Contas.entrar(campoNovo.value, palavra, true);
-      UTILIZADOR_ATUAL = r.nome;
-      abrirSite(true);
-      await carregarFormacaoGuardada();
-    }finally{
-      botao.disabled = false; botao.textContent = 'CRIAR CONTA';
+/* a jornada da Fantasy que está aberta (pública: fantasy_jornadas tem leitura para todos) */
+async function previaFantasy(){
+  if(!window.Entrada || $('#acesso')?.hidden) return;
+  let j = null;
+  try{
+    const db = Nuvem.cliente;
+    if(db){
+      const { data } = await db.from('fantasy_jornadas').select('numero, fecho')
+        .gt('fecho', new Date().toISOString()).order('fecho').limit(1);
+      j = data?.[0] || null;
     }
-  });
-
-  /* ---- entrar ---- */
-  $('#form-entrar').addEventListener('submit', async e => {
-    e.preventDefault();
-    const erroEl = $('#erro-entrar');
-    erroEl.textContent = '';
-
-    const botao = e.target.querySelector('button[type=submit]');
-    botao.disabled = true; botao.textContent = 'A ENTRAR…';
-    try{
-      const utilizador = $('#entrar-utilizador').value;
-      const palavra = $('#entrar-palavra').value;
-      const r = naNuvem()
-        ? await Nuvem.entrar(utilizador, palavra, $('#lembrar').checked)
-        : await Contas.entrar(utilizador, palavra, $('#lembrar').checked);
-
-      if(r.erro){
-        erroEl.textContent = r.erro;
-        $('#entrar-palavra').value = '';
-        $('#entrar-palavra').focus();
-        treme();
-        return;
-      }
-      UTILIZADOR_ATUAL = r.nome;
-      abrirSite(true);
-      await carregarFormacaoGuardada();
-    }finally{
-      botao.disabled = false; botao.textContent = 'ENTRAR';
-    }
-  });
-
-  const haLocais = !naNuvem() && Contas.quantas() > 0;
-  setTimeout(() => $(naNuvem() || haLocais ? '#entrar-utilizador' : '#criar-utilizador').focus(), 300);
+  }catch(e){}
+  Entrada.pintarPrevia({ fantasy: j ? { numero: j.numero,
+    texto: 'fecha ' + rotuloDia(new Date(j.fecho)).toLowerCase() + ' às ' +
+      new Date(j.fecho).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) } : null });
 }
 
 /* nomes como os escrevemos → nomes na base de emblemas da API */
@@ -762,6 +622,7 @@ function registarLeitura(link, titulo, fonte){
 }
 
 function pintarHome(){
+  pintarPreviaEntrada();
   const lista = noticiasFiltradas();
 
   /* ---- hero rotativo ---- */
@@ -3530,8 +3391,17 @@ async function pintarChat(){
 
   const eu = Nuvem.perfil;
   $('#chat-form').hidden = !eu;
-  estadoChat(eu ? 'ligado como @' + eu.utilizador : 'entra na tua conta para escrever',
-             eu ? 'ok' : '');
+  /* o chat é dos adeptos com conta: o servidor (RLS) só dá as mensagens a
+     quem entrou, por isso aqui nem se pede — mostra-se o convite */
+  if(!eu){
+    estadoChat('só com conta', '');
+    lista.innerHTML = `<li>${Entrada.portao({
+      titulo: 'O chat é para quem tem conta',
+      texto: 'Entra ou cria uma conta gratuita para leres e escreveres com outros adeptos durante os jogos.',
+      vista: 'chat' })}</li>`;
+    return;
+  }
+  estadoChat('ligado como @' + eu.utilizador, 'ok');
 
   const mensagens = await Nuvem.lerMensagens(60);
   if(!mensagens.length){
@@ -3982,7 +3852,7 @@ async function sincronizar(){
   if(noRodape) noRodape.textContent = falhas.length
     ? 'dados parciais · ' + hora
     : 'dados atualizados às ' + hora;
-  jogosSincronizados = true; pintarProximoJogo(); pintarCalendario();
+  jogosSincronizados = true; pintarProximoJogo(); pintarCalendario(); pintarPreviaEntrada();
   if(!falhas.length){ marca.textContent = `dados reais · ${hora}`; marca.className = 'menu__estado ok'; }
   else if(falhas.length === 1){ marca.textContent = `parcial: falhou ${falhas[0]}`; marca.className = 'menu__estado aviso'; }
   else { marca.textContent = 'offline · dados locais'; marca.className = 'menu__estado erro'; }
@@ -4490,7 +4360,9 @@ async function arranque(){
   /* a nuvem trata das contas, do ranking e do chat; se nao houver ligacao
      o site continua a funcionar com as contas locais */
   await Nuvem.iniciar();
-  ligarAcesso();
+  Entrada.iniciar({ irPara });
+  UTILIZADOR_ATUAL = Entrada.nome;
+  document.addEventListener('conta:mudou', e => contaMudou(e.detail.nome));
   ligarLeitor();
   ligarMenuMobile();
   ligarAoTopo();
@@ -4529,7 +4401,7 @@ async function arranque(){
   ligarArrastar();
   ligarChat();
 
-  montarFundoEntrada();
+  previaFantasy();
 
   /* skeletons já visíveis enquanto os feeds não respondem */
   pintarHome();
@@ -4555,8 +4427,6 @@ async function arranque(){
     b.addEventListener('click', () => irPara(b.dataset.vista)));
   ligarSubmenus();
   ligarBarraInferior();
-  /* na gaveta do telemóvel o sair faz o mesmo que o do cabeçalho */
-  $('#btn-sair-gaveta')?.addEventListener('click', () => $('#btn-sair').click());
   $$('#agenda-filtro .separador').forEach(b => b.addEventListener('click', () => {
     filtroAgenda = b.dataset.filtro;
     pintarAgenda();
@@ -4618,13 +4488,6 @@ async function arranque(){
     $('#badge-alertas').textContent = NOTICIAS.length;
     irPara('aominuto');
   });
-  $('#btn-conta').addEventListener('click', () => irPara('clube'));
-
-  $('#btn-sair').addEventListener('click', () => {
-    Promise.resolve(naNuvem() ? Nuvem.sair() : null)
-      .finally(() => { Contas.sair(); location.reload(); });
-  });
-
   addEventListener('keydown', e => {
     if(e.key === 'Escape') caixaProcura.classList.remove('is-aberta');
   });

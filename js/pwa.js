@@ -135,6 +135,9 @@ const PWA = (() => {
      --------------------------------------------------------------------- */
   function registar(){
     if(!('serviceWorker' in navigator) || !isSecureContext) return;
+    /* em desenvolvimento (servidor.py) a cache escondia cada alteração;
+       para testar a aplicação instalada localmente, abre com ?sw=1 */
+    if(/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && !/[?&]sw=1\b/.test(location.search)) return;
     addEventListener('load', async () => {
       let reg;
       try{ reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' }); }
