@@ -3937,19 +3937,26 @@ function ligarAoTopo(){
 
 const TEXTOS_LEGAIS = {
   privacidade: ['Política de Privacidade', `
-    <h4>O que se guarda</h4>
-    <p>Este site não tem servidor de contas nem base de dados. Tudo o que
-    guarda fica <b>no teu browser</b>, no teu computador:</p>
+    <h4>Sem conta</h4>
+    <p>Quem só lê (modo visitante) não deixa nada no servidor. No teu browser
+    ficam apenas preferências (tema, filtros) e o arquivo das notícias já
+    lidas, para abrir mais depressa.</p>
+    <h4>Com conta</h4>
+    <p>As contas, o chat e a Fantasy vivem no <b>Supabase</b> (UE, Irlanda). Guarda-se:</p>
     <ul>
-      <li>a tua conta (nome e um resumo criptográfico da palavra-passe)</li>
-      <li>a tua formação e a pontuação da Fantasy</li>
-      <li>o arquivo de notícias já lidas e a lista das mais abertas</li>
+      <li>o nome de utilizador e um resumo criptográfico (bcrypt) da palavra-passe —
+          a palavra-passe em si nunca é guardada;</li>
+      <li>o resumo do código de recuperação, se o gerares (o código só aparece uma vez);</li>
+      <li>as mensagens e fotografias que publicas no chat e a tua equipa Fantasy;</li>
+      <li>nas tentativas de recuperação de palavra-passe, o endereço IP e a hora,
+          durante 30 dias, só para travar tentativas repetidas.</li>
     </ul>
-    <h4>O que não se guarda</h4>
-    <p>Nada é enviado para lado nenhum. Não há registo de visitas, nem
-    publicidade, nem partilha com terceiros.</p>
-    <h4>Como apagar</h4>
-    <p>Limpar os dados do site no browser apaga tudo, incluindo a conta.</p>`],
+    <p>As contas não têm email: nunca te pedimos nenhum.</p>
+    <h4>O que não se faz</h4>
+    <p>Não há publicidade, registo de visitas para marketing nem partilha com terceiros.</p>
+    <h4>Apagar</h4>
+    <p>Podes apagar as tuas mensagens no chat. Para apagar a conta inteira, fala connosco
+    (Contacto). Terminar sessão limpa a sessão deste browser.</p>`],
 
   termos: ['Termos de Utilização', `
     <h4>O que isto é</h4>
@@ -3976,15 +3983,30 @@ const TEXTOS_LEGAIS = {
 
   fontes: ['Fontes dos dados', `
     <h4>Notícias</h4>
-    <p>RSS diretos de Leonino, Record, Maisfutebol, Notícias ao Minuto,
-    zerozero, RTP, Observador, Bola na Rede, Futebol 365, Correio da Manhã
-    e Público. Atualizam de 60 em 60 segundos.</p>
-    <h4>Plantel, jogos e classificação</h4>
-    <p>API do Wikipédia, atualizada poucas horas depois de cada jogo.</p>
-    <h4>Fotografias e emblemas</h4>
-    <p>API-Football, descarregados uma vez para a pasta do projeto.</p>
+    <p>RSS dos jornais (Leonino, Record, Maisfutebol, Notícias ao Minuto, zerozero, RTP,
+    Observador, Bola na Rede, Futebol 365, Correio da Manhã, Público) e o sitemap de
+    notícias d'A BOLA. Só título, data, resumo curto e ligação — lê-se sempre no jornal.</p>
+    <h4>Calendário, resultados, classificação e plantel</h4>
+    <p>Wikipédia (CC BY-SA), atualizado algumas horas depois de cada jogo. Os totais da
+    época e as comparações entre épocas são contas sobre esses resultados.</p>
+    <h4>Jogo em direto e estatísticas da partida</h4>
+    <p>Só de uma fonte com dados autorizados, identificada em cada bloco com a hora da
+    última atualização. Neste momento <b>nenhuma está ativa</b>: a conta da API-Football
+    está suspensa e o football-data.org ainda não tem chave. Por isso o centro de jogo
+    diz «Dados em direto indisponíveis» em vez de estimar minutos, lances ou estatísticas.</p>
+    <table class="tabela"><thead><tr><th>Fonte</th><th>Direto</th><th>Eventos</th><th>Onzes</th><th>Estatísticas</th></tr></thead><tbody>
+      <tr><th>API-Football</th><td>sim (pago)</td><td>sim</td><td>sim</td><td>equipa e jogadores</td></tr>
+      <tr><th>football-data.org (grátis)</th><td>com atraso</td><td>não</td><td>não</td><td>não</td></tr>
+      <tr><th>Wikipédia</th><td>não</td><td>só golos, depois do jogo</td><td>não</td><td>não</td></tr>
+    </tbody></table>
+    <p>Não usamos o painel de resultados do Google nem endereços privados de outros sites:
+    para acompanhar sem fonte ativa, o centro de jogo leva-te para fora.</p>
+    <h4>Imagens</h4>
+    <p>Fotografia da entrada: «Estádio José Alvalade antes do jogo Sporting - Arouca», de
+    Megutim, CC BY 4.0, via Wikimedia Commons. Fotografias de jogadores e emblemas: API-Football.
+    Os emblemas pertencem aos clubes; este é um projeto de adeptos, sem ligação oficial.</p>
     <h4>Valores de mercado</h4>
-    <p>Transfermarkt, escritos à mão — o site bloqueia leitura automática.</p>`]
+    <p>Transfermarkt, escritos à mão.</p>`]
 };
 
 function ligarLegais(){

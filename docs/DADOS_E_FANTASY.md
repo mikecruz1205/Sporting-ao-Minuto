@@ -18,12 +18,16 @@ reais; onde uma fonte não respondeu, isso está escrito.
 
 ### Escolha
 
-* **Fonte principal para o Fantasy (grátis): football-data.org**, quando tiver
-  token. Dá por jogo, num só pedido, o onze, o banco, golos com marcador e
-  assistente, cartões e substituições com o minuto — chega para minutos,
-  golos, assistências, cartões, autogolos e golos sofridos com o jogador em
-  campo. Cobre a **Liga Portugal (PPL)** e a **Liga dos Campeões (CL)**.
-  Não dá defesas, penáltis falhados/defendidos nem recuperações (ficam "sem dados").
+* **Correção (9 de outubro, depois de ler a página de preços):** o plano
+  **gratuito** do football-data.org dá a Liga Portugal (PPL) e a Liga dos
+  Campeões (CL) com **resultados com atraso**, calendário e classificação —
+  **não dá** onzes, marcadores, cartões nem substituições. Isso é do plano
+  **"Free + Deep Data" (29 €/mês)**; os resultados em direto são do plano
+  "Free w/ Livescores" (12 €/mês); as estatísticas de jogo são um extra dos
+  planos pagos. Com o token gratuito, o site fica com a classificação e com
+  estado/resultado (com atraso) no centro de jogo; o script
+  `sincronizar_jogos.py --fonte football-data` só tem dados para o Fantasy
+  com o plano Deep Data. Ver `docs/REFORMULACAO.md` (tabela de cobertura).
 * **Alternativa paga: API-Football** (plano com a época atual). Dá, num
   pedido por jogo, minutos, golos, assistências, cartões, penáltis, defesas e
   golos sofridos do guarda-redes. **Precisa da tua decisão** (custo).

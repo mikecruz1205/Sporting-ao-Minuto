@@ -268,6 +268,8 @@ no `js/app.js`, `ROTAS_DO_SITE` no `servidor.py` e os `rewrites` do
 - **Notificações push** — ver `docs/NOTIFICACOES.md`; desligadas até haver
   chave VAPID em `CONFIG.push.chavePublica`.
 - **Fantasy, dados desportivos e A BOLA** — ver `docs/DADOS_E_FANTASY.md`
+- **Entrada, contas, centro de jogo, estatísticas e fontes (cobertura e testes)** — ver `docs/REFORMULACAO.md`
+- **Testes** — `python -m unittest discover -s tests` (camada de dados do jogo) e `supabase/testes/*.sql` (contas e Fantasy, em transação desfeita)
   (fontes testadas, modelo da base de dados em `supabase/migrations/`,
   regras, testes em `supabase/testes/`, variáveis de ambiente, operação).
 - **SEO** — quando souberes o domínio de produção:

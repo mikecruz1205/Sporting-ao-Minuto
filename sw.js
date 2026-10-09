@@ -18,7 +18,7 @@
    são apagadas na ativação.
    ========================================================================= */
 
-const VERSAO = 'v1-2026-10-08';
+const VERSAO = 'v2-2026-10-09';
 const CACHE_CASCA   = `casca-${VERSAO}`;
 const CACHE_ESTATICO = `estatico-${VERSAO}`;
 const CACHE_DADOS   = `dados-${VERSAO}`;
@@ -82,6 +82,10 @@ self.addEventListener('fetch', evento => {
   }
 
   if(url.origin === self.location.origin){
+    /* o jogo em direto nunca sai da cache: sem rede, o centro de jogo tem
+       de saber que falhou (e dizer que os dados são antigos), em vez de
+       receber uma cópia velha como se fosse nova */
+    if(url.pathname.startsWith('/api/jogo')) return;
     if(DADOS_DO_SITE.test(url.pathname)){ evento.respondWith(redePrimeiro(pedido, CACHE_DADOS)); return; }
     if(ESTATICO.test(url.pathname) || url.pathname === '/manifest.webmanifest'){
       evento.respondWith(guardadoEAtualiza(pedido, CACHE_ESTATICO)); return;
