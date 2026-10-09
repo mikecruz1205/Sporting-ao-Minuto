@@ -1,0 +1,277 @@
+/* =========================================================================
+   FANTASY DO SPORTING
+   -------------------------------------------------------------------------
+   Topo da jornada, números da equipa, campo com o onze e o banco,
+   mercado, pontos, classificação, ligas, regras e gestão. Tokens do
+   base.css; a cor de cada posição só aparece no aro da cara do jogador.
+   ========================================================================= */
+.fan{ --fan-gr: var(--amarelo); --fan-def: var(--m-hoquei); --fan-med: var(--verde-claro); --fan-ava: var(--m-destaque);
+      display: flex; flex-direction: column; gap: 14px; max-width: 980px; margin-bottom: 40px; }
+.fan-osso .osso{ display: block; }
+
+/* ---------- topo: a jornada aberta */
+.fan-topo{
+  position: relative; overflow: hidden; isolation: isolate;
+  padding: 18px 20px 20px; border-radius: 18px;
+  background: radial-gradient(120% 70% at 100% 0%, rgba(10,157,95,.32), transparent 60%),
+              linear-gradient(160deg, #0f2219 0%, #0b100e 100%);
+  border: 1px solid rgba(47,217,138,.16);
+}
+.fan-topo::before{
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background: repeating-linear-gradient(180deg, rgba(255,255,255,.025) 0 22px, transparent 22px 44px);
+}
+.fan-topo__sobre{ font-size: 11.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--verde-claro); }
+.fan-topo__titulo{ margin-top: 6px; font-family: var(--f-tit); font-weight: 800; font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.3rem); line-height: 1; text-transform: uppercase; color: var(--texto); }
+.fan-topo__titulo span{ color: var(--texto-3); font-size: .7em; margin: 0 4px; }
+.fan-topo__nota{ margin-top: 10px; font-size: 13.5px; color: var(--texto-2); }
+.fan-topo__nota b{ font-family: var(--f-num); font-size: 18px; font-weight: 800; color: var(--texto); font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+
+/* ---------- resumo: orçamento, gasto, saldo, jogadores, transferências */
+.fan-resumo{
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1px;
+  border-radius: 16px; overflow: hidden; background: var(--linha); border: 1px solid var(--linha);
+}
+.fan-resumo > div{ display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; background: var(--cartao); min-width: 0; }
+.fan-resumo span{ font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--texto-3); }
+.fan-resumo b{ font-family: var(--f-num); font-weight: 800; font-size: 22px; line-height: 1.05; color: var(--texto); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fan-resumo b i{ font-style: normal; font-size: 12px; font-weight: 700; color: var(--texto-3); margin-left: 2px; }
+.fan-resumo em{ font-style: normal; font-size: 12px; font-weight: 800; color: var(--vermelho); }
+.fan-resumo .mau b{ color: var(--vermelho); }
+.fan-resumo__lugares{ grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 8px 12px; background: var(--cartao); font-size: 12px; font-weight: 700; color: var(--texto-3); }
+.fan-resumo__lugares .cheio{ color: var(--verde-claro); }
+
+/* ---------- separadores */
+.fan-sep{ display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 4px 0; }
+.fan-sep::-webkit-scrollbar{ display: none; }
+.fan-sep .chip{ min-height: 40px; }
+
+.fan-aviso:empty{ display: none; }
+.fan-aviso{ padding: 10px 14px; border-radius: 12px; font-size: 14px; font-weight: 600; }
+.fan-aviso--ok{ background: var(--verde-vidro); color: var(--verde-claro); }
+.fan-aviso--erro{ background: color-mix(in srgb, var(--vermelho) 14%, transparent); color: var(--vermelho); }
+
+.fan-rotulo{ font-size: 11.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--texto-2); margin-bottom: 8px; }
+.fan-rotulo span{ font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--texto-3); }
+.fan-nota{ font-size: 12.5px; line-height: 1.5; color: var(--texto-3); }
+.fan-nota--info{ padding: 10px 12px; border-radius: 12px; background: var(--verde-vidro); color: var(--texto-2); }
+.fan-vazio{ display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 24px 20px; border: 1px dashed var(--linha-forte); border-radius: 16px; }
+.fan-vazio .botao-cta{ flex: none; width: auto; margin-top: 6px; }
+
+/* ---------- cara: fotografia ou avatar neutro com as iniciais */
+.fan-cara{
+  position: relative; display: grid; place-items: center; flex: none; overflow: hidden;
+  width: 48px; height: 48px; border-radius: 50%;
+  background: var(--cartao-alto); box-shadow: 0 0 0 2px var(--aro, var(--linha-forte));
+}
+.fan-cara img{ position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 15%; }
+.fan-cara__ini{ font-family: var(--f-tit); font-weight: 800; font-size: 17px; color: var(--texto-2); }
+.fan-cara--p{ width: 36px; height: 36px; } .fan-cara--p .fan-cara__ini{ font-size: 13px; }
+.fan-cara--g{ width: 64px; height: 64px; } .fan-cara--g .fan-cara__ini{ font-size: 22px; }
+.fan-pos--GR{ --aro: var(--fan-gr); } .fan-pos--DEF{ --aro: var(--fan-def); }
+.fan-pos--MED{ --aro: var(--fan-med); } .fan-pos--AVA{ --aro: var(--fan-ava); }
+
+/* ---------- campo */
+.fan-campo{
+  position: relative; display: flex; flex-direction: column; justify-content: space-around; gap: 6px;
+  min-height: 460px; padding: 34px 6px 16px; border-radius: 18px; overflow: hidden;
+  background:
+    linear-gradient(rgba(255,255,255,.16), rgba(255,255,255,.16)) center 50% / 100% 2px no-repeat,
+    radial-gradient(circle at 50% 50%, transparent 54px, rgba(255,255,255,.16) 55px, rgba(255,255,255,.16) 57px, transparent 58px),
+    linear-gradient(rgba(255,255,255,.16), rgba(255,255,255,.16)) 50% 100% / 46% 2px no-repeat,
+    repeating-linear-gradient(180deg, #0d6a40 0 46px, #0b5e39 46px 92px);
+  border: 1px solid rgba(255,255,255,.08);
+}
+.fan-campo__formacao{
+  position: absolute; top: 10px; left: 12px; padding: 3px 9px; border-radius: 6px;
+  font-family: var(--f-num); font-weight: 800; font-size: 14px; color: #fff; background: rgba(0,0,0,.28);
+}
+.fan-linha{ display: flex; justify-content: space-evenly; gap: 4px; }
+
+.fan-slot{
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  width: 76px; min-height: 44px; padding: 4px 2px; border-radius: 12px; color: #fff;
+  transition: transform var(--t-rapida), background var(--t-rapida);
+}
+.fan-slot:hover{ background: rgba(255,255,255,.08); }
+.fan-slot:focus-visible{ outline: 2px solid #fff; outline-offset: 2px; }
+.fan-slot.is-sel{ background: rgba(255,255,255,.16); }
+.fan-slot.is-alvo{ animation: fan-alvo 1.2s ease-in-out infinite; }
+@keyframes fan-alvo{ 50%{ background: rgba(255,255,255,.18); } }
+.fan-slot.is-inelegivel .fan-cara{ filter: grayscale(1); opacity: .6; }
+.fan-slot__nome{
+  max-width: 100%; padding: 2px 6px; border-radius: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 11.5px; font-weight: 800; color: #04150d; background: #fff;
+}
+.fan-slot__info{ font-size: 11px; font-weight: 700; color: #fff; background: rgba(0,0,0,.35); padding: 1px 6px; border-radius: 5px; font-variant-numeric: tabular-nums; }
+.fan-braco{
+  position: absolute; top: 0; right: 10px; display: grid; place-items: center;
+  width: 20px; height: 20px; border-radius: 50%; font-style: normal; font-size: 11px; font-weight: 800;
+  color: #04150d; background: var(--amarelo); box-shadow: 0 0 0 2px #0b5e39;
+}
+.fan-braco--v{ background: #fff; }
+.fan-pj .fan-braco{ position: static; display: inline-grid; width: 18px; height: 18px; font-size: 10px; box-shadow: none; vertical-align: 1px; }
+
+/* banco: os 4, por ordem */
+.fan-banco{ padding: 12px; border-radius: 16px; background: var(--cartao); border: 1px solid var(--linha); }
+.fan-banco__lista{ list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; counter-reset: banco; }
+.fan-banco__lista li{ position: relative; display: flex; justify-content: center; counter-increment: banco; }
+.fan-banco__lista li::before{ content: counter(banco); position: absolute; top: 2px; left: 4px; font-family: var(--f-num); font-weight: 800; font-size: 13px; color: var(--texto-3); }
+.fan-banco .fan-slot{ color: var(--texto); }
+.fan-banco .fan-slot:hover{ background: var(--veu-2); }
+.fan-banco .fan-slot__nome{ color: var(--texto); background: var(--veu-2); }
+.fan-banco .fan-slot__info{ color: var(--texto-2); background: transparent; }
+.fan-banco .fan-braco{ box-shadow: 0 0 0 2px var(--cartao); }
+
+.fan-falta{ display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.fan-falta .fan-rotulo{ margin: 0 4px 0 0; }
+
+/* ---------- painel do jogador tocado */
+.fan-painel{ display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 16px; background: var(--cartao); border: 1px solid var(--linha-forte); box-shadow: var(--sombra-cartao); }
+.fan-painel__topo{ display: flex; align-items: flex-start; gap: 12px; }
+.fan-painel__topo > div{ display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.fan-painel__topo b{ font-size: 16px; color: var(--texto); }
+.fan-painel__topo span{ font-size: 13px; color: var(--texto-2); }
+.fan-painel__topo small{ color: var(--texto-3); }
+.fan-painel__acoes{ display: flex; flex-wrap: wrap; gap: 6px; }
+.fan-painel__acoes .chip{ min-height: 40px; }
+.fan-fechar{ flex: none; width: 44px; height: 44px; border-radius: 50%; font-size: 24px; line-height: 1; color: var(--texto-2); }
+.fan-fechar:hover{ background: var(--veu-2); }
+.chip--perigo{ color: var(--vermelho); border-color: color-mix(in srgb, var(--vermelho) 40%, var(--linha-forte)); }
+.chip--perigo:hover{ border-color: var(--vermelho); color: var(--vermelho); }
+
+.fan-nome{ display: flex; flex-direction: column; gap: 6px; max-width: 360px; }
+.fan-nome span, .fan-form label span{ font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--texto-2); }
+.fan-nome input, .fan-form input, .fan-busca input, .fan-res input{
+  min-height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--linha-forte);
+  background: var(--cartao); color: var(--texto); font-size: 15px;
+}
+.fan-nome input:focus-visible, .fan-form input:focus-visible, .fan-busca input:focus-visible, .fan-res input:focus-visible{ outline: 2px solid var(--verde-claro); outline-offset: 1px; }
+
+.fan-hist{ border-top: 1px solid var(--linha); padding-top: 12px; }
+.fan-hist summary{ min-height: 44px; display: flex; align-items: center; cursor: pointer; font-size: 14px; font-weight: 700; color: var(--texto-2); }
+.fan-hist ul{ list-style: none; display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; font-size: 13px; color: var(--texto-2); }
+
+/* ---------- barra de gravar (fica por cima da barra inferior) */
+.fan-guardar{
+  position: sticky; bottom: calc(var(--altura-barra-inferior, 0px) + env(safe-area-inset-bottom) + 10px); z-index: 5;
+  display: flex; align-items: center; gap: 10px; padding: 10px 10px 10px 16px;
+  border-radius: 16px; background: var(--vidro-forte); border: 1px solid var(--linha-forte); box-shadow: var(--sombra-flutuante);
+}
+@supports (backdrop-filter: blur(1px)){ .fan-guardar{ background: var(--vidro); backdrop-filter: blur(16px) saturate(140%); } }
+.fan-guardar p{ flex: 1; min-width: 0; font-size: 13px; line-height: 1.4; color: var(--texto-2); }
+.fan-guardar .botao-cta{ flex: none; width: auto; min-height: 44px; padding: 0 18px; }
+.fan-guardar .botao-cta:disabled{ opacity: .5; cursor: not-allowed; }
+@media (min-width: 901px){ .fan-guardar{ bottom: 16px; } }
+
+/* ---------- mercado */
+.fan-filtros{ display: flex; flex-direction: column; gap: 8px; }
+.fan-filtros__linha{ display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.fan-busca{ flex: 1; min-width: 180px; }
+.fan-busca input{ width: 100%; }
+.fan-mercado{ list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.fan-mj{
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 12px;
+  padding: 10px 10px 10px 12px; border-radius: 14px; background: var(--cartao); border: 1px solid var(--linha);
+}
+.fan-mj.is-meu{ border-color: color-mix(in srgb, var(--verde-claro) 45%, var(--linha)); background: color-mix(in srgb, var(--verde) 6%, var(--cartao)); }
+.fan-mj__corpo{ display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.fan-mj__corpo > b{ font-size: 15px; color: var(--texto); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fan-mj__corpo > span{ font-size: 12.5px; color: var(--texto-2); }
+.fan-mj__corpo small{ font-size: 12px; color: var(--texto-3); }
+.fan-mj__preco{ font-family: var(--f-num); font-weight: 800; font-size: 19px; color: var(--texto); font-variant-numeric: tabular-nums; }
+.fan-mj__preco i{ font-style: normal; font-size: 11px; color: var(--texto-3); margin-left: 2px; }
+.fan-mj__botao{
+  width: 44px; height: 44px; border-radius: 50%; font-size: 22px; font-weight: 800; line-height: 1;
+  color: var(--sobre-verde); background: var(--verde);
+}
+.fan-mj__botao:disabled{ background: var(--veu-2); color: var(--texto-3); cursor: not-allowed; }
+.fan-mj__botao--sai{ background: transparent; color: var(--vermelho); border: 1px solid color-mix(in srgb, var(--vermelho) 45%, transparent); }
+.fan-mj__botao:focus-visible{ outline: 2px solid var(--verde-claro); outline-offset: 2px; }
+
+/* ---------- pontos */
+.fan-jogo{ font-size: 15px; color: var(--texto-2); }
+.fan-jogo b{ font-family: var(--f-num); font-size: 22px; color: var(--texto); margin: 0 6px; }
+.fan-chip-estado{ display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 6px; font-size: 11.5px; font-weight: 700; color: var(--amarelo); border: 1px solid color-mix(in srgb, var(--amarelo) 40%, transparent); }
+.fan-total{ display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1px; border-radius: 14px; overflow: hidden; background: var(--linha); border: 1px solid var(--linha); }
+.fan-total > div{ display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; background: var(--cartao); }
+.fan-total span{ font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--texto-3); }
+.fan-total b{ font-family: var(--f-num); font-weight: 800; font-size: 22px; color: var(--texto); }
+.fan-total__soma{ background: var(--verde-vidro) !important; }
+.fan-total__soma b{ color: var(--verde-claro); font-size: 26px; }
+.fan-pontos{ list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.fan-pj{ display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; background: var(--cartao); border: 1px solid var(--linha); }
+.fan-pj--fora{ opacity: .75; }
+.fan-pj__corpo{ display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.fan-pj__corpo b{ font-size: 14px; color: var(--texto); }
+.fan-pj__corpo span{ font-size: 12px; line-height: 1.4; color: var(--texto-2); }
+.fan-pj__pts{ font-family: var(--f-num); font-weight: 800; font-size: 22px; color: var(--texto); min-width: 2ch; text-align: right; }
+
+/* ---------- classificação e ligas */
+.fan-class{ list-style: none; display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.fan-class li{ display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 52px; padding: 6px 14px 6px 8px; border-radius: 12px; background: var(--cartao); border: 1px solid var(--linha); }
+.fan-class li.eu{ border-color: var(--verde-claro); background: var(--verde-vidro); }
+.fan-class__pos{ font-family: var(--f-num); font-weight: 800; font-size: 20px; text-align: center; color: var(--texto-2); }
+.fan-class__nome{ display: flex; flex-direction: column; min-width: 0; }
+.fan-class__nome b{ font-size: 15px; color: var(--texto); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fan-class__nome span{ font-size: 12px; color: var(--texto-3); }
+.fan-class__pts{ font-family: var(--f-num); font-weight: 800; font-size: 22px; color: var(--texto); }
+
+.fan-ligas{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.fan-form{ display: flex; align-items: flex-end; gap: 8px; padding: 14px; border-radius: 16px; background: var(--cartao); border: 1px solid var(--linha); }
+.fan-form label{ display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
+.fan-form input{ width: 100%; }
+.fan-form .botao-cta{ flex: none; width: auto; min-height: 44px; padding: 0 18px; }
+.fan-lista-ligas{ list-style: none; display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.fan-lista-ligas li{ display: flex; align-items: center; gap: 8px; }
+.fan-liga{ flex: 1; display: flex; flex-direction: column; align-items: flex-start; min-height: 52px; padding: 8px 14px; border-radius: 12px; background: var(--cartao); border: 1px solid var(--linha); text-align: left; }
+.fan-liga.is-on{ border-color: var(--verde-claro); }
+.fan-liga b{ font-size: 15px; color: var(--texto); }
+.fan-liga span{ font-size: 12px; color: var(--texto-3); font-family: var(--f-num); letter-spacing: .08em; }
+
+/* ---------- regras */
+.fan-regras{ display: flex; flex-direction: column; gap: 10px; max-width: 760px; }
+.fan-regras h4{ margin-top: 10px; font-family: var(--f-tit); font-weight: 800; font-size: 20px; letter-spacing: .03em; text-transform: uppercase; color: var(--texto); }
+.fan-regras ul{ display: flex; flex-direction: column; gap: 8px; padding-left: 18px; font-size: 14.5px; line-height: 1.55; color: var(--texto-2); }
+.fan-regras li b{ color: var(--texto); }
+.fan-tabela{ width: 100%; font-size: 14px; }
+.fan-tabela td:last-child{ font-weight: 700; color: var(--texto); }
+
+/* ---------- gestão */
+.fan-gestao{ display: flex; flex-direction: column; gap: 12px; }
+.fan-res{ display: flex; flex-wrap: wrap; gap: 12px; }
+.fan-res label{ display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--texto); }
+.fan-res input{ width: 80px; }
+.fan-gestao__tabela{ overflow-x: auto; border-radius: 12px; border: 1px solid var(--linha); }
+.fan-gestao__tabela table{ min-width: 760px; }
+.fan-gestao__tabela th[scope="row"]{ position: sticky; left: 0; z-index: 1; background: var(--cartao); text-align: left; white-space: nowrap; font-size: 13px; }
+.fan-gestao__tabela th small{ color: var(--texto-3); font-weight: 600; }
+.fan-gestao__tabela input{ width: 52px; min-height: 36px; padding: 0 6px; border-radius: 8px; border: 1px solid var(--linha-forte); background: var(--fundo); color: var(--texto); font-size: 16px; text-align: center; }
+.fan-gestao__tabela input:disabled{ opacity: .3; }
+.fan-gestao__acoes{ display: flex; flex-wrap: wrap; gap: 8px; }
+.fan-gestao__acoes .botao-cta{ flex: none; width: auto; min-height: 44px; padding: 0 18px; }
+
+/* ---------- quadro tático (a antiga "A tua formação"), por baixo do Fantasy */
+.quadro-tatico__nota{ font-size: 13px; color: var(--texto-3); }
+
+/* ---------- telemóvel */
+@media (max-width: 640px){
+  .fan-resumo{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .fan-resumo > div:nth-child(4), .fan-resumo > div:nth-child(5){ grid-column: span 1; }
+  .fan-resumo b{ font-size: 19px; }
+  .fan-campo{ min-height: 400px; padding-top: 30px; }
+  .fan-slot{ width: 62px; }
+  .fan-cara{ width: 42px; height: 42px; }
+  .fan-slot__nome{ font-size: 10.5px; padding: 1px 4px; }
+  .fan-slot__info{ font-size: 10px; }
+  .fan-braco{ right: 4px; }
+  .fan-ligas{ grid-template-columns: minmax(0, 1fr); }
+  .fan-total{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fan-total__soma{ grid-column: 1 / -1; order: -1; }
+  .fan-mj{ grid-template-columns: auto minmax(0, 1fr) auto; }
+  .fan-mj__preco{ grid-column: 3; grid-row: 1; }
+  .fan-mj__botao{ grid-column: 3; grid-row: 2; justify-self: end; margin-top: -4px; }
+  .fan-mj .fan-cara{ grid-row: span 2; }
+  .fan-mj__corpo{ grid-row: span 2; }
+}
+@media (prefers-reduced-motion: reduce){ .fan-slot.is-alvo{ animation: none; outline: 2px dashed #fff; } }

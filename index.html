@@ -135,13 +135,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Manrope:wght@400..800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/base.css?v=108">
-<link rel="stylesheet" href="css/componentes.css?v=108">
-<link rel="stylesheet" href="css/style.css?v=108">
-<link rel="stylesheet" href="css/portal.css?v=108">
-<link rel="stylesheet" href="css/inicio.css?v=108">
-<link rel="stylesheet" href="css/app.css?v=108">
-<link rel="stylesheet" href="css/editorial.css?v=108">
+<link rel="stylesheet" href="css/base.css?v=114">
+<link rel="stylesheet" href="css/componentes.css?v=114">
+<link rel="stylesheet" href="css/style.css?v=114">
+<link rel="stylesheet" href="css/portal.css?v=114">
+<link rel="stylesheet" href="css/inicio.css?v=114">
+<link rel="stylesheet" href="css/app.css?v=114">
+<link rel="stylesheet" href="css/fantasy.css?v=114">
+<link rel="stylesheet" href="css/editorial.css?v=114">
 </head>
 <body class="trancado">
 <!-- ============================ ECRÃ DE CARREGAMENTO (modo aplicação) ============================ -->
@@ -308,7 +309,7 @@
     <button class="menu__pai" aria-expanded="false" aria-controls="sub-comunidade"><span class="menu__ico-caixa" aria-hidden="true"><svg class="icone menu__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2Z"/></svg></span><span class="menu__pai-nome">Comunidade</span><svg class="icone menu__seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
     <div class="menu__sub" id="sub-comunidade" role="group" aria-label="Comunidade">
       <button class="menu__item" data-vista="chat">Chat<small>Fala com outros leões</small></button>
-      <button class="menu__item" data-vista="formacao">Fantasy<small>Monta o teu onze e soma pontos</small></button>
+      <button class="menu__item" data-vista="formacao">Fantasy<small>Plantel, capitão, transferências e ligas</small></button>
     </div>
   </div>
   <button class="menu__item menu__item--topo menu__item--taca" data-vista="clube"><span class="menu__ico-caixa" aria-hidden="true"><span class="menu__taca"></span></span>Clube</button>
@@ -731,10 +732,18 @@
   </section>
 </main>
 
-<main class="vista" id="vista-formacao">
+<main class="vista" id="vista-formacao" aria-labelledby="tit-fantasy">
+  <header class="vista__cabeca">
+    <p class="seccao__sobre">Plantel, orçamento, capitão e transferências</p>
+    <h2 class="vista__titulo" id="tit-fantasy">Fantasy do Sporting</h2>
+  </header>
+  <!-- o jogo: tudo o que conta vive no servidor (js/fantasy.js) -->
+  <section class="fan" id="fantasy"></section>
+
+  <!-- QUADRO TÁTICO — o onze ideal de cada um; não conta para o Fantasy -->
   <section class="cartao">
     <div class="cartao__topo">
-      <h2>A TUA FORMAÇÃO</h2>
+      <h2>QUADRO TÁTICO</h2>
       <div class="head-tools">
         <label class="escolher-desenho">
           <span>DESENHO</span>
@@ -755,42 +764,13 @@
         </div>
       </div>
       <div class="formacao__aviso" id="formacao-aviso">
-        Escolhe o desenho e carrega numa posição para pôr lá o jogador que quiseres.
-        Fica guardada na tua conta, neste browser.
+        O teu onze ideal, para ti — não conta para o Fantasy. Escolhe o desenho e
+        carrega numa posição para pôr lá o jogador que quiseres. Fica guardado na tua conta.
       </div>
     </div>
   </section>
 
-  <!-- ---------- FANTASY ---------- -->
-  <section class="cartao" style="margin-top:16px">
-    <div class="cartao__topo">
-      <h2>FANTASY</h2>
-      <span class="sub-inline" id="fantasy-nota">—</span>
-    </div>
-    <div class="cartao__corpo">
-      <div class="fantasy">
-        <div class="fantasy__total">
-          <label>OS TEUS PONTOS</label>
-          <b id="fantasy-pontos">0</b>
-          <span id="fantasy-detalhe">escolhe o teu onze</span>
-        </div>
-        <ol class="fantasy__jogadores" id="fantasy-jogadores"></ol>
-      </div>
 
-      <div class="sub sub--banco">COMO SE CONTAM OS PONTOS</div>
-      <div class="pontuacao" id="pontuacao"></div>
-
-      <div class="sub sub--banco">TOP 10 <em id="ranking-origem">—</em></div>
-      <ol class="ranking" id="ranking"></ol>
-
-      <div class="formacao__aviso">
-        Só conta a época <b id="fantasy-epoca">2026/27</b> — nada de carreira nem
-        de épocas passadas. Quem não jogar, não pontua. Os números saem das
-        estatísticas oficiais e podem ser mudados em <b>js/data.js</b>, em
-        <b>FANTASY</b>. O ranking junta as contas criadas neste browser.
-      </div>
-    </div>
-  </section>
 
   <section class="cartao" style="margin-top:16px">
     <div class="cartao__topo"><h2>NOTÍCIAS DA FORMAÇÃO</h2></div>
@@ -1010,17 +990,18 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.min.js" defer></script>
-<script src="js/nuvem.js?v=108" defer></script>
-<script src="js/jogo.js?v=108" defer></script>
-<script src="js/fd.js?v=108" defer></script>
-<script src="js/componentes.js?v=108" defer></script>
-<script src="js/contas.js?v=108" defer></script>
-<script src="js/arte.js?v=108" defer></script>
-<script src="js/data.js?v=108" defer></script>
-<script src="js/wiki.js?v=108" defer></script>
-<script src="js/tema.js?v=108" defer></script>
-<script src="js/notificacoes.js?v=108" defer></script>
-<script src="js/pwa.js?v=108" defer></script>
-<script src="js/app.js?v=108" defer></script>
+<script src="js/nuvem.js?v=114" defer></script>
+<script src="js/jogo.js?v=114" defer></script>
+<script src="js/fd.js?v=114" defer></script>
+<script src="js/componentes.js?v=114" defer></script>
+<script src="js/contas.js?v=114" defer></script>
+<script src="js/arte.js?v=114" defer></script>
+<script src="js/data.js?v=114" defer></script>
+<script src="js/wiki.js?v=114" defer></script>
+<script src="js/tema.js?v=114" defer></script>
+<script src="js/notificacoes.js?v=114" defer></script>
+<script src="js/pwa.js?v=114" defer></script>
+<script src="js/fantasy.js?v=114" defer></script>
+<script src="js/app.js?v=114" defer></script>
 </body>
 </html>

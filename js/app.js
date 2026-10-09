@@ -2465,6 +2465,9 @@ async function pintarRanking(){
 }
 
 function desenharRanking(lista, origem){
+  /* o ranking antigo (pontos calculados no browser) saiu: o do Fantasy
+     vem agora do servidor, em js/fantasy.js */
+  if(!$('#ranking')) return;
   const nota = $('#ranking-origem');
   if(nota) nota.textContent = origem;
 
@@ -2692,11 +2695,13 @@ function guardarFormacao(){
   if(naNuvem() && Nuvem.perfil){
     clearTimeout(guardarFormacao._espera);
     guardarFormacao._espera = setTimeout(() => {
+      /* o quadro tático guarda-se, mas sem pontos: pontos calculados no
+         browser não entram em lado nenhum (o Fantasy conta-os no servidor) */
       Nuvem.guardarEquipa({ ...equipa,
         trancada: equipaTrancada(),
-        pontos: pontosDoOnze(),
+        pontos: 0,
         jogadores: meuOnze.filter(Boolean).length
-      }).then(pintarRanking);
+      });
     }, 700);
   }
 }
@@ -4178,7 +4183,7 @@ const DESCRICOES = {
   estatisticas:'Estatísticas do Sporting CP: golos, jogos e números da época, por competição.',
   modalidades:'Futsal, andebol, basquetebol, hóquei, voleibol, atletismo, feminino e formação do Sporting CP.',
   chat:'Conversa entre adeptos do Sporting CP sobre os jogos.',
-  formacao:'Fantasy do Sporting: monta o teu onze e soma pontos jornada a jornada.',
+  formacao:'Fantasy do Sporting: plantel de 15, orçamento, capitão, transferências, jornadas e ligas privadas entre amigos.',
   clube:'O Sporting Clube de Portugal: história, palmarés, estádio e números.'
 };
 
@@ -4228,6 +4233,7 @@ function irPara(vista, opcoes = {}){
   if(!$('#vista-' + vista)) vista = 'inicio';
   vistaAtual = vista;
   if(vista === 'chat') pintarChat();
+  if(vista === 'formacao') window.Fantasy?.abrir();
   if(vista === 'aovivo') pintarDiaDeJogo();
   if(vista === 'agenda') pintarAgenda();
   if(vista === 'modalidades') pintarModalidades();

@@ -283,6 +283,9 @@ const Nuvem = (() => {
     guardarEquipa, lerEquipa, ranking,
     lerMensagens, enviarMensagem, apagarMensagem, enviarFoto, ouvirChat,
     get ligado(){ return ligado; },
-    get perfil(){ return perfil; }
+    get perfil(){ return perfil; },
+    /* o Fantasy (js/fantasy.js) lê e chama as funções do servidor com o
+       mesmo cliente — a sessão é a mesma */
+    get cliente(){ return ligado ? cliente : null; }
   };
 })();
