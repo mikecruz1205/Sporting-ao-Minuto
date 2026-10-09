@@ -72,7 +72,7 @@ body{ background: var(--carvao); }
   transition: width .3s var(--ease-saida), height .3s var(--ease-saida);
 }
 .cabeca .emblema:hover{ transform: none; box-shadow: none; }
-.cabeca .marca-txt h1{
+.cabeca .marca-txt .marca-txt__nome{
   font-family: var(--f-tit); font-weight: 800; font-size: 28px;
   letter-spacing: .04em; line-height: 1; color: var(--tx-1);
 }
@@ -85,9 +85,9 @@ body{ background: var(--carvao); }
 /* ao descer, a faixa da marca encolhe */
 body.rolou .cabeca .topo{ padding-block: 10px; }
 body.rolou .cabeca .emblema{ width: 38px; height: 38px; }
-body.rolou .cabeca .marca-txt h1{ font-size: 22px; }
+body.rolou .cabeca .marca-txt .marca-txt__nome{ font-size: 22px; }
 body.rolou .cabeca .marca-txt span{ opacity: 0; max-height: 0; margin-top: 0; }
-.cabeca .marca-txt h1{ transition: font-size .3s var(--ease-saida); }
+.cabeca .marca-txt .marca-txt__nome{ transition: font-size .3s var(--ease-saida); }
 
 /* ---- ações agrupadas numa cápsula ---- */
 .topo__acoes{ gap: 12px; }
@@ -780,14 +780,14 @@ body.rolou .cabeca .marca-txt span{ opacity: 0; max-height: 0; margin-top: 0; }
 @media (max-width: 900px){
   .cabeca .topo, body.rolou .cabeca .topo{ padding: 10px 14px; }
   .cabeca .emblema, body.rolou .cabeca .emblema{ width: 40px; height: 40px; }
-  .cabeca .marca-txt h1, body.rolou .cabeca .marca-txt h1{ font-size: 22px; }
+  .cabeca .marca-txt .marca-txt__nome, body.rolou .cabeca .marca-txt .marca-txt__nome{ font-size: 22px; }
   .acoes-capsula{ padding: 2px; }
   .acoes-capsula .ico{ width: 40px; height: 40px; }
   .ico.conta{ padding: 0; width: 40px; }
   .cabeca .botao-login{ min-height: 40px; padding: 0 14px; font-size: 11.5px; }
   .menu-abrir{ top: 10px; }
   .topo__marca, .marca-txt{ min-width: 0; }
-  .cabeca .marca-txt h1{ white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cabeca .marca-txt .marca-txt__nome{ white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
 /* telemóvel: a cápsula perde a moldura e o "sair" fica só com o ícone,
    para a marca caber inteira ao lado */
@@ -796,7 +796,7 @@ body.rolou .cabeca .marca-txt span{ opacity: 0; max-height: 0; margin-top: 0; }
   .acoes-capsula{ background: none; border: 0; padding: 0; gap: 0; }
   .cabeca .botao-login{ width: 40px; padding: 0; justify-content: center; border-color: transparent; }
   .cabeca .botao-login span{ display: none; }
-  .cabeca .marca-txt h1, body.rolou .cabeca .marca-txt h1{ font-size: 20px; }
+  .cabeca .marca-txt .marca-txt__nome, body.rolou .cabeca .marca-txt .marca-txt__nome{ font-size: 20px; }
   .cabeca .topo__marca{ gap: 10px; }
 }
 

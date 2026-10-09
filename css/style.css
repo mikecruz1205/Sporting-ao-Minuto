@@ -244,7 +244,7 @@ body.trancado .topo, body.trancado .menu, body.trancado .vista{ filter:blur(6px)
 .emblema:hover{ transform:scale(1.05); box-shadow:0 0 0 2px rgba(47,217,138,.35); }
 .emblema img, .emblema svg{ width:100%; height:100%; object-fit:contain; display:block; }
 
-.marca-txt h1{
+.marca-txt .marca-txt__nome{
   font-family:var(--f-tit); font-size:30px; font-weight:700; letter-spacing:.5px; line-height:1;
 }
 .marca-txt span{
@@ -1388,7 +1388,7 @@ body.a-arrastar-jogador *{ cursor: grabbing !important; }
     border-bottom: 1px solid var(--linha);
   }
   .emblema{ width: 44px; height: 44px; }
-  .marca-txt h1{ font-size: var(--t-lg); }
+  .marca-txt .marca-txt__nome{ font-size: var(--t-lg); }
   .marca-txt span{ display: none; }          /* o lema não cabe */
 
   /* deixa espaço para o botão do menu, que é fixo no canto */
@@ -1452,7 +1452,7 @@ body.a-arrastar-jogador *{ cursor: grabbing !important; }
   .topo{ flex-wrap: nowrap; }
   .topo__marca{ min-width: 0; }
   .marca-txt{ min-width: 0; }
-  .marca-txt h1{ font-size: var(--t-md); white-space: nowrap; }
+  .marca-txt .marca-txt__nome{ font-size: var(--t-md); white-space: nowrap; }
   .emblema{ width: 38px; height: 38px; }
   #btn-conta{ display: none; }
   .topo__acoes .ico{ width: 40px; height: 40px; min-width: 40px; min-height: 40px; }

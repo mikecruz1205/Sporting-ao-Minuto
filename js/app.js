@@ -87,8 +87,77 @@ const naNuvem = () => Nuvem.ligado;
 function contaMudou(nome){
   UTILIZADOR_ATUAL = nome;
   carregarFormacaoGuardada();
+  pintarComunidade();
   if(vistaAtual === 'chat') pintarChat();
   if(vistaAtual === 'formacao') window.Fantasy?.abrir();
+}
+
+/* =========================================================================
+   FANTASY E COMUNIDADE na página inicial — números reais do Supabase
+   ========================================================================= */
+async function pintarComunidade(){
+  const corpoF = $('#comu-fantasy-corpo'), corpoC = $('#comu-chat-corpo');
+  if(!corpoF || !corpoC) return;
+  const seguro = Componentes.seguro;
+  const db = Nuvem.cliente;
+  const eu = Nuvem.perfil;
+
+  /* ---- Fantasy ---- */
+  let jornada = null, minha = null, total = null;
+  if(db){
+    try{
+      const { data } = await db.from('fantasy_jornadas').select('numero, fecho')
+        .gt('fecho', new Date().toISOString()).order('fecho').limit(1);
+      jornada = data?.[0] || null;
+    }catch(e){}
+    try{
+      const { count } = await db.from('fantasy_perfis').select('perfil_id', { count: 'exact', head: true });
+      total = Number.isFinite(count) ? count : null;
+    }catch(e){}
+    if(eu){
+      try{
+        const { data } = await db.from('fantasy_classificacao').select('total, posicao, nome_equipa').eq('perfil_id', eu.id).maybeSingle();
+        minha = data || null;
+      }catch(e){}
+    }
+  }
+  const fecho = jornada ? new Date(jornada.fecho) : null;
+  corpoF.innerHTML = `
+    ${jornada ? `<p class="comu__linha"><b>Jornada ${jornada.numero}</b> · fecha ${rotuloDia(fecho).toLowerCase()} às ${fecho.toLocaleTimeString('pt-PT', { hour:'2-digit', minute:'2-digit' })}</p>`
+              : `<p class="comu__linha">${db ? 'Não há nenhuma jornada aberta neste momento.' : 'Sem ligação ao servidor da Fantasy.'}</p>`}
+    <div class="comu__numeros">
+      ${minha ? `<span class="comu__numero"><b>${minha.total ?? 0}</b><span>os teus pontos</span></span>
+                 ${minha.posicao ? `<span class="comu__numero"><b>${minha.posicao}.º</b><span>na geral</span></span>` : ''}` : ''}
+      ${total != null ? `<span class="comu__numero"><b>${total}</b><span>${total === 1 ? 'equipa inscrita' : 'equipas inscritas'}</span></span>` : ''}
+    </div>
+    <p class="comu__linha">Plantel de 15 jogadores do Sporting, 100 M€ de orçamento, capitão a dobrar e ligas privadas com os amigos. Os pontos são calculados no servidor.</p>
+    <div class="comu__acoes">
+      <button type="button" class="p1" data-ir="formacao">${eu ? (minha ? 'Gerir a minha equipa' : 'Fazer a minha equipa') : 'Ver a Fantasy'}</button>
+      ${eu ? '' : '<button type="button" class="p2" data-auth="criar" data-auth-vista="formacao">Criar conta para jogar</button>'}
+    </div>`;
+
+  /* ---- chat ---- */
+  if(eu && Nuvem.ligado){
+    let msgs = [];
+    try{ msgs = (await Nuvem.lerMensagens(3)).slice(-2).reverse(); }catch(e){}
+    corpoC.innerHTML = `
+      ${msgs.length ? `<ul class="comu__msgs">${msgs.map(m => {
+          const nome = m.perfis?.nome_mostrado || m.perfis?.utilizador || m.autor || 'alguém';
+          return `<li><b>@${seguro(nome)}</b> ${seguro((m.texto || '📷 fotografia').slice(0, 140))}
+            <time datetime="${new Date(m.criado_em).toISOString()}">${Componentes.haQuanto(new Date(m.criado_em))}</time></li>`;
+        }).join('')}</ul>` : '<p class="comu__linha">Ainda ninguém escreveu. Começa tu a conversa.</p>'}
+      <div class="comu__acoes"><button type="button" class="p1" data-ir="chat">Abrir o chat</button></div>`;
+  }else{
+    corpoC.innerHTML = `
+      <p class="comu__linha">Conversa entre adeptos durante os jogos, com fotografias. As mensagens são só para quem tem conta.</p>
+      <div class="comu__acoes">
+        <button type="button" class="p1" data-auth="entrar" data-auth-vista="chat">Entrar</button>
+        <button type="button" class="p2" data-auth="criar" data-auth-vista="chat">Criar conta</button>
+      </div>`;
+  }
+  /* os data-ir novos precisam de ouvinte */
+  $$('#comu-fantasy-corpo [data-ir], #comu-chat-corpo [data-ir]').forEach(b =>
+    b.addEventListener('click', () => irPara(b.dataset.ir)));
 }
 
 /* a página de boas-vindas mostra o que há lá dentro — só com dados reais */
@@ -1516,7 +1585,7 @@ function pintarCalendario(){
 function pintarResultados(){
   const alvo = $('#resultados');
   if(!alvo) return;
-  const feitos = JOGOS.filter(jogado).slice(-6).reverse();
+  const feitos = JOGOS.filter(jogado).slice(-4).reverse();      // 2 × 2 ao lado do próximo jogo
   if(!feitos.length){
     alvo.innerHTML = JOGOS.length
       ? `<li class="estado"><p class="estado__texto">Ainda não há resultados esta época.</p></li>`
@@ -2361,8 +2430,8 @@ function pintarEstatisticas(){
       `<div class="caixa"><label>${l}</label><b>${val}</b><i>${sub}</i></div>`).join('');
   };
 
-  /* página inicial: tudo o que já se jogou, pré-época incluída */
-  const todosFeitos = JOGOS.filter(jogado);
+  /* página inicial: os jogos oficiais já jogados (os particulares ficam de fora) */
+  const todosFeitos = JOGOS.filter(jogado).filter(j => provaDoJogo(j) !== 'Pré-época');
   $('#caixas-equipa').innerHTML = todosFeitos.length
     ? caixasDe(todosFeitos)
     : `<div class="vazio" style="grid-column:1/-1">Ainda não há jogos.</div>`;
@@ -4154,6 +4223,75 @@ function ligarBarraInferior(){
 }
 
 /* =========================================================================
+   PESQUISA — jogadores do plantel e notícias, numa só caixa
+   Escrever filtra as notícias e sugere jogadores; Enter abre as notícias
+   com a pesquisa; uma sugestão de jogador abre a ficha dele.
+   ========================================================================= */
+let sugestaoAtiva = -1;
+function fecharSugestoes(){
+  const caixa = $('#procura-sugestoes');
+  if(!caixa) return;
+  caixa.hidden = true; caixa.innerHTML = '';
+  $('#procura')?.setAttribute('aria-expanded', 'false');
+  $('#procura')?.removeAttribute('aria-activedescendant');
+  sugestaoAtiva = -1;
+}
+function pintarSugestoes(texto){
+  const caixa = $('#procura-sugestoes');
+  if(!caixa) return;
+  const t = semAcentos(texto);
+  if(t.length < 2){ fecharSugestoes(); return; }
+  const jogadores = PLANTEL.filter(p => p.nome && (semAcentos(p.nome).includes(t) || semAcentos(ALCUNHAS[p.nome] || '').includes(t))).slice(0, 5);
+  const nNoticias = NOTICIAS.filter(n => semAcentos(n.titulo + ' ' + (n.resumo || '')).includes(t)).length;
+  const seguro = Componentes.seguro;
+  caixa.innerHTML = jogadores.map((p, i) => `
+      <button type="button" role="option" id="sug-${i}" class="sug" data-sug-jogador="${seguro(p.nome)}" aria-selected="false">
+        <img src="${p.foto || avatarJogador(p)}" alt="" width="32" height="32" loading="lazy" onerror="this.onerror=null;this.src='${avatarJogador(p)}'">
+        <span><b>${seguro(ALCUNHAS[p.nome] || p.nome)}</b><small>${seguro([p.pos, p.n ? 'n.º ' + p.n : ''].filter(Boolean).join(' · ') || 'Plantel')}</small></span>
+      </button>`).join('') + `
+      <button type="button" role="option" id="sug-n" class="sug sug--noticias" data-sug-noticias aria-selected="false">
+        <span class="sug__ico" aria-hidden="true">${'<svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>'}</span>
+        <span><b>Notícias com «${seguro(texto)}»</b><small>${nNoticias} ${nNoticias === 1 ? 'notícia' : 'notícias'} nos jornais lidos</small></span>
+      </button>`;
+  caixa.hidden = false;
+  $('#procura').setAttribute('aria-expanded', 'true');
+  sugestaoAtiva = -1;
+}
+function escolherSugestao(b){
+  if(!b) return;
+  if(b.dataset.sugJogador){ abrirFichaDoNome(b.dataset.sugJogador); }
+  else irPara('noticias');
+  fecharSugestoes();
+  $('#procura-caixa')?.classList.remove('is-aberta');
+}
+function ligarProcura(){
+  const campo = $('#procura'), caixa = $('#procura-sugestoes');
+  if(!campo || !caixa) return;
+  campo.addEventListener('input', e => {
+    procuraTexto = e.target.value.trim();
+    pintarNoticias();
+    pintarSugestoes(procuraTexto);
+  });
+  campo.addEventListener('keydown', e => {
+    const opcoes = $$('#procura-sugestoes .sug');
+    if(e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+      if(!opcoes.length) return;
+      e.preventDefault();
+      sugestaoAtiva = (sugestaoAtiva + (e.key === 'ArrowDown' ? 1 : -1) + opcoes.length) % opcoes.length;
+      opcoes.forEach((o, i) => o.setAttribute('aria-selected', i === sugestaoAtiva));
+      campo.setAttribute('aria-activedescendant', opcoes[sugestaoAtiva].id);
+      opcoes[sugestaoAtiva].scrollIntoView({ block: 'nearest' });
+    }else if(e.key === 'Enter'){
+      e.preventDefault();
+      if(sugestaoAtiva >= 0) escolherSugestao(opcoes[sugestaoAtiva]);
+      else if(procuraTexto){ irPara('noticias'); fecharSugestoes(); }
+    }
+  });
+  caixa.addEventListener('click', e => escolherSugestao(e.target.closest('.sug')));
+  document.addEventListener('click', e => { if(!e.target.closest('#procura-caixa')) fecharSugestoes(); });
+}
+
+/* =========================================================================
    11. ARRANQUE
    ========================================================================= */
 async function arranque(){
@@ -4173,7 +4311,7 @@ async function arranque(){
   const elAno = $('#ano'); if(elAno) elAno.textContent = new Date().getFullYear();
   const tacaMenu = $('.menu__taca');
   if(tacaMenu) tacaMenu.innerHTML = tacaSVG('liga', 'currentColor');
-  $('#lema').textContent = CONFIG.lema;
+  /* o lema do clube saiu do cabeçalho: a marca é a do site, de adeptos */
   CLUBE.treinador = CONFIG.treinador;
 
   /* fotos dos jogadores (atualizar_fotos.py) e emblemas (atualizar_emblemas.py) */
@@ -4203,6 +4341,8 @@ async function arranque(){
   ligarChat();
 
   previaFantasy();
+  pintarComunidade();
+  setInterval(pintarComunidade, 5 * 60000);
 
   /* skeletons já visíveis enquanto os feeds não respondem */
   pintarHome();
@@ -4279,11 +4419,7 @@ async function arranque(){
     caixaProcura.classList.toggle('is-aberta');
     if(caixaProcura.classList.contains('is-aberta')) $('#procura').focus();
   });
-  $('#procura').addEventListener('input', e => {
-    procuraTexto = e.target.value.trim();
-    pintarNoticias();
-    if(procuraTexto && vistaAtual !== 'noticias') irPara('noticias');
-  });
+  ligarProcura();
 
   $('#mais-antigas').addEventListener('click', () => {
     mostradas += 40;
@@ -4296,7 +4432,7 @@ async function arranque(){
     irPara('aominuto');
   });
   addEventListener('keydown', e => {
-    if(e.key === 'Escape') caixaProcura.classList.remove('is-aberta');
+    if(e.key === 'Escape'){ caixaProcura.classList.remove('is-aberta'); fecharSugestoes(); }
   });
 }
 
