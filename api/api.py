@@ -17,12 +17,16 @@ class handler(BaseHTTPRequestHandler):
             self.responder(400, "pedido invalido")
             return
 
-        if not os.path.exists(FICHEIRO_CHAVE):
-            self.responder(500, "falta o ficheiro chave-api.txt")
+        # a chave vem da variavel de ambiente do Vercel (Settings > Environment
+        # Variables > API_FOOTBALL_KEY); o ficheiro so serve para correr em casa
+        # e nunca e publicado (ver .vercelignore)
+        chave = os.environ.get("API_FOOTBALL_KEY", "").strip()
+        if not chave and os.path.exists(FICHEIRO_CHAVE):
+            with open(FICHEIRO_CHAVE, encoding="utf-8") as f:
+                chave = f.read().strip()
+        if not chave:
+            self.responder(503, "sem chave: define API_FOOTBALL_KEY nas variaveis de ambiente do Vercel")
             return
-
-        with open(FICHEIRO_CHAVE, encoding="utf-8") as f:
-            chave = f.read().strip()
 
         url = "https://v3.football.api-sports.io/" + caminho
 

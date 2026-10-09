@@ -1,0 +1,5 @@
+# Nunca publicar segredos nem respostas guardadas da API.
+# (o Vercel serve como ficheiro estatico tudo o que nao estiver aqui)
+chave-api.txt
+chave-football-data.txt
+cache/
