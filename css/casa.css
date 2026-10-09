@@ -134,3 +134,39 @@
 .banda-dados .caixas{ grid-template-columns: repeat(5, minmax(0, 1fr)); }
 @media (max-width: 1240px){ .banda-dados .caixas{ grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 520px){ .banda-dados .caixas{ grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* =========================================================================
+   ESTATÍSTICAS — esta época jogo a jogo, casa e fora, por competição
+   ========================================================================= */
+.est-bloco{ margin-top: 16px; }
+.est-grelha{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.est-grelha .est-bloco{ margin-top: 16px; }
+@media (max-width: 900px){ .est-grelha{ grid-template-columns: minmax(0, 1fr); gap: 0; } }
+.est-nota{ margin-top: 12px; font-size: 13px; line-height: 1.5; color: var(--texto-3); }
+.est-nota--topo{ margin: 0 0 14px; }
+.est-forma{ display: grid; gap: 6px; list-style: none; margin: 0; padding: 0; }
+.est-jogo{
+  display: grid; grid-template-columns: 34px minmax(0, 1fr) auto auto; align-items: center; gap: 12px;
+  width: 100%; min-height: 54px; padding: 8px 12px; border-radius: 12px; text-align: left;
+  background: var(--veu-1); border: 1px solid var(--linha); color: var(--texto);
+}
+.est-jogo:hover{ background: var(--veu-2); border-color: var(--linha-forte); }
+.est-jogo__r{ display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; font: 800 15px/1 var(--f-num); }
+.est-jogo--V .est-jogo__r{ background: var(--verde); color: var(--sobre-verde); }
+.est-jogo--E .est-jogo__r{ background: var(--empate); color: var(--texto); }
+.est-jogo--D .est-jogo__r{ background: var(--vermelho); color: #fff; }
+.est-jogo__adv{ display: grid; grid-template-columns: 22px minmax(0, 1fr); column-gap: 8px; align-items: center; min-width: 0; }
+.est-jogo__adv img{ grid-row: span 2; width: 22px; height: 22px; object-fit: contain; }
+.est-jogo__adv b{ font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.est-jogo__adv small{ font-size: 12px; color: var(--texto-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.est-jogo__res{ font: 800 20px/1 var(--f-num); font-variant-numeric: tabular-nums; }
+.est-jogo time{ font-size: 12px; color: var(--texto-3); text-transform: uppercase; }
+.est-tabela-rolo{ overflow-x: auto; }
+.est-tabela th, .est-tabela td{ text-align: center; white-space: nowrap; }
+.est-tabela tbody th{ text-align: left; }
+.est-tabela small{ color: var(--texto-3); font-weight: 600; }
+.arq-comparar{ border-top: 1px solid var(--linha); }
+.arq-comp th, .arq-comp td{ text-align: center; white-space: nowrap; }
+.arq-comp tbody th{ text-align: left; }
+.arq-comp small{ color: var(--texto-3); font-weight: 600; }
+.arq-melhor{ color: var(--verde-claro); font-weight: 800; }

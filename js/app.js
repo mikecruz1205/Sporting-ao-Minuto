@@ -2460,6 +2460,7 @@ function pintarEstatisticas(){
     return provaAtiva === 'Total' ? prova !== 'Pré-época' : prova === provaAtiva;
   });
 
+  pintarEstatisticasEpoca();
   $('#caixas-equipa-total').innerHTML = jogosDaProva.length
     ? caixasDe(jogosDaProva)
     : `<div class="vazio" style="grid-column:1/-1">
@@ -2499,6 +2500,126 @@ function pintarEstatisticas(){
          Ninguém jogou ${provaAtiva === 'Total' ? 'em provas oficiais' : 'nesta prova'} até agora,
          por isso ninguém tem golos.
        </td></tr>`;
+}
+
+/* =========================================================================
+   ESTATÍSTICAS DA ÉPOCA — jogo a jogo, em casa e fora, por competição
+   Tudo calculado a partir dos RESULTADOS do calendário (Wikipédia): são
+   contas sobre resultados reais, não estatísticas de jogo inventadas.
+   ========================================================================= */
+function balancoDe(jogos){
+  const b = { j: 0, v: 0, e: 0, d: 0, gm: 0, gs: 0 };
+  jogos.forEach(j => {
+    const r = resultadoSCP(j);
+    if(!r) return;
+    b.j++; b.gm += r.nos; b.gs += r.deles;
+    b[{ V: 'v', E: 'e', D: 'd' }[r.r]]++;
+  });
+  return b;
+}
+
+function linhaBalanco(rotulo, b){
+  const dg = b.gm - b.gs;
+  return `<tr><th scope="row">${rotulo}</th><td>${b.j}</td><td>${b.v}</td><td>${b.e}</td><td>${b.d}</td>
+    <td>${b.gm}</td><td>${b.gs}</td><td>${dg > 0 ? '+' : ''}${dg}</td>
+    <td>${b.j ? (b.gm / b.j).toFixed(1).replace('.', ',') : '—'}</td></tr>`;
+}
+const CABECA_BALANCO = `<thead><tr><th scope="col"></th><th scope="col" title="Jogos">J</th><th scope="col" title="Vitórias">V</th>
+  <th scope="col" title="Empates">E</th><th scope="col" title="Derrotas">D</th><th scope="col" title="Golos marcados">GM</th>
+  <th scope="col" title="Golos sofridos">GS</th><th scope="col" title="Diferença de golos">DG</th><th scope="col" title="Golos marcados por jogo">GM/J</th></tr></thead>`;
+
+function pintarEstatisticasEpoca(){
+  const oficiais = JOGOS.filter(jogado).filter(j => provaDoJogo(j) !== 'Pré-época')
+    .sort((a, b) => new Date(a.data) - new Date(b.data));
+  const forma = $('#est-forma');
+  if(!forma) return;
+  if(!oficiais.length){
+    const msg = jogosSincronizados ? 'Ainda não há jogos oficiais com resultado nesta época.' : 'A ler o calendário…';
+    forma.innerHTML = `<li class="vazio">${msg}</li>`;
+    $('#est-casa-fora').innerHTML = $('#est-provas').innerHTML = `<p class="vazio">${msg}</p>`;
+    return;
+  }
+  const NOME = { V: 'Vitória', E: 'Empate', D: 'Derrota' };
+  forma.innerHTML = oficiais.slice(-10).reverse().map(j => {
+    const r = resultadoSCP(j);
+    const casa = eSporting(j.casa);
+    const adv = casa ? j.fora : j.casa;
+    return `<li><button type="button" class="est-jogo est-jogo--${r.r}" data-jogo-data="${j.data}">
+      <span class="est-jogo__r" aria-label="${NOME[r.r]}">${r.r}</span>
+      <span class="est-jogo__adv"><img src="${emblemaEquipa(adv)}" alt="" width="22" height="22" loading="lazy">
+        <b>${Componentes.seguro(adv)}</b><small>${casa ? 'em casa' : 'fora'} · ${Componentes.seguro(nomeProva(j.comp).completo)}</small></span>
+      <span class="est-jogo__res">${r.nos}–${r.deles}</span>
+      <time datetime="${new Date(j.data).toISOString()}">${diaMes(new Date(j.data))}</time>
+    </button></li>`;
+  }).join('');
+  forma.querySelectorAll('[data-jogo-data]').forEach(b => b.addEventListener('click', () => {
+    const j = JOGOS.find(x => x.data === b.dataset.jogoData);
+    if(j) verJogo(j);
+  }));
+
+  const emCasa = oficiais.filter(j => eSporting(j.casa));
+  const fora = oficiais.filter(j => !eSporting(j.casa));
+  $('#est-casa-fora').innerHTML = `<table class="tabela est-tabela"><caption class="so-leitor">Em casa e fora</caption>${CABECA_BALANCO}<tbody>
+    ${linhaBalanco('Em casa', balancoDe(emCasa))}${linhaBalanco('Fora', balancoDe(fora))}${linhaBalanco('<b>Total</b>', balancoDe(oficiais))}</tbody></table>`;
+
+  const provas = [...new Set(oficiais.map(provaDoJogo))];
+  $('#est-provas').innerHTML = `<table class="tabela est-tabela"><caption class="so-leitor">Por competição</caption>${CABECA_BALANCO}<tbody>
+    ${provas.map(p => linhaBalanco(Componentes.seguro(p), balancoDe(oficiais.filter(j => provaDoJogo(j) === p)))).join('')}</tbody></table>`;
+
+  pintarIndividuais(oficiais.length);
+}
+
+/* estatísticas individuais por jogo: só as que estão na base de dados
+   (sincronização com uma fonte ou introdução manual na Gestão da Fantasy) */
+let individuaisLidos = null;
+async function pintarIndividuais(jogosOficiais){
+  const alvo = $('#est-individuais');
+  if(!alvo) return;
+  const db = Nuvem.cliente;
+  if(!db){ alvo.innerHTML = '<p class="vazio">Sem ligação à base de dados.</p>'; return; }
+  if(!individuaisLidos){
+    alvo.innerHTML = Componentes.esqueletoCompacto(3);
+    try{
+      const [{ data: linhas }, { data: jogadores }] = await Promise.all([
+        db.from('desporto_estatisticas_jogo').select('jogo_id, jogador_id, minutos, golos, assistencias, amarelos, vermelhos, defesas, fonte'),
+        db.from('desporto_jogadores').select('id, nome, nome_curto, posicao')
+      ]);
+      individuaisLidos = { linhas: linhas || [], jogadores: new Map((jogadores || []).map(j => [j.id, j])) };
+    }catch(e){
+      alvo.innerHTML = '<p class="vazio">Não foi possível ler as estatísticas individuais. Tenta mais tarde.</p>';
+      return;
+    }
+  }
+  const { linhas, jogadores } = individuaisLidos;
+  if(!linhas.length){
+    $('#est-ind-nota').textContent = 'sem dados';
+    alvo.innerHTML = `<p class="vazio">Ainda não há estatísticas individuais por jogo nesta época (0 de ${jogosOficiais} jogos oficiais).
+      Entram aqui quando uma fonte de dados estiver ligada ou quando forem introduzidas a partir do relatório oficial do jogo.
+      As presenças e os golos da tabela de cima vêm do Wikipédia.</p>`;
+    return;
+  }
+  const porJogador = new Map();
+  const soma = (a, b) => b == null ? a : (a ?? 0) + b;     // NULL = sem dados, não 0
+  linhas.forEach(l => {
+    const t = porJogador.get(l.jogador_id) || { jogos: 0, minutos: null, golos: null, assistencias: null, amarelos: null, vermelhos: null, defesas: null };
+    t.jogos++;
+    ['minutos', 'golos', 'assistencias', 'amarelos', 'vermelhos', 'defesas'].forEach(k => { t[k] = soma(t[k], l[k]); });
+    porJogador.set(l.jogador_id, t);
+  });
+  const nJogos = new Set(linhas.map(l => l.jogo_id)).size;
+  const fontes = [...new Set(linhas.map(l => l.fonte).filter(Boolean))].join(', ') || 'não indicada';
+  $('#est-ind-nota').textContent = `${nJogos} de ${jogosOficiais} jogos oficiais com dados`;
+  const lista = [...porJogador.entries()].map(([id, t]) => ({ ...t, j: jogadores.get(id) }))
+    .sort((a, b) => (b.minutos ?? -1) - (a.minutos ?? -1));
+  const v = x => x == null ? '—' : x;
+  alvo.innerHTML = `<div class="est-tabela-rolo"><table class="tabela est-tabela">
+    <caption class="so-leitor">Estatísticas individuais nos jogos com dados</caption>
+    <thead><tr><th scope="col">Jogador</th><th scope="col">Jogos</th><th scope="col">Min</th><th scope="col">Golos</th>
+      <th scope="col">Assist.</th><th scope="col">Amarelos</th><th scope="col">Verm.</th><th scope="col">Defesas</th></tr></thead>
+    <tbody>${lista.map(x => `<tr><th scope="row">${Componentes.seguro(x.j?.nome_curto || x.j?.nome || '—')} <small>${x.j?.posicao || ''}</small></th>
+      <td>${x.jogos}</td><td>${v(x.minutos)}</td><td>${v(x.golos)}</td><td>${v(x.assistencias)}</td><td>${v(x.amarelos)}</td><td>${v(x.vermelhos)}</td><td>${v(x.defesas)}</td></tr>`).join('')}
+    </tbody></table></div>
+    <p class="est-nota">Só os ${nJogos} jogos com estatísticas individuais na base de dados (fonte: ${Componentes.seguro(fontes)}). «—» = sem dados.</p>`;
 }
 
 /* a que prova pertence um jogo do calendário */

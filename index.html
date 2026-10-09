@@ -889,17 +889,46 @@
 <main class="vista" id="vista-estatisticas">
   <section class="cartao">
     <div class="cartao__topo">
-      <h2>ESTATÍSTICAS</h2>
+      <h2>ESTA ÉPOCA · TOTAIS</h2>
       <div class="fontes" id="provas-filtro"></div>
     </div>
     <div class="cartao__corpo">
+      <p class="est-nota est-nota--topo">Totais da época, calculados a partir dos resultados do calendário (Wikipédia). Não são estatísticas de uma partida nem de outras épocas.</p>
       <div class="caixas caixas--largo" id="caixas-equipa-total"></div>
-      <div class="sub">JOGADORES <em id="prova-nota">todas as provas</em></div>
+      <div class="sub">JOGADORES · PRESENÇAS E GOLOS <em id="prova-nota">todas as provas</em></div>
       <table class="tabela tabela--jogadores" id="tabela-jogadores">
         <thead><tr><th></th><th>JOGADOR</th><th>POS</th><th>Nº</th><th>JOGOS</th><th>GOLOS</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
+  </section>
+
+  <!-- ESTA ÉPOCA, JOGO A JOGO — calculado a partir dos resultados do calendário -->
+  <section class="cartao est-bloco" aria-labelledby="tit-est-forma">
+    <div class="cartao__topo">
+      <h2 id="tit-est-forma">ÚLTIMOS JOGOS</h2>
+      <span class="sub-inline">jogos oficiais desta época · resultados: Wikipédia</span>
+    </div>
+    <div class="cartao__corpo">
+      <ol class="est-forma" id="est-forma"></ol>
+      <p class="est-nota">Carrega num jogo para abrir o Centro de jogo: as estatísticas da partida (posse, remates, cantos…) aparecem lá quando houver uma fonte com esses dados.</p>
+    </div>
+  </section>
+
+  <div class="est-grelha">
+    <section class="cartao est-bloco" aria-labelledby="tit-est-casa">
+      <div class="cartao__topo"><h2 id="tit-est-casa">EM CASA E FORA</h2><span class="sub-inline">jogos oficiais</span></div>
+      <div class="cartao__corpo"><div class="est-tabela-rolo" id="est-casa-fora"></div></div>
+    </section>
+    <section class="cartao est-bloco" aria-labelledby="tit-est-provas">
+      <div class="cartao__topo"><h2 id="tit-est-provas">POR COMPETIÇÃO</h2><span class="sub-inline">golos marcados e sofridos</span></div>
+      <div class="cartao__corpo"><div class="est-tabela-rolo" id="est-provas"></div></div>
+    </section>
+  </div>
+
+  <section class="cartao est-bloco" aria-labelledby="tit-est-ind">
+    <div class="cartao__topo"><h2 id="tit-est-ind">JOGADORES · JOGO A JOGO</h2><span class="sub-inline" id="est-ind-nota">minutos, assistências e cartões</span></div>
+    <div class="cartao__corpo" id="est-individuais" aria-live="polite"></div>
   </section>
 
   <!-- ARQUIVO — épocas anteriores (js/arquivo.js, a partir do Wikipédia) -->
@@ -910,6 +939,12 @@
         <select id="arquivo-epoca" aria-label="Escolher época"></select></label>
     </div>
     <div class="cartao__corpo" id="arquivo-corpo" aria-live="polite"></div>
+    <div class="cartao__corpo arq-comparar">
+      <h3 class="arq-sub">Comparar épocas</h3>
+      <p class="arq-fonte">Dados históricos: os resultados de cada época, lidos do Wikipédia. Pontos calculados a partir dos resultados (3 por vitória, 1 por empate), sem castigos nem decisões de secretaria.</p>
+      <button type="button" class="botao-largo botao-largo--fantasma" id="arquivo-comparar">Comparar as últimas 7 épocas</button>
+      <div class="arq-tabela" id="arquivo-comparacao" aria-live="polite"></div>
+    </div>
   </section>
 </main>
 

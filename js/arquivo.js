@@ -119,6 +119,42 @@ const Arquivo = (() => {
         Só há resultados, marcadores, presenças e golos; minutos, assistências, cartões e estatísticas de jogo não estão disponíveis nesta fonte.</p>`;
   }
 
+  /* ---------- comparar épocas (dados históricos) ---------- */
+  async function comparar(){
+    const alvo = raiz.querySelector('#arquivo-comparacao');
+    const botao = raiz.querySelector('#arquivo-comparar');
+    botao.disabled = true;
+    const linhas = [];
+    for(let i = 0; i < EPOCAS.length; i++){
+      alvo.innerHTML = `<p class="arq-fonte" role="status">A ler a época ${EPOCAS[i].replace('–', '/')} (${i + 1} de ${EPOCAS.length})…</p>`;
+      const r = await ler(EPOCAS[i]);
+      if(r.erro){ linhas.push({ epoca: EPOCAS[i], erro: true }); continue; }
+      const jogos = r.dados.jogos || [];
+      const liga = balanco(jogos.filter(g => competicao(g.comp) === 'LIGA'));
+      const oficiais = balanco(jogos.filter(g => contaParaAEpoca(competicao(g.comp))));
+      linhas.push({ epoca: EPOCAS[i], liga, oficiais });
+    }
+    botao.disabled = false;
+    botao.textContent = 'Voltar a comparar';
+    const melhor = Math.max(...linhas.filter(l => !l.erro && l.liga.j).map(l => (3 * l.liga.v + l.liga.e) / l.liga.j));
+    alvo.innerHTML = `<table class="tabela arq-comp">
+      <caption class="so-leitor">Comparação entre épocas</caption>
+      <thead>
+        <tr><th scope="col" rowspan="2">Época</th><th scope="colgroup" colspan="4">Liga</th><th scope="colgroup" colspan="3">Todas as oficiais</th></tr>
+        <tr><th scope="col">J</th><th scope="col">V-E-D</th><th scope="col">Golos</th><th scope="col">Pts/J</th>
+            <th scope="col">J</th><th scope="col">V-E-D</th><th scope="col">Golos</th></tr>
+      </thead>
+      <tbody>${linhas.map(l => l.erro
+        ? `<tr><th scope="row">${l.epoca.replace('–', '/')}</th><td colspan="7" class="vazio">não foi possível ler esta época</td></tr>`
+        : `<tr><th scope="row">${l.epoca.replace('–', '/')}</th>
+            <td>${l.liga.j || '—'}</td><td>${l.liga.j ? `${l.liga.v}-${l.liga.e}-${l.liga.d}` : '—'}</td>
+            <td>${l.liga.j ? `${l.liga.gm}–${l.liga.gs}` : '—'}</td>
+            <td class="${l.liga.j && (3 * l.liga.v + l.liga.e) / l.liga.j === melhor ? 'arq-melhor' : ''}">${l.liga.j ? ((3 * l.liga.v + l.liga.e) / l.liga.j).toFixed(2).replace('.', ',') : '—'}</td>
+            <td>${l.oficiais.j}</td><td>${l.oficiais.v}-${l.oficiais.e}-${l.oficiais.d}</td><td>${l.oficiais.gm}–${l.oficiais.gs}</td></tr>`).join('')}
+      </tbody></table>
+      <p class="arq-fonte">Épocas completas. A época atual está nas secções de cima. Só entram jogos com a competição identificada na página de cada época; «—» = a página dessa época não diz a competição dos jogos.</p>`;
+  }
+
   function abrir(){
     raiz = raiz || document.getElementById('arquivo');
     if(!raiz) return;
@@ -129,6 +165,7 @@ const Arquivo = (() => {
       sel.addEventListener('change', () => { escolhida = sel.value; pintar(); });
       raiz.addEventListener('click', ev => {
         if(ev.target.closest('[data-arquivo="repetir"]')){ lidas.delete(escolhida); pintar(); }
+        if(ev.target.closest('#arquivo-comparar')) comparar();
       });
       pintar();
     }
