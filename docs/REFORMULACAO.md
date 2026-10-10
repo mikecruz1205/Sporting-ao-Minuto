@@ -109,6 +109,7 @@ não foi possível, isso está dito.
 | **API-Football** (api-sports.io) | Liga, Taças, Champions, Liga Europa… | Sim (planos pagos) | Sim | Sim | Sim | Sim | Desde ~2010 | Grátis 100/dia; Pro 7 500/dia | Grátis só 2022–2024; **Pro 19 USD/mês** | **Conta suspensa** (`/status`, 9/10/2026). Chave antiga está no histórico do git → trocar |
 | **football-data.org** grátis | Liga Portugal (PPL), Champions (CL). **Não**: Taças, Liga Europa | **Com atraso** | Não | Não | Não | Não | ? | 10/min | 0 € | Sem token configurado |
 | football-data.org pagos | as mesmas 12 | Sim ("Livescores" 12 €/mês) | Sim ("Deep Data" 29 €/mês) | Sim (Deep Data) | Extra pago | Não | — | 20–30/min | 12–29 €/mês | Não ativado (precisa da tua decisão) |
+| **SportScore** (sportscore.com, API pública) | Liga Portugal ("Portuguese Primera Liga"), Champions e muitas mais | **Sim** (minuto e estado; cache da fonte 30–60 s) | Sim (golos, autogolos, cartões, substituições, com resultado parcial) | Sim (formação, onze, banco; indica se está confirmado) | Algumas (posse, remates à baliza/para fora…); "Attacks" ignorados | Não (notas a 0) | Jogos recentes por slug | ~1000 pedidos/24 h por IP (o README oficial; outra página diz 10 000) | **0 €**, sem conta nem chave (não há como cobrar) | **Integrada, desligada por omissão** (`SPORTSCORE_ATIVO=1`). Exige ligação "Powered by SportScore". Termos completos atrás de verificação anti-robôs: lidos só os resumos oficiais |
 | **TheSportsDB** (chave grátis `123`) | Liga Portugal (resultados) | Só premium | Linha temporal **incompleta** | Vazio | Vazio | Não | Sim | 30/min | Grátis / Patreon | **Rejeitado**: no Sporting 2–2 Arouca (19/09/2026) só listou 2 golos e 2 amarelos da 1.ª parte |
 | **Wikipédia** (CC BY-SA) | Todas as do Sporting | Não (horas depois) | Só golos e minuto, depois do jogo | Não | Não | Presenças e golos da época | Várias épocas | Educado | 0 € | **Em uso**: calendário, resultados, classificação, marcadores, arquivo |
 | Sites oficiais (sporting.pt, ligaportugal.pt, uefa.com) | — | — | — | — | — | — | — | — | — | Sem API pública documentada → só ligações |
@@ -201,3 +202,60 @@ histórico (commits `93858b5` e `b65684c`) → tem de ser trocada.
   precisa de um passo próprio para não partir nada).
 * A função de gatilho `chat_carimbar_autor` continua executável por `anon`
   (aviso do Supabase, anterior a esta reformulação; inofensiva fora de um gatilho).
+
+## 8. Fonte gratuita em direto: SportScore (10 de outubro de 2026)
+
+**Porquê esta.** Era a única opção encontrada que é ao mesmo tempo gratuita (sem
+conta, sem chave, sem forma de pagamento: não há como gerar cobranças), em
+direto (o minuto avançou de 14' para 16' em 76 s, com os dados atualizados
+~40 s antes) e com a Liga Portugal e o Sporting. Testada contra o jogo real
+SC Braga 1–3 Sporting CP (9/10/2026): o resultado bate certo com a RTP ("venceu
+por 3-1, com reviravolta") e os marcadores e minutos (autogolo de Rui Silva 41',
+Suárez 66', autogolo de Bernardo Fontes 71', Zalazar 82') batem certo com o
+Wikipédia. A classificação da SportScore já tinha esse jogo (Sporting 8 J, 18 pts, 20–9).
+
+**Como funciona.** Só no servidor (`api/_jogo.py`, `ler_ss`): os nomes das
+equipas vêm das classificações da Liga e da Champions (guardadas 24 h); o jogo
+procura-se pelo slug nas duas ordens e só é aceite se as equipas e a hora
+baterem certo com o calendário (o slug repete-se na 2.ª volta). Depois da
+primeira leitura o cliente envia o id (`ss:<slug>`) e é um pedido por leitura.
+Cache: 60 s em direto, 60 s nos 15 min antes, 5 min antes disso, 6 h depois do
+fim; limite de 10 pedidos por minuto por instância. Um jogo completo gasta
+cerca de 150 pedidos — longe das ~1000/dia.
+
+**Atribuição.** A ligação "Powered by SportScore" (dofollow) aparece no placar
+do centro de jogo, no cartão do jogo da página inicial e no rodapé de todas as
+páginas enquanto houver dados da SportScore no ecrã.
+
+**Falhas.** O servidor devolve a última leitura boa marcada como desatualizada;
+o browser guarda também a última leitura boa de cada jogo (até 6) e, se o
+servidor reiniciar com a fonte em baixo, mostra-a com "Desatualizado" e a hora
+real. Sem leitura anterior: "Dados em direto indisponíveis".
+
+**Ligar.** No Vercel: Settings → Environment Variables → `SPORTSCORE_ATIVO` = `1`.
+Para desligar, apaga a variável. Em casa: a configuração `sporting-hud-sportscore`
+do `launch.json` já a define.
+
+**Reservas antes de ligar.**
+* Os termos completos (`sportscore.com/developers/terms/`) e a documentação estão
+  atrás de uma verificação anti-robôs que não se contornou: só se leram o README e o
+  NOTICE do cliente oficial deles (GitHub `Backspace-me/sportscore-mcp`) e os resumos
+  publicados. Lê os termos num browser antes de ligar.
+* O README oficial diz "Bulk / production / higher-volume use: contact
+  api@sportscore.com". O uso deste site é baixo, mas é um site público: na dúvida,
+  envia-lhes um email a descrever o uso.
+* O `robots.txt` deles tem `Disallow: /api/` para todos os robôs. Isto é para robôs
+  de indexação; uma API documentada e oferecida a programadores não é rastreio,
+  mas fica registado.
+* O limite é por IP e o Vercel partilha IPs entre clientes: se outro site no mesmo IP
+  gastar a quota, a fonte responde 429 e o site mostra a última leitura com a hora.
+* Os dados vêm de um fornecedor deles (os emblemas são de `img.thesports.com`).
+  Não usamos esses emblemas; ficam os nossos.
+
+**Testes.** `tests/test_sportscore.py` (17 testes) com respostas reais gravadas em
+`tests/dados/` (Braga–Sporting terminado, um jogo da Liga MX em direto, a
+classificação da Liga): estados, golos e resultado parcial, 10 substituições com
+sentido certo, cartões, onzes, estatísticas sem métricas indefinidas, procura pelo
+nome do calendário, recusa do jogo errado com o mesmo slug, desligada por omissão,
+cache de 60 s, última leitura com a hora quando falha, ids validados. Total:
+`python -m unittest discover -s tests` → 44 testes, OK.

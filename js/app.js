@@ -3990,11 +3990,14 @@ const TEXTOS_LEGAIS = {
     <p>Wikipédia (CC BY-SA), atualizado algumas horas depois de cada jogo. Os totais da
     época e as comparações entre épocas são contas sobre esses resultados.</p>
     <h4>Jogo em direto e estatísticas da partida</h4>
-    <p>Só de uma fonte com dados autorizados, identificada em cada bloco com a hora da
-    última atualização. Neste momento <b>nenhuma está ativa</b>: a conta da API-Football
-    está suspensa e o football-data.org ainda não tem chave. Por isso o centro de jogo
-    diz «Dados em direto indisponíveis» em vez de estimar minutos, lances ou estatísticas.</p>
+    <p>Só de uma fonte autorizada, identificada em cada bloco com a hora da última
+    atualização. A fonte gratuita é a <b>SportScore</b> (API pública, sem custos, com a
+    ligação «Powered by SportScore» onde os dados aparecem): resultado, minuto, golos,
+    cartões, substituições, onzes e algumas estatísticas, atualizados a cada minuto. Quando
+    não está ligada ou não responde, o centro de jogo mostra a última leitura com a hora dela,
+    ou diz «Dados em direto indisponíveis» — nunca estima minutos, lances ou estatísticas.</p>
     <table class="tabela"><thead><tr><th>Fonte</th><th>Direto</th><th>Eventos</th><th>Onzes</th><th>Estatísticas</th></tr></thead><tbody>
+      <tr><th>SportScore (grátis)</th><td>sim, ~1 min</td><td>sim</td><td>sim</td><td>algumas da equipa</td></tr>
       <tr><th>API-Football</th><td>sim (pago)</td><td>sim</td><td>sim</td><td>equipa e jogadores</td></tr>
       <tr><th>football-data.org (grátis)</th><td>com atraso</td><td>não</td><td>não</td><td>não</td></tr>
       <tr><th>Wikipédia</th><td>não</td><td>só golos, depois do jogo</td><td>não</td><td>não</td></tr>

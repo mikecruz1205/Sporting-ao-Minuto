@@ -48,7 +48,7 @@ FD_BASE = "https://api.football-data.org/v4/"
 SPORTING_AF = 228
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-NOME_FONTE = {"af": "API-Football", "fd": "football-data.org"}
+NOME_FONTE = {"af": "API-Football", "ss": "SportScore", "fd": "football-data.org"}
 VERSAO = 1
 
 
@@ -124,7 +124,7 @@ class ErroFonte(Exception):
 
 # limite de pedidos por instancia e por fonte (a CDN faz o grosso do trabalho)
 _JANELA = {}
-LIMITE_POR_MINUTO = {"af": 20, "fd": 8}
+LIMITE_POR_MINUTO = {"af": 20, "ss": 10, "fd": 8}
 
 
 def _gastar(fonte):
@@ -388,7 +388,7 @@ def normalizar_af(fx, quando=None):
     }
 
 
-def ler_af(data_local, casa, fora, fonte_id=None, abrir=None):
+def ler_af(data_local, casa, fora, fonte_id=None, abrir=None, quando=None):
     chave = segredo("API_FOOTBALL_KEY", "chave-api.txt")
     if not chave:
         raise ErroFonte("sem_chave", "API_FOOTBALL_KEY não está configurada no servidor")
@@ -503,7 +503,7 @@ def normalizar_fd(m, plano_gratuito=True, quando=None):
     }
 
 
-def ler_fd(data_local, casa, fora, fonte_id=None, abrir=None):
+def ler_fd(data_local, casa, fora, fonte_id=None, abrir=None, quando=None):
     token = segredo("FOOTBALL_DATA_TOKEN", "chave-football-data.txt")
     if not token:
         raise ErroFonte("sem_chave", "FOOTBALL_DATA_TOKEN não está configurado no servidor")
@@ -523,12 +523,266 @@ def ler_fd(data_local, casa, fora, fonte_id=None, abrir=None):
 
 
 # ---------------------------------------------------------------------------
+# SportScore — API pública gratuita, sem chave (https://sportscore.com/developers/)
+# ---------------------------------------------------------------------------
+# O plano gratuito não cobra nada (não há conta nem forma de pagamento), tem
+# cerca de 1000 pedidos por dia por IP e exige uma ligação visível
+# "Powered by SportScore" (dofollow) em qualquer página que mostre os dados.
+# Fica DESLIGADA até SPORTSCORE_ATIVO=1: os termos completos estão atrás de
+# uma verificação anti-robôs e têm de ser lidos por uma pessoa antes de usar.
+SS_BASE = "https://sportscore.com/api/widget/"
+SS_SPORTING = "sporting-cp"
+SS_COMPETICOES = ("portuguese-primera-liga", "uefa-champions-league")
+SS_UA = "SportingAoMinuto/1.0 (+https://sporting-fan-ao-minuto.vercel.app)"
+SS_ATRIBUICAO = {"texto": "Powered by SportScore", "url": "https://sportscore.com/"}
+_SS_EQUIPAS = {"t": 0.0, "nomes": {}}      # nome na SportScore -> slug (das classificações, 24 h)
+
+
+def ss_ativo():
+    return os.environ.get("SPORTSCORE_ATIVO", "").strip().lower() in ("1", "sim", "true")
+
+
+def ss_get(caminho, params, abrir=None):
+    url = SS_BASE + caminho + "?" + urllib.parse.urlencode({"sport": "football", **params})
+    return pedir_json(url, {"User-Agent": SS_UA}, "ss", abrir=abrir)
+
+
+def slugificar(s):
+    s = unicodedata.normalize("NFD", s or "").encode("ascii", "ignore").decode().lower()
+    return re.sub(r"[^a-z0-9]+", "-", s).strip("-")
+
+
+def ss_nomes_equipas(abrir=None):
+    if _SS_EQUIPAS["nomes"] and time.time() - _SS_EQUIPAS["t"] < 86400:
+        return _SS_EQUIPAS["nomes"]
+    nomes = {}
+    for comp in SS_COMPETICOES:
+        try:
+            d = ss_get("standings/", {"slug": comp}, abrir)
+        except ErroFonte:
+            continue
+        for tabela in d.get("tables") or []:
+            for linha in tabela.get("rows") or []:
+                if linha.get("team") and linha.get("team_slug"):
+                    nomes[linha["team"]] = linha["team_slug"]
+    if nomes:
+        _SS_EQUIPAS.update(t=time.time(), nomes=nomes)
+    return _SS_EQUIPAS["nomes"] or nomes
+
+
+def ss_slug_equipa(nome, nomes):
+    """O nome do nosso calendário ("SC Braga") -> slug da SportScore
+    ("sporting-braga"): o nome mais parecido nas classificações; se não
+    houver, o nome em forma de slug (o jogo é sempre validado depois)."""
+    if eh_sporting(nome):
+        return SS_SPORTING
+    palavras = lambda x: {w for w in chave_nome(x).split() if len(w) > 1}     # "V. Guimarães": o "v" não conta
+    alvo = palavras(nome)
+    melhor, nota = None, 0.0
+    for n, slug in nomes.items():
+        if eh_sporting(n):
+            continue
+        p = palavras(n)
+        if not p or not alvo:
+            continue
+        j = len(p & alvo) / len(p | alvo)
+        if j > nota:
+            melhor, nota = slug, j
+    return melhor if nota >= 0.34 else slugificar(nome)
+
+
+def ss_jogo_certo(m, quando, casa, fora):
+    try:
+        t = datetime.fromisoformat(str(m.get("time")).replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    if quando and abs((t - quando).total_seconds()) > 6 * 3600:
+        return False
+    return mesma_equipa(m.get("home"), casa) and mesma_equipa(m.get("away"), fora)
+
+
+TEXTOS_SS = [
+    (r"half.?time|^ht$|intervalo", "intervalo"), (r"postpon", "adiado"), (r"cancel", "cancelado"),
+    (r"suspend", "suspenso"), (r"interrupt", "interrompido"), (r"abandon", "abandonado"),
+]
+FASES_SS = {"1st half": "1.ª parte", "2nd half": "2.ª parte", "extra time": "Prolongamento",
+            "overtime": "Prolongamento", "penalties": "Grandes penalidades", "penalty shootout": "Grandes penalidades",
+            "delayed": "Início atrasado"}
+ESTATS_SS = [
+    # (rótulos possíveis na fonte, chave, rótulo, unidade) — "Attacks" e
+    # "Dangerous Attacks" ficam de fora: a fonte não define o que contam
+    (("ball possession", "possession"), "posse", "Posse de bola", "%"),
+    (("total shots", "shots"), "remates", "Remates", ""),
+    (("shots on target", "shots on goal"), "remates_baliza", "Remates à baliza", ""),
+    (("shots off target", "shots off goal"), "remates_fora", "Remates para fora", ""),
+    (("blocked shots",), "remates_bloqueados", "Remates bloqueados", ""),
+    (("corner kicks", "corners"), "cantos", "Cantos", ""),
+    (("fouls",), "faltas", "Faltas", ""),
+    (("offsides",), "foras_jogo", "Foras de jogo", ""),
+    (("yellow cards",), "amarelos", "Cartões amarelos", ""),
+    (("red cards",), "vermelhos", "Cartões vermelhos", ""),
+    (("goalkeeper saves", "saves"), "defesas", "Defesas do guarda-redes", ""),
+    (("total passes", "passes"), "passes", "Passes", ""),
+    (("accurate passes", "passes accurate"), "passes_certos", "Passes certos", ""),
+    (("pass accuracy", "passes %"), "precisao_passe", "Precisão de passe", "%"),
+    (("expected goals", "xg", "expected goals (xg)"), "xg", "Golos esperados (xG)", ""),
+]
+
+
+def estado_ss(status, texto):
+    t = (texto or "").strip().lower()
+    for rx, codigo in TEXTOS_SS:
+        if re.search(rx, t):
+            return codigo
+    return {"live": "direto", "finished": "terminado", "upcoming": "agendado"}.get((status or "").lower(), "desconhecido")
+
+
+def _minuto_ss(valor, extra=None):
+    if valor is None:
+        return None, None
+    if isinstance(valor, str) and "+" in valor:
+        a, b = valor.split("+", 1)
+        return _num(a), _num(b)
+    return _num(valor), _num(extra)
+
+
+def eventos_ss(m):
+    saida, vistos = [], {}
+    for i in m.get("incidents") or []:
+        tipo_f = (i.get("type") or "").lower()
+        minuto, acrescimo = _minuto_ss(i.get("time"), i.get("addtime") or i.get("added_time") or i.get("time_extra"))
+        lado = {"home": "casa", "away": "fora"}.get(i.get("side"))
+        jogador = i.get("player") or None
+        ev = {"minuto": minuto, "acrescimo": acrescimo, "equipa": lado}
+        if "own goal" in tipo_f:
+            ev.update(tipo="autogolo", jogador=jogador)          # "side" = equipa a quem conta o golo
+        elif "pen" in tipo_f and "miss" in tipo_f:
+            ev.update(tipo="penalti_falhado", jogador=jogador)
+        elif "goal" in tipo_f or i.get("is_goal"):
+            ev.update(tipo="penalti" if "pen" in tipo_f else "golo", jogador=jogador,
+                      assistencia=i.get("assist") or i.get("assist1") or None)
+        elif "second yellow" in tipo_f or "yellow red" in tipo_f or "yellow-red" in tipo_f or "yellowred" in tipo_f:
+            ev.update(tipo="segundo_amarelo", jogador=jogador)
+        elif "red" in tipo_f:
+            ev.update(tipo="vermelho", jogador=jogador)
+        elif "yellow" in tipo_f:
+            ev.update(tipo="amarelo", jogador=jogador)
+        elif "sub" in tipo_f or i.get("is_sub"):
+            entrou, saiu = i.get("player_in") or None, i.get("player_out") or None
+            if entrou and saiu:
+                ev.update(tipo="substituicao", entrou=entrou, saiu=saiu)
+            else:
+                ev.update(tipo="substituicao", jogadores=[x for x in (entrou, saiu) if x])
+        elif "var" in tipo_f:
+            ev.update(tipo="var", jogador=jogador, detalhe=traduz_var(i.get("detail") or i.get("reason") or ""))
+        else:
+            continue
+        if i.get("home_score") is not None and i.get("away_score") is not None and ev["tipo"] in ("golo", "penalti", "autogolo"):
+            ev["resultado"] = "%s-%s" % (i["home_score"], i["away_score"])
+        base = (ev["tipo"], ev["minuto"], ev["acrescimo"], ev["equipa"], jogador or ev.get("entrou"), ev.get("saiu"))
+        vistos[base] = vistos.get(base, 0) + 1
+        ev["id"] = _id_evento(*base, vistos[base])
+        saida.append({k: v for k, v in ev.items() if v is not None or k == "acrescimo"})
+    return saida
+
+
+def estatisticas_ss(m):
+    por_rotulo = {(x.get("label") or "").strip().lower(): x for x in m.get("stats") or []}
+    linhas = []
+    for rotulos, chave, rotulo, unidade in ESTATS_SS:
+        x = next((por_rotulo[r] for r in rotulos if r in por_rotulo), None)
+        if not x:
+            continue
+        c, f = _num(x.get("home")), _num(x.get("away"))
+        if c is None and f is None:
+            continue
+        linhas.append({"chave": chave, "rotulo": rotulo, "unidade": unidade or (x.get("suffix") or ""), "casa": c, "fora": f})
+    return linhas
+
+
+def equipas_ss(m):
+    l = m.get("lineups") or {}
+
+    def conv(p):
+        return {"nome": p.get("name"), "numero": p.get("number"), "posicao": POSICAO_AF.get(p.get("position"), p.get("position"))}
+    saida = {}
+    for lado, pre in (("casa", "home"), ("fora", "away")):
+        xi = l.get(pre + "_xi") or []
+        if xi:
+            saida[lado] = {"formacao": l.get(pre + "_formation"), "treinador": l.get(pre + "_coach"),
+                           "titulares": [conv(p) for p in xi], "suplentes": [conv(p) for p in l.get(pre + "_subs") or []]}
+    return saida, l.get("confirmed")
+
+
+def normalizar_ss(m, slug, atualizado=None):
+    codigo = estado_ss(m.get("status"), m.get("status_text"))
+    em_jogo = codigo == "direto"
+    try:
+        hora = iso(datetime.fromisoformat(str(atualizado).replace("Z", "+00:00"))) if atualizado else iso(agora())
+    except ValueError:
+        hora = iso(agora())
+    eventos = eventos_ss(m)
+    estats = estatisticas_ss(m)
+    equipas, confirmado = equipas_ss(m)
+    ht = (m.get("home_ht_score"), m.get("away_ht_score"))
+    mostra_intervalo = ht[0] is not None and ht[1] is not None and (
+        codigo in ("intervalo", "terminado") or (m.get("status_text") or "").lower() in ("2nd half", "extra time", "penalties"))
+    fonte = NOME_FONTE["ss"]
+    return {
+        "fonte_id": "ss:%s" % slug,
+        "atribuicao": SS_ATRIBUICAO,
+        "jogo": {"competicao": m.get("competition"), "jornada": None, "data": m.get("time"), "estadio": None,
+                 "arbitro": None, "casa": {"nome": m.get("home")}, "fora": {"nome": m.get("away")}},
+        "estado": {"codigo": codigo, "fase": FASES_SS.get((m.get("status_text") or "").lower()),
+                   "texto_fonte": m.get("status_text"),
+                   "minuto": _num(m.get("live_minute")) if em_jogo else None, "acrescimo": None,
+                   "fonte": fonte, "atualizado_em": hora,
+                   "atraso": "A fonte e o site guardam cada leitura até 1 minuto: o resultado pode chegar com 1 a 2 minutos de atraso."
+                             if codigo in ("direto", "intervalo") else None},
+        "resultado": {"casa": _num(m.get("home_score")), "fora": _num(m.get("away_score")),
+                      "intervalo": {"home": ht[0], "away": ht[1]} if mostra_intervalo else None, "penaltis": None,
+                      "fonte": fonte, "atualizado_em": hora},
+        "eventos": {"disponivel": "incidents" in m, "lista": eventos, "fonte": fonte, "atualizado_em": hora},
+        "estatisticas": {"disponivel": bool(estats), "linhas": estats, "fonte": fonte, "atualizado_em": hora,
+                         "motivo": None if estats else "A SportScore ainda não publicou estatísticas deste jogo."},
+        "equipas": {"disponivel": bool(equipas), **equipas, "confirmado": confirmado, "fonte": fonte, "atualizado_em": hora,
+                    "motivo": None if equipas else "Os onzes ainda não foram publicados pela SportScore."},
+        "jogadores": {"disponivel": False, "lista": [], "fonte": fonte, "atualizado_em": hora,
+                      "motivo": "A SportScore não dá estatísticas individuais por jogador."},
+    }
+
+
+def ler_ss(data_local, casa, fora, fonte_id=None, abrir=None, quando=None):
+    if not ss_ativo():
+        raise ErroFonte("desligada", "SPORTSCORE_ATIVO não está ligado")
+    candidatos = [fonte_id[3:]] if fonte_id and fonte_id.startswith("ss:") else []
+    nomes = ss_nomes_equipas(abrir)
+    a, b = ss_slug_equipa(casa, nomes), ss_slug_equipa(fora, nomes)
+    # o slug do jogo na SportScore nem sempre tem a equipa da casa à frente
+    for s in ("%s-vs-%s" % (a, b), "%s-vs-%s" % (b, a)):
+        if s not in candidatos:
+            candidatos.append(s)
+    for slug in candidatos:
+        try:
+            d = ss_get("match/", {"slug": slug}, abrir)
+        except ErroFonte as e:
+            if e.motivo == "sem_jogo":
+                continue
+            raise
+        m = d.get("match") or {}
+        if m and ss_jogo_certo(m, quando, casa, fora):
+            return normalizar_ss(m, slug, d.get("updated"))
+    raise ErroFonte("sem_jogo", "a SportScore não tem este jogo nesta data")
+
+
+# ---------------------------------------------------------------------------
 # juntar as fontes
 # ---------------------------------------------------------------------------
-LEITORES = [("af", ler_af), ("fd", ler_fd)]
+LEITORES = [("af", ler_af), ("ss", ler_ss), ("fd", ler_fd)]
 
 MOTIVOS = {
     "sem_chave": "sem chave configurada",
+    "desligada": "desligada (SPORTSCORE_ATIVO não está ligado)",
     "conta": "conta ou chave recusada",
     "limite": "limite de pedidos atingido",
     "sem_cobertura": "o plano não cobre este jogo",
@@ -561,6 +815,8 @@ def juntar(resultados, fontes, conflitos):
             conflitos.append("%s dá %s-%s; %s dá %s-%s. Fica o de %s (prioridade mais alta)." % (
                 NOME_FONTE[principal], r0["casa"], r0["fora"], NOME_FONTE[fid], r1["casa"], r1["fora"], NOME_FONTE[principal]))
     base["ids"] = {fid: dados["fonte_id"] for fid, dados in resultados}
+    # quem exige atribuição (a SportScore, no plano gratuito) fica listado
+    base["atribuicoes"] = [d["atribuicao"] for _, d in resultados if d.get("atribuicao")]
     return base
 
 
@@ -568,14 +824,16 @@ def tempo_de_cache(dados, quando_jogo):
     """segundos de validade: curto em direto, longo depois do fim"""
     codigo = (dados or {}).get("estado", {}).get("codigo")
     if codigo in ("direto", "intervalo"):
-        return 20
+        return 60            # um pedido por minuto à fonte, partilhado por todos
     if codigo == "terminado":
         return 6 * 3600
     if codigo in ("adiado", "cancelado", "abandonado"):
         return 1800
     falta = (quando_jogo - agora()).total_seconds() if quando_jogo else None
-    if falta is not None and -3 * 3600 < falta < 2 * 3600:
-        return 60            # perto da hora ou já devia ter começado
+    if falta is not None and -3 * 3600 < falta < 15 * 60:
+        return 60            # quase a começar, ou já devia ter começado
+    if falta is not None and 0 < falta < 2 * 3600:
+        return 300           # antes do jogo: os onzes saem cerca de 1 h antes
     return 900
 
 
@@ -603,7 +861,8 @@ def obter(data_iso, casa, fora, fonte_id=None, leitores=None, abrir=None):
     fontes, resultados, conflitos = [], [], []
     for fid, ler in (leitores or LEITORES):
         try:
-            dados = ler(data_local, casa, fora, fonte_id if (fonte_id or "").startswith(fid + ":") else None, abrir=abrir)
+            dados = ler(data_local, casa, fora, fonte_id if (fonte_id or "").startswith(fid + ":") else None,
+                        abrir=abrir, quando=quando)
             resultados.append((fid, dados))
             fontes.append({"id": fid, "nome": NOME_FONTE[fid], "estado": "ok"})
         except ErroFonte as e:
@@ -651,5 +910,5 @@ def validar_pedido(data, casa, fora, fonte_id):
     padrao = re.compile(r"^[\w .'\-ºª&()]{2,60}$", re.UNICODE)
     if not padrao.match(casa) or not padrao.match(fora):
         raise ValueError("nome de equipa inválido")
-    if fonte_id and not re.match(r"^(af|fd):\d{1,10}$", fonte_id):
+    if fonte_id and not re.match(r"^((af|fd):\d{1,10}|ss:[a-z0-9-]{3,120})$", fonte_id):
         raise ValueError("id de fonte inválido")

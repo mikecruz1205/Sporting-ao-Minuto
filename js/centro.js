@@ -41,6 +41,12 @@ const CentroJogo = (() => {
     let s = seguimentos.get(k);
     if(!s){
       s = { jogo, dados: null, lidoEm: null, erro: null, falhas: 0, aLer: false, timer: null, idFonte: null, ouvintes: new Set() };
+      const guardada = lerGuardada(jogo);
+      if(guardada){
+        /* até à primeira leitura nova, mostra-se a guardada, marcada como antiga */
+        Object.assign(s, guardada, { restaurada: true });
+        s.idFonte = guardada.dados.ids?.af || guardada.dados.ids?.ss || guardada.dados.ids?.fd || null;
+      }
       seguimentos.set(k, s);
       agendar(s, true);
     }else{
@@ -54,7 +60,28 @@ const CentroJogo = (() => {
     };
   }
 
-  const avisar = s => s.ouvintes.forEach(f => { try{ f(situacao(s)); }catch(e){ console.error('centro:', e); } });
+  const avisar = s => {
+    s.ouvintes.forEach(f => { try{ f(situacao(s)); }catch(e){ console.error('centro:', e); } });
+    pintarAtribuicaoRodape();
+  };
+
+  /* A última leitura boa de cada jogo fica também neste browser: se o
+     servidor reiniciar e a fonte estiver em baixo, ainda há o que mostrar —
+     sempre como "desatualizado" e com a hora real dos dados. */
+  const PREFIXO_GUARDADO = 'scp-jogo:';
+  function guardarLeitura(s){
+    try{
+      localStorage.setItem(PREFIXO_GUARDADO + chave(s.jogo), JSON.stringify({ dados: s.dados, lidoEm: s.lidoEm.toISOString() }));
+      const chaves = Object.keys(localStorage).filter(k => k.startsWith(PREFIXO_GUARDADO));
+      if(chaves.length > 6) chaves.slice(0, chaves.length - 6).forEach(k => localStorage.removeItem(k));
+    }catch(e){ /* sem espaço ou sem acesso: fica só a memória */ }
+  }
+  function lerGuardada(jogo){
+    try{
+      const g = JSON.parse(localStorage.getItem(PREFIXO_GUARDADO + chave(jogo)) || 'null');
+      return g?.dados?.disponivel ? { dados: g.dados, lidoEm: new Date(g.lidoEm) } : null;
+    }catch(e){ return null; }
+  }
 
   async function ler(s){
     if(s.aLer) return;
@@ -68,8 +95,14 @@ const CentroJogo = (() => {
       const r = await fetch('/api/jogo?' + q, { signal: ctrl.signal });
       if(!r.ok) throw new Error('HTTP ' + r.status);
       const d = await r.json();
-      s.dados = d; s.lidoEm = new Date(); s.erro = null; s.falhas = 0;
-      s.idFonte = d.ids?.af || d.ids?.fd || s.idFonte;
+      if(!d.disponivel && s.dados?.disponivel){
+        /* a fonte deixou de responder: mantém-se a última leitura boa, como antiga */
+        s.erro = 'fonte'; s.falhas++;
+      }else{
+        s.dados = d; s.lidoEm = new Date(); s.erro = null; s.falhas = 0; s.restaurada = false;
+        s.idFonte = d.ids?.af || d.ids?.ss || d.ids?.fd || s.idFonte;
+        if(d.disponivel) guardarLeitura(s);
+      }
     }catch(e){
       s.erro = navigator.onLine === false ? 'offline' : e.name === 'AbortError' ? 'tempo' : 'servidor';
       s.falhas++;
@@ -128,7 +161,8 @@ const CentroJogo = (() => {
       const e = d.estado;
       return { ...base, tipo: e.codigo, fonte: e.fonte, minuto: e.minuto, acrescimo: e.acrescimo,
                fase: e.fase, atraso: e.atraso, atualizado: e.atualizado_em ? new Date(e.atualizado_em) : s.lidoEm,
-               resultado: d.resultado, desatualizado: !!d.desatualizado || !!s.erro, aviso: d.aviso };
+               resultado: d.resultado, desatualizado: !!d.desatualizado || !!s.erro || !!s.restaurada, aviso: d.aviso,
+               atribuicoes: d.atribuicoes || [] };
     }
     if(jogado(j)) return { ...base, tipo: 'terminado', fonte: 'Wikipédia', origem: 'calendario',
                            resultado: { casa: j.golosCasa, fora: j.golosFora } };
@@ -153,7 +187,9 @@ const CentroJogo = (() => {
   /* linha de fonte e frescura: "Fonte: API-Football · Atualizado às 21:03 · Com atraso" */
   function linhaFonte(sit){
     const partes = [];
-    if(sit.fonte) partes.push(`Fonte: ${seguro(sit.fonte)}`);
+    const atr = (sit.atribuicoes || []).find(a => a.texto && a.url && sit.fonte && a.texto.includes(sit.fonte));
+    if(atr) partes.push(`Fonte: <a class="cj-atribuicao" href="${seguro(atr.url)}" target="_blank" rel="noopener">${seguro(atr.texto)}</a>`);
+    else if(sit.fonte) partes.push(`Fonte: ${seguro(sit.fonte)}`);
     if(sit.atualizado && !sit.origem) partes.push(`Atualizado às ${hora(sit.atualizado)}`);
     else if(sit.lidoEm && sit.origem !== 'calendario') partes.push(`Lido às ${hora(sit.lidoEm)}`);
     if(sit.atraso) partes.push('<span class="cj-selo cj-selo--atraso">Com atraso</span>');
@@ -192,6 +228,20 @@ const CentroJogo = (() => {
     apito: '<circle cx="9" cy="14" r="5"/><path d="M13 11 21 6v4l-6 3"/>'
   };
   const icone = tipo => `<svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONES[tipo] || ICONES.apito}</svg>`;
+
+  /* o rodapé (em todas as páginas) mostra a atribuição enquanto a faixa ou o
+     centro estiverem a usar dados de uma fonte que a exija */
+  function pintarAtribuicaoRodape(){
+    const alvo = document.getElementById('atribuicao-dados');
+    if(!alvo) return;
+    const todas = [];
+    seguimentos.forEach(s => (s.dados?.disponivel ? s.dados.atribuicoes || [] : []).forEach(a => {
+      if(!todas.some(x => x.url === a.url)) todas.push(a);
+    }));
+    alvo.hidden = !todas.length;
+    alvo.innerHTML = todas.length ? 'Resultados em direto: ' + todas.map(a =>
+      `<a href="${seguro(a.url)}" target="_blank" rel="noopener">${seguro(a.texto)}</a>`).join(' · ') : '';
+  }
 
   function pintar(sit){
     if(!$('#cj-placar')) return;
@@ -345,7 +395,8 @@ const CentroJogo = (() => {
         return `<li class="lc lc--${e.tipo} lc--${e.equipa} ${nosso ? 'lc--nos' : ''}">
           <span class="lc__min">${min}</span>
           <span class="lc__ico">${icone(e.tipo)}</span>
-          <span class="lc__txt"><span class="lc__tipo">${NOMES_EVENTO[e.tipo] || 'Lance'} · ${seguro(curto(nomeEquipa(e.equipa)))}</span><span>${detalhe}</span></span>
+          <span class="lc__txt"><span class="lc__tipo">${e.tipo === 'autogolo' ? `Autogolo · golo para ${seguro(curto(nomeEquipa(e.equipa)))}`
+            : `${NOMES_EVENTO[e.tipo] || 'Lance'} · ${seguro(curto(nomeEquipa(e.equipa)))}`}${e.resultado ? ` · ${seguro(e.resultado)}` : ''}</span><span>${detalhe}</span></span>
         </li>`;
       }).join('')}</ol>`;
   }
@@ -429,7 +480,8 @@ const CentroJogo = (() => {
           ${minhas.length ? `<h5>Substituições</h5><ul class="cj-onze__trocas">${minhas.map(t => `<li><span>${t.minuto}'</span> ${seguro(t.entrou)} <i>por</i> ${seguro(t.saiu)}</li>`).join('')}</ul>` : ''}
         </div>`;
       };
-      alvo.innerHTML = `<p class="cj-origem">Fonte: ${seguro(eq.fonte)}</p><div class="cj-onzes">${bloco('casa', j.casa)}${bloco('fora', j.fora)}</div>`;
+      alvo.innerHTML = `<p class="cj-origem">Fonte: ${seguro(eq.fonte)}${eq.confirmado === false ? ' · <b>onzes ainda não confirmados</b>' : ''}</p>
+        <div class="cj-onzes">${bloco('casa', j.casa)}${bloco('fora', j.fora)}</div>`;
       return;
     }
     const noticia = ctx.noticiaOnze(j);

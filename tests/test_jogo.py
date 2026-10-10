@@ -209,7 +209,7 @@ class Juntar(unittest.TestCase):
         self.assertTrue(d["disponivel"])
         self.assertEqual(d["estado"]["fonte"], "football-data.org")
         self.assertEqual(d["fontes"][0]["estado"], "conta")
-        self.assertEqual(s, 20, "em direto a cache é curta")
+        self.assertEqual(s, 60, "em direto: um pedido por minuto")
 
     def test_cache_nao_volta_a_pedir(self):
         af = _jogo.normalizar_af(fixture_af(status="FT", elapsed=90))
