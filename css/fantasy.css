@@ -78,7 +78,6 @@
   background:
     linear-gradient(rgba(255,255,255,.16), rgba(255,255,255,.16)) center 50% / 100% 2px no-repeat,
     radial-gradient(circle at 50% 50%, transparent 54px, rgba(255,255,255,.16) 55px, rgba(255,255,255,.16) 57px, transparent 58px),
-    linear-gradient(rgba(255,255,255,.16), rgba(255,255,255,.16)) 50% 100% / 46% 2px no-repeat,
     repeating-linear-gradient(180deg, #0d6a40 0 46px, #0b5e39 46px 92px);
   border: 1px solid rgba(255,255,255,.08);
 }
@@ -275,3 +274,33 @@
   .fan-mj__corpo{ grid-row: span 2; }
 }
 @media (prefers-reduced-motion: reduce){ .fan-slot.is-alvo{ animation: none; outline: 2px dashed #fff; } }
+
+/* ---------- campo mais perto de um campo a sério: não estica a toda a largura,
+   tem as duas grandes áreas e cada jogador diz a posição pela cor */
+.fan-campo, .fan-banco, .fan-legenda{ width: 100%; max-width: 760px; margin-inline: auto; }
+.fan-campo::before, .fan-campo::after{
+  content: ''; position: absolute; left: 50%; width: 42%; height: 12%; translate: -50% 0;
+  border: 2px solid rgba(255,255,255,.16); pointer-events: none;
+}
+.fan-campo::before{ bottom: -2px; border-bottom: 0; }
+.fan-campo::after{ top: -2px; border-top: 0; }
+.fan-linha{ position: relative; z-index: 1; }
+@media (min-width: 641px){ .fan-slot{ width: 100px; } }
+.fan-slot__nome{ display: inline-flex; align-items: center; gap: 4px; }
+.fan-slot__txt{ min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.fan-slot__pos{
+  flex: none; padding: 0 3px; border-radius: 3px; font: 800 9px/14px var(--f-ui); font-style: normal; letter-spacing: .02em;
+  color: #fff; background: var(--aro, #555);
+}
+.fan-slot__pos.fan-pos--GR{ color: #1a1300; }
+.fan-slot__info b{ font-weight: 800; color: #ffe08a; }
+.fan-banco .fan-slot__info b{ color: var(--verde-claro); }
+.fan-slot.is-novo{ animation: fan-entra .38s cubic-bezier(.2, .9, .3, 1.25); }
+@keyframes fan-entra{ from{ transform: scale(.6) translateY(6px); opacity: 0; } }
+.fan-legenda{ display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--texto-2); }
+.fan-legenda span{ display: inline-flex; align-items: center; gap: 5px; }
+.fan-braco--legenda{ position: static; width: 16px; height: 16px; font-size: 9px; box-shadow: none; }
+@media (max-width: 640px){
+  .fan-slot .fan-slot__pos{ display: none; }
+}
+@media (prefers-reduced-motion: reduce){ .fan-slot.is-novo{ animation: none; } }

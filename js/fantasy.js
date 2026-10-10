@@ -45,6 +45,7 @@ const Fantasy = (() => {
   let relogio = null;
   let aGuardar = false;
   let aviso = null;                     // { tipo: 'ok'|'erro', texto }
+  const recentes = new Set();           // acabaram de entrar ou de trocar (animação curta no campo)
 
   const fmt = v => v == null ? '—' : Number(v).toLocaleString('pt-PT', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const lisboa = d => new Date(d).toLocaleString('pt-PT', { timeZone: 'Europe/Lisbon', weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
@@ -68,7 +69,14 @@ const Fantasy = (() => {
      ===================================================================== */
   async function carregar(){
     estado = 'a-carregar'; pintar();
-    db = Nuvem.cliente; eu = Nuvem.perfil;
+    db = Nuvem.cliente;
+    /* mudou de conta (ou saiu): nada da conta anterior pode ficar à vista */
+    if((Nuvem.perfil?.id || null) !== (eu?.id || null)){
+      minhas = { equipas: [], escolhas: [], resultados: [], transferencias: [], historico: [], perfil: null, ligas: [] };
+      admin = false; ligaVista = null; tocado = aTrocar = null; aviso = null;
+      if(separador === 'admin') separador = 'equipa';
+    }
+    eu = Nuvem.perfil;
     if(!db){ estado = 'erro'; erro = 'Sem ligação ao servidor do site.'; pintar(); return; }
     try{
       const pedidos = await Promise.all([
@@ -170,6 +178,17 @@ const Fantasy = (() => {
     }
     const guardado = lerRascunho();
     if(guardado) rascunho = guardado;
+    else if(eu){
+      /* a equipa montada antes de entrar não se perde: passa para a conta */
+      const doVisitante = lerRascunho('scp-fantasy-rascunho-anonimo');
+      if(doVisitante){
+        rascunho = doVisitante;
+        try{ localStorage.removeItem('scp-fantasy-rascunho-anonimo'); }catch(e){}
+        avisar('ok', minhas.equipas.length
+          ? 'Esta é a equipa que montaste antes de entrar. Guarda-a, ou toca em Desfazer para voltares à equipa que tinhas guardada.'
+          : 'Recuperámos a equipa que montaste antes de entrar. Já a podes guardar.', 15000);
+      }
+    }
   }
   const assinatura = r => JSON.stringify([r.titulares.slice().sort(), r.banco, r.capitao, r.vice]);
 
@@ -182,12 +201,17 @@ const Fantasy = (() => {
       else localStorage.removeItem(CHAVE_RASCUNHO());
     }catch(e){}
   }
-  function lerRascunho(){
+  function lerRascunho(chave = CHAVE_RASCUNHO()){
     try{
-      const g = JSON.parse(localStorage.getItem(CHAVE_RASCUNHO()) || 'null');
-      if(!g || !aberta || g.jornada !== aberta.id) return null;
+      const g = JSON.parse(localStorage.getItem(chave) || 'null');
+      if(!g || !aberta || g.jornada !== aberta.id || !Array.isArray(g.r?.titulares) || !Array.isArray(g.r?.banco)) return null;
       const ids = [...g.r.titulares, ...g.r.banco];
-      return ids.every(id => jog(id)) ? g.r : null;
+      /* jogadores que já não existem ou repetidos: o rascunho não serve */
+      if(!ids.every(id => jog(id)) || new Set(ids).size !== ids.length || ids.length > 15) return null;
+      const r = { titulares: g.r.titulares, banco: g.r.banco, capitao: g.r.capitao ?? null, vice: g.r.vice ?? null };
+      if(!r.titulares.includes(r.capitao)) r.capitao = null;
+      if(!r.titulares.includes(r.vice) || r.vice === r.capitao) r.vice = null;
+      return r;
     }catch(e){ return null; }
   }
   const alterado = () => !!rascunho && assinatura(rascunho) !== gravado;
@@ -247,7 +271,7 @@ const Fantasy = (() => {
   function podeEntrar(id){
     const j = jog(id);
     if(!j) return 'Jogador desconhecido';
-    if(plantel().includes(id)) return null;
+    if(plantel().includes(id)) return 'Já está na tua equipa';
     if(!j.elegivel) return j.motivoInelegivel || 'Não elegível';
     if(j.preco == null) return 'Ainda sem preço Fantasy';
     const c = contar(plantel());
@@ -266,6 +290,7 @@ const Fantasy = (() => {
     const cabeNoOnze = rascunho.titulares.length < 11 && c[j.posicao] <= cfg.jogo.onze_max[j.posicao]
       && (j.posicao !== 'GR' || c.GR === 1);
     if(cabeNoOnze) rascunho.titulares.push(id); else rascunho.banco.push(id);
+    recentes.add(id);
     equilibrar();
     corrigirOnze();
     arrumarBanco();
@@ -284,8 +309,7 @@ const Fantasy = (() => {
       if(!falta || !entra || !sai) break;
       rascunho.titulares = rascunho.titulares.map(x => x === sai ? entra : x);
       rascunho.banco = rascunho.banco.map(x => x === entra ? sai : x);
-      if(rascunho.capitao === sai) rascunho.capitao = null;
-      if(rascunho.vice === sai) rascunho.vice = null;
+      tirarBracadeira(sai);
     }
   }
 
@@ -327,10 +351,20 @@ const Fantasy = (() => {
     if(!formacaoValida(contar(novo))) return 'Essa troca deixava a formação inválida (3–5 defesas, 2–5 médios, 1–3 avançados)';
     rascunho.titulares = novo;
     rascunho.banco = rascunho.banco.map(x => x === sup ? tit : x);
-    if(rascunho.capitao === tit) rascunho.capitao = null;
-    if(rascunho.vice === tit) rascunho.vice = null;
+    tirarBracadeira(tit);
     arrumarBanco();
+    recentes.add(tit); recentes.add(sup);
     return null;
+  }
+
+  /* capitão e vice têm de ser titulares: quem vai para o banco perde a
+     braçadeira, e diz-se em vez de desaparecer sem aviso */
+  function tirarBracadeira(id){
+    const era = rascunho.capitao === id ? 'capitão' : rascunho.vice === id ? 'vice-capitão' : null;
+    if(!era) return;
+    if(rascunho.capitao === id) rascunho.capitao = null;
+    if(rascunho.vice === id) rascunho.vice = null;
+    avisar('ok', `${jog(id)?.nome_curto || 'O jogador'} foi para o banco e deixou de ser ${era}. Escolhe outro.`);
   }
 
   function moverBanco(id, delta){
@@ -356,14 +390,17 @@ const Fantasy = (() => {
   async function guardar(){
     if(!eu){ window.Entrada?.exigirConta('Entra ou cria uma conta para guardares a tua equipa Fantasy.', 'formacao'); return; }
     if(problemas().length || aGuardar) return;
-    aGuardar = true; pintar();
     const nome = $('#fan-nome-equipa')?.value?.trim() || null;
-    const { data, error } = await db.rpc('fantasy_guardar_equipa', {
-      p_titulares: rascunho.titulares, p_banco: rascunho.banco,
-      p_capitao: rascunho.capitao, p_vice: rascunho.vice, p_nome_equipa: nome
-    });
+    aGuardar = true; pintar();
+    let data = null, error = null;
+    try{
+      ({ data, error } = await db.rpc('fantasy_guardar_equipa', {
+        p_titulares: rascunho.titulares, p_banco: rascunho.banco,
+        p_capitao: rascunho.capitao, p_vice: rascunho.vice, p_nome_equipa: nome
+      }));
+    }catch(e){ error = e; }
     aGuardar = false;
-    if(error){ avisar('erro', 'O servidor não aceitou: ' + error.message); pintar(); return; }
+    if(error){ avisar('erro', 'Não foi possível guardar: ' + mensagemErro(error)); pintar(); return; }
     if(!data?.ok){ avisar('erro', (data?.erros || ['Não foi possível guardar.']).join(' · ')); pintar(); return; }
     avisar('ok', data.penalizacao
       ? `Equipa guardada. ${data.transferencias} transferências: −${data.penalizacao} pontos nesta jornada.`
@@ -374,10 +411,19 @@ const Fantasy = (() => {
     pintar();
   }
 
-  function avisar(tipo, texto){
+  /* as mensagens do servidor do Fantasy já vêm em português; as técnicas não se mostram */
+  function mensagemErro(e){
+    const m = String(e?.message || e || '');
+    if(/failed to fetch|networkerror|load failed|network request failed/i.test(m)) return 'sem ligação ao servidor. Verifica a internet e tenta outra vez.';
+    if(/jwt|session|not authenticated|refresh token/i.test(m)) return 'a sessão expirou. Entra outra vez.';
+    if(!m || /permission denied|violates|column|relation|function|syntax|timeout|schema|postgrest/i.test(m)) return 'o servidor não respondeu como esperado. Tenta outra vez daqui a pouco.';
+    return m;
+  }
+
+  function avisar(tipo, texto, ms = 6000){
     aviso = { tipo, texto };
     clearTimeout(avisar._t);
-    avisar._t = setTimeout(() => { aviso = null; pintarAviso(); }, 6000);
+    avisar._t = setTimeout(() => { aviso = null; pintarAviso(); }, ms);
     pintarAviso();
   }
 
@@ -415,6 +461,7 @@ const Fantasy = (() => {
     pintarAviso();
     ligarRelogio();
     guardarRascunho();
+    if(separador === 'equipa') recentes.clear();
     if(separador === 'classificacao') pintarClassificacao();
     if(separador === 'ligas') pintarLiga();
     if(separador === 'admin') preencherGestao();
@@ -491,7 +538,7 @@ const Fantasy = (() => {
     }
     const linha = p => {
       const ids = rascunho.titulares.filter(id => jog(id)?.posicao === p);
-      return `<div class="fan-linha" data-linha="${p}">${ids.map(slot).join('')}</div>`;
+      return `<div class="fan-linha" data-linha="${p}">${ids.map(id => slot(id)).join('')}</div>`;
     };
     const falta = POS.map(p => [p, cfg.jogo.plantel[p] - contar(plantel())[p]]).filter(([, n]) => n > 0);
     const c = contar(rascunho.titulares);
@@ -501,6 +548,8 @@ const Fantasy = (() => {
         <div class="fan-campo__formacao">${c.DEF}-${c.MED}-${c.AVA}</div>
         ${['AVA', 'MED', 'DEF', 'GR'].map(linha).join('')}
       </div>
+      <p class="fan-legenda" aria-hidden="true">${POS.map(p => `<span><i class="fan-slot__pos fan-pos--${p}">${p}</i>${NOME_POS[p]}</span>`).join('')}
+        <span><i class="fan-braco fan-braco--legenda">C</i>Capitão (pontos a dobrar)</span></p>
       <div class="fan-banco" aria-label="Banco, por ordem de entrada">
         <p class="fan-rotulo">Banco <span>— entram por esta ordem se um titular não jogar</span></p>
         <ol class="fan-banco__lista">${rascunho.banco.map((id, i) => `<li>${slot(id, i)}</li>`).join('')}</ol>
@@ -528,12 +577,12 @@ const Fantasy = (() => {
     const c = rascunho.capitao === id, v = rascunho.vice === id;
     const sel = tocado === id || aTrocar === id;
     const alvo = aTrocar && aTrocar !== id && (rascunho.titulares.includes(aTrocar) !== rascunho.titulares.includes(id));
-    return `<button type="button" class="fan-slot ${sel ? 'is-sel' : ''} ${alvo ? 'is-alvo' : ''} ${!j.elegivel ? 'is-inelegivel' : ''}" data-fan-slot="${id}"
-              aria-label="${seguro(j.nome)}, ${NOME_POS_1[j.posicao]}${c ? ', capitão' : v ? ', vice-capitão' : ''}${iBanco != null ? ', suplente ' + (iBanco + 1) : ''}">
+    return `<button type="button" class="fan-slot ${sel ? 'is-sel' : ''} ${alvo ? 'is-alvo' : ''} ${!j.elegivel ? 'is-inelegivel' : ''} ${recentes.has(id) ? 'is-novo' : ''}" data-fan-slot="${id}"
+              aria-label="${seguro(j.nome)}, ${NOME_POS_1[j.posicao]}${c ? ', capitão' : v ? ', vice-capitão' : ''}${iBanco != null ? ', suplente ' + (iBanco + 1) : ''}${j.pontos != null ? ', ' + j.pontos + ' pontos' : ''}">
       ${cara(j)}
       ${c ? '<i class="fan-braco" aria-hidden="true">C</i>' : v ? '<i class="fan-braco fan-braco--v" aria-hidden="true">V</i>' : ''}
-      <span class="fan-slot__nome">${seguro(rotuloCampo(j))}</span>
-      <span class="fan-slot__info">${fmt(precoAnterior(id) ?? j.preco)} M€</span>
+      <span class="fan-slot__nome"><i class="fan-slot__pos fan-pos--${j.posicao}" aria-hidden="true">${j.posicao}</i><span class="fan-slot__txt">${seguro(rotuloCampo(j))}</span></span>
+      <span class="fan-slot__info">${fmt(precoAnterior(id) ?? j.preco)} M€${j.pontos != null ? ` · <b>${j.pontos}</b> pts` : ''}</span>
     </button>`;
   }
 
@@ -865,7 +914,7 @@ const Fantasy = (() => {
       fonte: 'manual', substituir: true,
       jogo: { id: j.jogo_id, golos_casa: Number(fd.get('golos_casa')), golos_fora: Number(fd.get('golos_fora')), estado: 'terminado' },
       jogadores: linhas } });
-    if(error){ avisar('erro', error.message); return; }
+    if(error){ avisar('erro', mensagemErro(error)); return; }
     avisar('ok', `Jornada ${j.numero} calculada (provisória): ${data?.calculo?.jogadores ?? 0} jogadores, ${data?.calculo?.equipas ?? 0} equipas.`);
     await carregar();
   }
@@ -915,7 +964,8 @@ const Fantasy = (() => {
         if(aTrocar){
           if(aTrocar === id){ aTrocar = null; pintar(); return; }
           const mau = trocar(aTrocar, id);
-          if(mau) avisar('erro', mau); else { aTrocar = null; tocado = null; }
+          if(mau) avisar('erro', mau);
+          else { aTrocar = null; tocado = null; if(aviso?.tipo === 'erro') aviso = null; }
           pintar(); return;
         }
         tocado = tocado === id ? null : id; pintar();
@@ -931,7 +981,7 @@ const Fantasy = (() => {
       }
       if(d.fanSair){
         const { error } = await db.rpc('fantasy_sair_liga', { p_liga: Number(d.fanSair) });
-        if(error) avisar('erro', error.message); else { avisar('ok', 'Saíste da liga.'); ligaVista = null; await carregarMinhas(); pintar(); }
+        if(error) avisar('erro', mensagemErro(error)); else { avisar('ok', 'Saíste da liga.'); ligaVista = null; await carregarMinhas(); pintar(); }
         return;
       }
       switch(d.fan){
@@ -949,7 +999,7 @@ const Fantasy = (() => {
         case 'finalizar': {
           const j = jor(adminJornada);
           const { data, error } = await db.rpc('fantasy_finalizar_jornada', { p_jornada: j.id });
-          if(error) avisar('erro', error.message); else { avisar('ok', `Jornada ${j.numero} finalizada; ${data.precos_alterados} preços mudaram.`); await carregar(); }
+          if(error) avisar('erro', mensagemErro(error)); else { avisar('ok', `Jornada ${j.numero} finalizada; ${data.precos_alterados} preços mudaram.`); await carregar(); }
           break;
         }
       }
@@ -983,7 +1033,7 @@ const Fantasy = (() => {
       const { data, error } = tipo === 'criar'
         ? await db.rpc('fantasy_criar_liga', { p_nome: fd.get('nome') })
         : await db.rpc('fantasy_entrar_liga', { p_codigo: fd.get('codigo') });
-      if(error){ avisar('erro', error.message); return; }
+      if(error){ avisar('erro', mensagemErro(error)); return; }
       avisar('ok', tipo === 'criar' ? `Liga criada. Código para convidar: ${data.codigo}` : `Entraste na liga "${data.nome}".`);
       await carregarMinhas(); ligaVista = data.id; pintar();
     });
@@ -1001,7 +1051,15 @@ const Fantasy = (() => {
     else pintar();
   }
 
-  return { abrir, recarregar: carregar };
+  /* só para os testes automáticos (tests/fantasy_logica.test.js): as regras
+     do rascunho, sem desenho nem servidor */
+  const _teste = {
+    adicionar, remover, trocar, capitao, vice, problemas, contas, contar, guardarRascunho, mensagemErro,
+    get rascunho(){ return rascunho; }, get aviso(){ return aviso; }, get minhas(){ return minhas; },
+    get eu(){ return eu; }, get admin(){ return admin; }, get estado(){ return estado; }
+  };
+
+  return { abrir, recarregar: carregar, _teste };
 })();
 /* o app.js chega-lhe por window (um const global não fica em window) */
 window.Fantasy = Fantasy;
