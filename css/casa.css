@@ -170,3 +170,95 @@
 .arq-comp tbody th{ text-align: left; }
 .arq-comp small{ color: var(--texto-3); font-weight: 600; }
 .arq-melhor{ color: var(--verde-claro); font-weight: 800; }
+
+/* =========================================================================
+   QUADRO TÁTICO — escalação ao estilo de um jogo de futebol
+   Campo pequeno (4:5), o nome do jogador por cima da etiqueta da posição
+   (cor do grupo), a lista da escalação ao lado. Sem notas nem números
+   inventados: só o nome, a posição e o desenho.
+   ========================================================================= */
+#vista-formacao .formacao{
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 24px; align-items: start;
+}
+@media (max-width: 760px){ #vista-formacao .formacao{ grid-template-columns: minmax(0, 1fr); gap: 18px; } }
+
+#vista-formacao .campo{
+  position: relative; overflow: hidden;
+  width: 360px; max-width: 100%; min-width: 0; aspect-ratio: 4 / 5; margin: 0 auto;
+  border-radius: 6px; border: 2px solid rgba(255,255,255,.8);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.35), 0 14px 32px -14px rgba(0,0,0,.65);
+}
+#vista-formacao .campo__relva{
+  background:
+    radial-gradient(120% 70% at 50% 50%, rgba(255,255,255,.06), transparent 70%),
+    repeating-linear-gradient(180deg, #2f7d38 0 10%, #29702f 10% 20%);
+}
+#vista-formacao .posicao{
+  position: absolute; transform: translate(-50%, -50%);
+  width: auto; min-width: 44px; min-height: 40px; padding: 2px 4px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  background: none; border: 0; cursor: pointer;
+  animation: entraEtiqueta .3s cubic-bezier(.2,.9,.3,1) backwards;
+}
+@keyframes entraEtiqueta{ from{ opacity: 0; transform: translate(-50%, -40%); } }
+#vista-formacao .posicao:hover{ transform: translate(-50%, -50%); z-index: 3; }
+#vista-formacao .posicao__nome{
+  background: none; padding: 0; border-radius: 0;
+  font: 800 11px/1.05 var(--f-ui); letter-spacing: .02em; text-transform: uppercase;
+  color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.85), 0 0 6px rgba(0,0,0,.35); white-space: nowrap;
+  max-width: 96px; overflow: hidden; text-overflow: ellipsis;
+}
+@media (max-width: 520px){ #vista-formacao .posicao__nome{ max-width: 78px; font-size: 10px; } }
+#vista-formacao .posicao__nome i{ font-style: normal; color: #ffe08a; }
+#vista-formacao .posicao--vazia .posicao__nome{
+  display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
+  border: 1.5px dashed rgba(255,255,255,.75); background: rgba(0,0,0,.18); font-size: 14px; font-weight: 600;
+}
+#vista-formacao .posicao--vazia .papel{ opacity: .85; }
+/* seleção como num jogo: contorno ciano na etiqueta */
+#vista-formacao .posicao:hover .papel,
+#vista-formacao .posicao:focus-visible .papel,
+#vista-formacao .posicao.alvo-troca .papel{ outline: 2px solid #5fd6ff; outline-offset: 2px; }
+#vista-formacao .posicao:focus-visible{ outline: none; }
+#vista-formacao .posicao--fora .papel{ box-shadow: 0 0 0 2px #f2c14e; }
+#vista-formacao .posicao.a-arrastar{ opacity: .35; }
+.campo__desenho{
+  position: absolute; right: 8px; bottom: 6px; z-index: 2;
+  font: 800 19px/1 var(--f-num); letter-spacing: .02em; color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,.8);
+}
+.campo__espera{
+  position: absolute; inset: 0; z-index: 4; display: grid; place-items: center;
+  margin: 0; background: rgba(8,20,12,.55); color: #fff; font-weight: 700; font-size: 14px;
+}
+
+/* etiqueta da posição: cor do grupo, como nas escalações dos jogos */
+.papel{
+  display: inline-block; min-width: 30px; padding: 2px 5px; border-radius: 3px;
+  font: 800 10px/1.25 var(--f-ui); letter-spacing: .04em; text-align: center; text-transform: uppercase;
+  color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.35);
+}
+.papel--GR{ background: #e9b13a; color: #2a1d00; }
+.papel--DEF{ background: #2f6bd1; }
+.papel--MED{ background: #2b9443; }
+.papel--AVA{ background: #cf3a3a; }
+
+/* listas: a escalação e o resto do plantel */
+#vista-formacao .convocados .onze{ list-style: none; margin: 0; padding: 0; }
+#vista-formacao .convocados .onze li{
+  display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 6px 8px;
+  border-bottom: 1px solid var(--linha); border-radius: 6px; cursor: pointer;
+  transition: background var(--rapido);
+}
+#vista-formacao .convocados .onze li:hover,
+#vista-formacao .convocados .onze li:focus-visible{ background: var(--cartao-alto); transform: none; outline: none; box-shadow: inset 3px 0 0 #5fd6ff; }
+#vista-formacao .convocados .onze__nome{ flex: 1; font-size: 13.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .02em; }
+#vista-formacao .convocados .onze li.onze--vazio{ opacity: .7; }
+#vista-formacao .convocados .onze li.onze--vazio .onze__nome{ text-transform: none; font-weight: 500; color: var(--texto-3); }
+.onze__aviso{ font-size: 11px; font-weight: 700; color: var(--amarelo); white-space: nowrap; }
+#vista-formacao .convocados .onze--banco{ max-height: 300px; overflow-y: auto; overscroll-behavior: contain; }
+#vista-formacao .convocados .onze--banco .onze__nome{ font-weight: 600; color: var(--texto-2); }
+#vista-formacao .head-tools .pilula:disabled{ opacity: .45; cursor: not-allowed; }
+.posicao--fantasma{ display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.posicao--fantasma .posicao__nome{ font: 800 11px/1 var(--f-ui); color: #fff; text-transform: uppercase; text-shadow: 0 1px 2px #000; }
+.cand__txt .papel{ margin-right: 4px; vertical-align: 1px; }

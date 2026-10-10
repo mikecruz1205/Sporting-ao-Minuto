@@ -2671,80 +2671,65 @@ function nomeCurto(nome){
 let desenhoAtual = FORMACAO.desenho;
 let meuOnze = [];              // um nome (ou null) por posição do desenho
 let posicaoAberta = -1;
-let capitaoIdx = -1;      // posicao do capitao no onze (x1.5 na fantasy)
+let capitaoIdx = -1;           // posição do capitão (só para mostrar o (C))
+let plantelReal = false;       // o plantel a sério (Wikipédia/zerozero) já chegou
+let formacaoCarregada = false;
 
-/* Contas.idDe mantem os numeros do nome — o chaveNome() do app deita-os
-   fora, e "mike1"/"mike2" acabavam a partilhar a mesma formacao. */
-const chaveFormacao = () =>
-  'scp-formacao-' + (UTILIZADOR_ATUAL ? Contas.idDe(UTILIZADOR_ATUAL) : 'convidado');
+/* A chave separa as contas: com sessão no Supabase usa-se o id da conta
+   (nunca o nome mostrado, que pode repetir-se em maiúsculas/minúsculas). */
+const chaveFormacao = () => 'scp-formacao-' + (Nuvem.perfil?.id
+  || (UTILIZADOR_ATUAL ? Contas.idDe(UTILIZADOR_ATUAL) : 'convidado'));
 
 /* =========================================================================
-   REGRAS DA FANTASY — tranca e substituições
-   -------------------------------------------------------------------------
-   Antes do primeiro jogo oficial mexe-se à vontade. Assim que a bola rolar,
-   a equipa tranca e só se fazem 2 trocas por jornada.
+   QUE JOGADOR SERVE EM CADA POSIÇÃO
+   O primeiro grupo é o natural (aparece primeiro na escolha); os outros
+   são as adaptações habituais — um médio a ala, um avançado a extremo.
+   Um defesa a ponta de lança ou um guarda-redes fora da baliza não entram.
    ========================================================================= */
-let jornadaGuardada = 0;
-let substituicoesUsadas = 0;
+const COMPATIVEIS = {
+  GR: ['GR'], DC: ['DEF'], LE: ['DEF'], LD: ['DEF'], ALA: ['DEF', 'MED'],
+  MDC: ['MED', 'DEF'], MC: ['MED'], MO: ['MED', 'AVA'], EXT: ['AVA', 'MED'], PL: ['AVA']
+};
+const gruposDoPapel = papel => COMPATIVEIS[papel] || [PAPEL_GRUPO[papel]].filter(Boolean);
+const grupoDoPapel = papel => gruposDoPapel(papel)[0] || 'MED';
+const serve = (p, slot) => !!p && !!slot && gruposDoPapel(slot.papel).includes(p.posGrupo);
+const NOME_GRUPO = { GR: 'guarda-redes', DEF: 'defesa', MED: 'médio', AVA: 'avançado' };
 
-/* quantos jogos oficiais já se jogaram (a pré-época não conta) */
-function jornadaAtual(){
-  return JOGOS.filter(j => jogado(j) && provaDoJogo(j) !== 'Pré-época').length;
+/* nomes guardados de jogadores que já saíram do plantel (ou escritos de
+   outra forma) passam ao nome do plantel atual, ou a vaga; repetidos saem */
+function normalizarOnze(){
+  if(!plantelReal) return;
+  const vistos = new Set();
+  meuOnze = meuOnze.map(n => {
+    const p = n ? acharJogador(n) : null;
+    if(!p || vistos.has(p.nome)) return null;
+    vistos.add(p.nome);
+    return p.nome;
+  });
 }
+const noOnze = () => meuOnze.filter(n => n && acharJogador(n));
 
-const equipaTrancada = () => jornadaAtual() > 0;
-
-function substituicoesRestantes(){
-  if(!equipaTrancada()) return Infinity;
-  return Math.max(0, FANTASY.substituicoesPorJornada - substituicoesUsadas);
-}
-
-/* Cada mexida no onze gasta uma substituição — mas só depois de a época
-   começar, e só se for mesmo uma troca (pôr alguém numa vaga vazia
-   durante a montagem inicial não conta). */
-function podeMexer(){
-  if(!equipaTrancada()) return { pode: true };
-  if(substituicoesRestantes() > 0) return { pode: true };
-  return { pode: false,
-           razao: `Já usaste as ${FANTASY.substituicoesPorJornada} substituições desta jornada. ` +
-                  `Podes voltar a mexer depois do próximo jogo.` };
-}
-
-function gastarSubstituicao(){
-  if(!equipaTrancada()) return;
-  substituicoesUsadas++;
-  guardarFormacao();
-}
-
-/* quando muda a jornada, o saldo de trocas volta a zero */
-function acertarJornada(){
-  const agora = jornadaAtual();
-  if(agora !== jornadaGuardada){
-    jornadaGuardada = agora;
-    substituicoesUsadas = 0;
-    guardarFormacao();
-  }
-}
+/* o quadro tático é o onze ideal de cada um: não conta para a Fantasy
+   (que tem as suas regras no servidor), por isso mexe-se à vontade */
+const equipaTrancada = () => false;
+function podeMexer(){ return { pode: true }; }
+function gastarSubstituicao(){}
 
 function guardarFormacao(){
-  const equipa = { desenho: desenhoAtual, onze: meuOnze, capitao: capitaoIdx,
-                   jornada: jornadaGuardada, substituicoes: substituicoesUsadas };
+  const equipa = { desenho: desenhoAtual, onze: meuOnze, capitao: capitaoIdx, atualizado: Date.now() };
 
-  /* copia local: serve de rascunho e faz o site abrir depressa */
+  /* cópia local: serve de rascunho e faz o site abrir depressa */
   try{ localStorage.setItem(chaveFormacao(), JSON.stringify(equipa)); }catch(e){}
 
-  /* e na nuvem, para entrar no ranking de toda a gente. Espera-se um pouco
-     para nao mandar um pedido por cada clique. */
+  /* e na conta, para ser a mesma em qualquer aparelho. Espera-se um pouco
+     para não mandar um pedido por cada clique. */
   if(naNuvem() && Nuvem.perfil){
+    const dono = Nuvem.perfil.id;
     clearTimeout(guardarFormacao._espera);
-    guardarFormacao._espera = setTimeout(() => {
-      /* o quadro tático guarda-se, mas sem pontos: pontos calculados no
-         browser não entram em lado nenhum (o Fantasy conta-os no servidor) */
-      Nuvem.guardarEquipa({ ...equipa,
-        trancada: equipaTrancada(),
-        pontos: 0,
-        jogadores: meuOnze.filter(Boolean).length
-      });
+    guardarFormacao._espera = setTimeout(async () => {
+      if(Nuvem.perfil?.id !== dono) return;          // entretanto mudou de conta
+      const r = await Nuvem.guardarEquipa({ ...equipa, trancada: false, pontos: 0, jogadores: noOnze().length });
+      if(r?.erro) avisarSubstituicoes('Não foi possível guardar o onze na tua conta (ficou guardado neste aparelho).');
     }, 700);
   }
 }
@@ -2760,77 +2745,104 @@ function pontosDoOnze(){
 }
 
 async function carregarFormacaoGuardada(){
-  let guardada = null;
-  /* o que esta na nuvem manda: e o mesmo em qualquer aparelho */
+  let local = null, nuvem = null;
+  try{ local = JSON.parse(localStorage.getItem(chaveFormacao()) || 'null'); }catch(e){}
   if(naNuvem() && Nuvem.perfil){
-    try{ guardada = await Nuvem.lerEquipa(); }catch(e){}
+    try{ nuvem = await Nuvem.lerEquipa(); }catch(e){}
   }
-  if(!guardada){
-    try{ guardada = JSON.parse(localStorage.getItem(chaveFormacao()) || 'null'); }
-    catch(e){}
-  }
+  /* as duas cópias podem divergir (mexeste sem rede, ou noutro aparelho):
+     fica a mais recente; se a local for mais nova, sobe para a conta */
+  const quando = g => g ? (Number(g.atualizado) || Date.parse(g.atualizado) || 0) : -1;
+  const guardada = quando(local) > quando(nuvem) ? local : (nuvem || local);
+  const subir = !!(nuvem || Nuvem.perfil) && guardada === local && local && quando(local) > quando(nuvem);
 
   if(guardada && FORMACOES[guardada.desenho]){
     desenhoAtual = guardada.desenho;
     meuOnze = FORMACOES[desenhoAtual].map((_, i) => guardada.onze?.[i] ?? null);
     capitaoIdx = Number.isInteger(guardada.capitao) ? guardada.capitao : -1;
-    jornadaGuardada = guardada.jornada | 0;
-    substituicoesUsadas = guardada.substituicoes | 0;
   }else{
     /* primeira vez: arranca com a sugestão de data.js */
     desenhoAtual = FORMACOES[FORMACAO.desenho] ? FORMACAO.desenho : Object.keys(FORMACOES)[0];
-    meuOnze = FORMACOES[desenhoAtual].map((slot, i) =>
-      FORMACAO.titulares[i]?.nome ?? null);
+    meuOnze = FORMACOES[desenhoAtual].map((slot, i) => FORMACAO.titulares[i]?.nome ?? null);
+    capitaoIdx = -1;
   }
+  formacaoCarregada = true;
+  normalizarOnze();
   pintarFormacao();
+  if(subir) guardarFormacao();
 }
 
-/* muda de desenho tentando manter quem já lá está, posição a posição */
+/* o plantel a sério chegou: os nomes guardados passam aos do plantel */
+function plantelChegou(){
+  plantelReal = true;
+  if(!formacaoCarregada) carregarFormacaoGuardada();
+  else { normalizarOnze(); pintarFormacao(); }
+}
+
+/* muda de desenho tentando manter quem já lá está: primeiro no mesmo
+   papel, depois numa posição onde sirva; quem não couber é dito */
 function mudarDesenho(novo){
   if(!FORMACOES[novo]) return;
   const antigos = meuOnze.slice();
   const antesSlots = FORMACOES[desenhoAtual];
   desenhoAtual = novo;
+  const slots = FORMACOES[novo];
 
   const usados = new Set();
-  meuOnze = FORMACOES[novo].map(slot => {
-    /* procura alguém do desenho anterior com o mesmo papel e ainda livre */
-    const i = antesSlots.findIndex((s, k) =>
-      s.papel === slot.papel && antigos[k] && !usados.has(k));
+  meuOnze = slots.map(slot => {
+    const i = antesSlots.findIndex((s, k) => s.papel === slot.papel && antigos[k] && !usados.has(k));
     if(i >= 0){ usados.add(i); return antigos[i]; }
     return null;
   });
-
-  /* quem sobrou tenta entrar nas posições vazias do mesmo grupo */
-  const sobra = antigos.filter((n, k) => n && !usados.has(k));
-  FORMACOES[novo].forEach((slot, i) => {
-    if(meuOnze[i]) return;
-    const j = sobra.findIndex(n => {
-      const p = acharJogador(n);
-      return p && p.posGrupo === PAPEL_GRUPO[slot.papel] && !meuOnze.includes(n);
+  /* quem sobrou: primeiro onde é o grupo natural, depois onde sirva */
+  let sobra = antigos.filter((n, k) => n && !usados.has(k));
+  for(const natural of [true, false]){
+    slots.forEach((slot, i) => {
+      if(meuOnze[i]) return;
+      const j = sobra.findIndex(n => {
+        const p = acharJogador(n);
+        return p && (natural ? p.posGrupo === grupoDoPapel(slot.papel) : serve(p, slot));
+      });
+      if(j >= 0) meuOnze[i] = sobra.splice(j, 1)[0];
     });
-    if(j >= 0) meuOnze[i] = sobra.splice(j, 1)[0];
-  });
-
+  }
+  capitaoIdx = -1;
   guardarFormacao();
   pintarFormacao();
+  const fora = sobra.filter(n => acharJogador(n));
+  if(fora.length) avisarSubstituicoes(`No ${novo} não há lugar para ${fora.map(nomeCurto).join(', ')} — ${fora.length > 1 ? 'ficaram' : 'ficou'} no plantel.`);
 }
 
-/* preenche os buracos com quem estiver livre e der para a posição */
+/* preenche as vagas com quem estiver livre e sirva para a posição */
 function preencherAuto(){
-  FORMACOES[desenhoAtual].forEach((slot, i) => {
-    if(meuOnze[i]) return;
-    const grupo = PAPEL_GRUPO[slot.papel];
-    const candidato =
-      PLANTEL.find(p => p.posGrupo === grupo && !meuOnze.includes(p.nome)) ||
-      PLANTEL.find(p => !meuOnze.includes(p.nome) && p.posGrupo !== 'GR');
-    if(candidato) meuOnze[i] = candidato.nome;
-  });
+  if(!plantelReal) return;
+  normalizarOnze();
+  const slots = FORMACOES[desenhoAtual];
+  for(const natural of [true, false]){
+    slots.forEach((slot, i) => {
+      if(meuOnze[i]) return;
+      const livre = PLANTEL.filter(p => !meuOnze.includes(p.nome));
+      const c = natural ? livre.find(p => p.posGrupo === grupoDoPapel(slot.papel)) : livre.find(p => serve(p, slot));
+      if(c) meuOnze[i] = c.nome;
+    });
+  }
+  guardarFormacao();
+  pintarFormacao();
+  const vagas = slots.filter((s, i) => !meuOnze[i]).map(s => s.papel);
+  if(vagas.length) avisarSubstituicoes(`Não há mais jogadores no plantel para: ${[...new Set(vagas)].join(', ')}.`);
+}
+
+function limparOnze(){
+  meuOnze = meuOnze.map(() => null);
+  capitaoIdx = -1;
   guardarFormacao();
   pintarFormacao();
 }
 
 /* ---------- desenhar ---------- */
+const etiquetaPapel = (papel, grupo) =>
+  `<span class="papel papel--${grupo}">${papel}</span>`;
+
 function pintarFormacao(){
   const alvo = $('#campo');
   if(!alvo) return;
@@ -2842,92 +2854,82 @@ function pintarFormacao(){
   /* selector de desenho */
   const sel = $('#escolher-formacao');
   if(sel && sel.options.length !== Object.keys(FORMACOES).length){
-    sel.innerHTML = Object.keys(FORMACOES)
-      .map(d => `<option value="${d}">${d}</option>`).join('');
+    sel.innerHTML = Object.keys(FORMACOES).map(d => `<option value="${d}">${d}</option>`).join('');
   }
   if(sel) sel.value = desenhoAtual;
+  $('#formacao-auto') && ($('#formacao-auto').disabled = !plantelReal);
+  $('#formacao-limpar') && ($('#formacao-limpar').disabled = !noOnze().length);
 
-  const escolhidos = meuOnze.filter(Boolean).length;
+  /* o contador só conta quem existe mesmo no plantel */
+  const escolhidos = noOnze().length;
   $('#onze-conta').textContent = `${escolhidos}/11`;
 
-  /* estado das substituições */
   const aviso = $('#formacao-aviso');
   if(aviso && !aviso.classList.contains('formacao__aviso--alerta')){
-    if(!equipaTrancada()){
-      aviso.innerHTML = 'Arrasta os jogadores para trocar de posição, ou carrega numa para '
-        + 'escolher outro. <b>Enquanto a época não começar mexes à vontade</b> — a partir do '
-        + 'primeiro jogo oficial só podes fazer '
-        + FANTASY.substituicoesPorJornada + ' substituições por jornada.';
-    }else{
-      const restam = substituicoesRestantes();
-      aviso.innerHTML = `Jornada ${jornadaAtual()} · <b>${restam} de `
-        + `${FANTASY.substituicoesPorJornada} substituições</b> por usar. `
-        + 'Trocar dois jogadores de posição entre si não gasta substituição.';
-    }
+    aviso.innerHTML = 'O teu onze ideal — <b>não conta para a Fantasy</b>. Toca numa posição para escolher '
+      + 'quem joga lá, ou arrasta para trocar. Cada posição só aceita quem serve para ela. Fica guardado na tua conta.';
   }
 
-  /* campo */
+  /* campo (4:5, como a escalação de um jogo de futebol) */
   alvo.innerHTML = `
     <div class="campo__relva"></div>
-    <svg class="campo__linhas" viewBox="0 0 100 150" preserveAspectRatio="none">
-      <rect x="2" y="2" width="96" height="146" fill="none" stroke="#fff" stroke-width="0.7" opacity=".75"/>
-      <line x1="2" y1="75" x2="98" y2="75" stroke="#fff" stroke-width="0.7" opacity=".75"/>
-      <circle cx="50" cy="75" r="13" fill="none" stroke="#fff" stroke-width="0.7" opacity=".75"/>
-      <circle cx="50" cy="75" r="1" fill="#fff" opacity=".75"/>
-      <rect x="24" y="2" width="52" height="22" fill="none" stroke="#fff" stroke-width="0.7" opacity=".75"/>
-      <rect x="38" y="2" width="24" height="9" fill="none" stroke="#fff" stroke-width="0.7" opacity=".75"/>
-      <rect x="24" y="126" width="52" height="22" fill="none" stroke="#fff" stroke-width="0.7" opacity=".75"/>
-      <rect x="38" y="139" width="24" height="9" fill="none" stroke="#fff" stroke-width="0.7" opacity=".75"/>
-      <path d="M40 24 a13 13 0 0 0 20 0" fill="none" stroke="#fff" stroke-width="0.7" opacity=".75"/>
-      <path d="M40 126 a13 13 0 0 1 20 0" fill="none" stroke="#fff" stroke-width="0.7" opacity=".75"/>
+    <svg class="campo__linhas" viewBox="0 0 100 125" preserveAspectRatio="none" aria-hidden="true">
+      <g fill="none" stroke="#fff" stroke-width="0.6" opacity=".7">
+        <rect x="3" y="3" width="94" height="119"/>
+        <line x1="3" y1="62.5" x2="97" y2="62.5"/>
+        <circle cx="50" cy="62.5" r="10"/>
+        <rect x="22" y="3" width="56" height="17"/><rect x="37" y="3" width="26" height="6"/>
+        <path d="M41 20 a10 10 0 0 0 18 0"/>
+        <rect x="22" y="105" width="56" height="17"/><rect x="37" y="116" width="26" height="6"/>
+        <path d="M41 105 a10 10 0 0 1 18 0"/>
+      </g>
+      <circle cx="50" cy="62.5" r=".8" fill="#fff" opacity=".7"/>
     </svg>
     ${slots.map((slot, i) => {
       const nome = meuOnze[i];
       const p = nome ? acharJogador(nome) : null;
-      const gr = slot.papel === 'GR';
-
+      const g = grupoDoPapel(slot.papel);
+      /* nas alas o nome não sai do campo */
+      const pos = `left:${Math.min(86, Math.max(14, slot.x))}%; top:${slot.y}%; animation-delay:${i * .03}s`;
       if(!p){
-        return `<button class="posicao posicao--vazia" data-i="${i}"
-                     style="left:${slot.x}%; top:${slot.y}%; animation-delay:${i*.04}s"
-                     title="Escolher ${slot.papel}">
-          <span class="posicao__vazia"><i>+</i></span>
-          <span class="posicao__nome posicao__nome--papel">${slot.papel}</span>
-        </button>`;
+        return `<button type="button" class="posicao posicao--vazia" data-i="${i}" style="${pos}"
+                     aria-label="Escolher ${NOME_GRUPO[g]} para ${slot.papel}">
+          <span class="posicao__nome" aria-hidden="true">+</span>${etiquetaPapel(slot.papel, g)}</button>`;
       }
-      return `<button class="posicao" data-i="${i}"
-                   style="left:${slot.x}%; top:${slot.y}%; animation-delay:${i*.04}s"
-                   title="${p.nome} · ${slot.papel} — carrega para trocar">
-        <span class="posicao__camisola">${camisolaSVG(p.n ?? '', gr ? 'gr' : 'campo')}</span>
-        <span class="posicao__nome">${nomeCurto(p.nome)}</span>
-      </button>`;
-    }).join('')}`;
+      const fora = !serve(p, slot);
+      return `<button type="button" class="posicao ${fora ? 'posicao--fora' : ''}" data-i="${i}" style="${pos}" title="${p.nome}"
+                   aria-label="${p.nome}, ${slot.papel}${fora ? ', fora de posição' : ''}${capitaoIdx === i ? ', capitão' : ''} — toca para trocar">
+        <span class="posicao__nome">${nomeCurto(p.nome)}${capitaoIdx === i ? ' <i>(C)</i>' : ''}</span>${etiquetaPapel(slot.papel, g)}</button>`;
+    }).join('')}
+    <span class="campo__desenho" aria-hidden="true">${desenhoAtual}</span>
+    ${plantelReal ? '' : '<p class="campo__espera" role="status">A carregar o plantel…</p>'}`;
 
-  /* o toque nas posicoes e tratado no pointerup do arrastar (ligarArrastar),
-     para funcionar tambem com o dedo */
-
-  /* listas à direita */
+  /* listas à direita: a escalação e o resto do plantel */
   $('#lista-titulares').innerHTML = slots.map((slot, i) => {
     const p = meuOnze[i] ? acharJogador(meuOnze[i]) : null;
-    return `<li class="${p ? '' : 'onze--vazio'}" data-i="${i}">
-      <span class="onze__n">${p?.n ?? '·'}</span>
+    const fora = p && !serve(p, slot);
+    return `<li class="${p ? '' : 'onze--vazio'}" data-i="${i}" tabindex="0" role="button"
+                aria-label="${slot.papel}: ${p ? p.nome : 'por escolher'}${fora ? ' (fora de posição)' : ''}">
+      ${etiquetaPapel(slot.papel, grupoDoPapel(slot.papel))}
       <span class="onze__nome">${p ? (ALCUNHAS[p.nome] || p.nome) : 'por escolher'}</span>
-      <span class="onze__papel">${slot.papel}</span>
+      ${fora ? '<span class="onze__aviso">fora de posição</span>' : ''}
     </li>`;
   }).join('');
 
-  $$('#lista-titulares li').forEach(li =>
-    li.addEventListener('click', () => abrirEscolha(+li.dataset.i)));
+  $$('#lista-titulares li').forEach(li => {
+    li.addEventListener('click', () => abrirEscolha(+li.dataset.i));
+    li.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); abrirEscolha(+li.dataset.i); } });
+  });
 
-  const fora = PLANTEL.filter(p => !meuOnze.includes(p.nome));
-  $('#lista-suplentes').innerHTML = fora.map(p => `
+  const naoJogam = PLANTEL.filter(p => !meuOnze.includes(p.nome))
+    .sort((a, b) => ['GR', 'DEF', 'MED', 'AVA'].indexOf(a.posGrupo) - ['GR', 'DEF', 'MED', 'AVA'].indexOf(b.posGrupo));
+  $('#lista-suplentes').innerHTML = !plantelReal
+    ? '<li class="onze--vazio"><span class="onze__nome">a carregar o plantel…</span></li>'
+    : naoJogam.map(p => `
     <li data-nome="${p.nome}">
-      <span class="onze__n">${p.n ?? '–'}</span>
+      ${etiquetaPapel(p.posGrupo, p.posGrupo)}
       <span class="onze__nome">${ALCUNHAS[p.nome] || p.nome}</span>
-      <span class="onze__papel">${p.pos}</span>
     </li>`).join('') || '<li class="onze--vazio"><span class="onze__nome">ninguém de fora</span></li>';
-
-  /* idem para a lista do plantel: o toque abre a ficha, o arrasto leva
-     o jogador para o campo */
 
   pintarFantasy();
 }
@@ -3016,8 +3018,7 @@ function ligarArrastar(){
       if(nomeArrastado){
         const p = acharJogador(nomeArrastado);
         fantasma.innerHTML =
-          `<span class="posicao__camisola">${camisolaSVG(p?.n ?? '', p?.posGrupo === 'GR' ? 'gr' : 'campo')}</span>
-           <span class="posicao__nome">${nomeCurto(nomeArrastado)}</span>`;
+          `<span class="posicao__nome">${nomeCurto(nomeArrastado)}</span>${etiquetaPapel(p?.posGrupo || '', p?.posGrupo || 'MED')}`;
       }else{
         fantasma.innerHTML = origem.innerHTML;
       }
@@ -3059,10 +3060,10 @@ function ligarArrastar(){
 
     /* ---- veio da lista do plantel: entra alguém de fora ---- */
     if(vindoDaLista){
-      const r = podeMexer();
-      if(!r.pode){ avisarSubstituicoes(r.razao); return; }
-      meuOnze[para] = vindoDaLista;
-      gastarSubstituicao();
+      const p = acharJogador(vindoDaLista), slot = FORMACOES[desenhoAtual][para];
+      if(!serve(p, slot)){ avisarSubstituicoes(`${nomeCurto(vindoDaLista)} é ${NOME_GRUPO[p?.posGrupo] || 'jogador'}: não joga a ${slot.papel}.`); return; }
+      meuOnze[para] = p.nome;
+      if(capitaoIdx === para) capitaoIdx = -1;
       guardarFormacao();
       pintarFormacao();
       return;
@@ -3071,19 +3072,16 @@ function ligarArrastar(){
     /* ---- troca entre duas posições do campo ---- */
     if(para === de) return;
 
-    /* trocar dois jogadores do onze é reorganizar — não gasta substituição.
-       Só gasta se uma das pontas estiver vazia (entra alguém de fora). */
-    const vazia = !meuOnze[de] || !meuOnze[para];
-    if(vazia){
-      const r = podeMexer();
-      if(!r.pode){ avisarSubstituicoes(r.razao); return; }
-    }
+    /* a troca só se faz se cada um servir na posição do outro */
+    const slotsAgora = FORMACOES[desenhoAtual];
+    const pDe = meuOnze[de] && acharJogador(meuOnze[de]), pPara = meuOnze[para] && acharJogador(meuOnze[para]);
+    if(pDe && !serve(pDe, slotsAgora[para])){ avisarSubstituicoes(`${nomeCurto(pDe.nome)} não joga a ${slotsAgora[para].papel}.`); return; }
+    if(pPara && !serve(pPara, slotsAgora[de])){ avisarSubstituicoes(`${nomeCurto(pPara.nome)} não joga a ${slotsAgora[de].papel}.`); return; }
 
     [meuOnze[de], meuOnze[para]] = [meuOnze[para], meuOnze[de]];
     if(capitaoIdx === de) capitaoIdx = para;
     else if(capitaoIdx === para) capitaoIdx = de;
 
-    if(vazia) gastarSubstituicao();
     guardarFormacao();
     pintarFormacao();
   };
@@ -3099,9 +3097,6 @@ function abrirEscolha(i){
   const dlg = $('#escolha');
 
   $('#escolha-papel').textContent = slot.papel;
-  $('#escolha-nota').textContent = meuOnze[i]
-    ? 'está lá ' + meuOnze[i]
-    : 'escolhe quem joga aqui';
   $('#escolha-tirar').hidden = !meuOnze[i];
   $('#escolha-procura').value = '';
 
@@ -3115,50 +3110,49 @@ function abrirEscolha(i){
 
 function listarCandidatos(procura){
   const slot = FORMACOES[desenhoAtual][posicaoAberta];
-  const grupo = PAPEL_GRUPO[slot.papel];
+  const grupos = gruposDoPapel(slot.papel);
   const q = semAcentos(procura);
 
-  /* primeiro os da posição certa, depois os restantes */
-  const ordenado = [...PLANTEL].sort((a,b) => {
-    const pa = a.posGrupo === grupo ? 0 : 1;
-    const pb = b.posGrupo === grupo ? 0 : 1;
-    return pa - pb || (a.n ?? 999) - (b.n ?? 999);
-  }).filter(p => !q || semAcentos(p.nome + ' ' + p.pos).includes(q));
+  /* só quem serve para a posição; primeiro o grupo natural */
+  const ordenado = PLANTEL.filter(p => grupos.includes(p.posGrupo))
+    .sort((a, b) => grupos.indexOf(a.posGrupo) - grupos.indexOf(b.posGrupo) || (a.n ?? 999) - (b.n ?? 999))
+    .filter(p => !q || semAcentos(p.nome + ' ' + (ALCUNHAS[p.nome] || '') + ' ' + p.pos).includes(q));
 
-  $('#escolha-lista').innerHTML = ordenado.map(p => {
+  $('#escolha-nota').textContent = (meuOnze[posicaoAberta] ? 'está lá ' + nomeCurto(meuOnze[posicaoAberta]) + ' · ' : '')
+    + 'servem: ' + grupos.map(g => NOME_GRUPO[g] + 's').join(' e ');
+
+  $('#escolha-lista').innerHTML = !plantelReal ? '<div class="vazio">O plantel ainda está a carregar.</div>'
+    : ordenado.map(p => {
     const onde = meuOnze.indexOf(p.nome);
     const jaJoga = onde >= 0 && onde !== posicaoAberta;
-    return `<button class="cand ${p.posGrupo === grupo ? 'cand--certo' : ''}"
-                 data-nome="${p.nome}">
-      <img src="${p.foto}" alt="" loading="lazy"
+    const natural = p.posGrupo === grupos[0];
+    return `<button type="button" class="cand ${natural ? 'cand--certo' : ''}" data-nome="${p.nome}">
+      <img src="${p.foto}" alt="" loading="lazy" width="40" height="40"
            onerror="this.onerror=null;this.src='${avatarJogador(p)}'">
       <span class="cand__txt">
         <b>${ALCUNHAS[p.nome] || p.nome}</b>
-        <span>${p.pos} · ${p.nac} · ${p.stats.golos} golos</span>
+        <span>${etiquetaPapel(p.posGrupo, p.posGrupo)} ${p.nac || ''}${natural ? '' : ' · adaptado'}</span>
       </span>
       <span class="cand__n">${p.n ?? '–'}</span>
-      ${jaJoga ? `<span class="cand__aviso">já joga a ${FORMACOES[desenhoAtual][onde].papel}</span>` : ''}
+      ${jaJoga ? `<span class="cand__aviso">já joga a ${FORMACOES[desenhoAtual][onde].papel} — trocam</span>` : ''}
     </button>`;
-  }).join('') || '<div class="vazio">Ninguém com esse nome.</div>';
+  }).join('') || `<div class="vazio">${q ? 'Ninguém com esse nome que sirva para ' + slot.papel + '.' : 'Ninguém no plantel serve para ' + slot.papel + '.'}</div>`;
 
   $$('#escolha-lista .cand').forEach(b => b.addEventListener('click', () => {
     const nome = b.dataset.nome;
     const onde = meuOnze.indexOf(nome);
-
-    /* trocar entre duas posições do próprio onze não gasta substituição:
-       é reorganizar, não é mudar de jogador */
-    const soReorganiza = onde >= 0;
-    const trazDeFora = !soReorganiza && meuOnze[posicaoAberta];
-
-    if(trazDeFora){
-      const r = podeMexer();
-      if(!r.pode){ avisarSubstituicoes(r.razao); return; }
+    const slots = FORMACOES[desenhoAtual];
+    /* já estava noutra posição: trocam, se o outro servir lá */
+    if(onde >= 0 && onde !== posicaoAberta){
+      const outro = meuOnze[posicaoAberta] && acharJogador(meuOnze[posicaoAberta]);
+      if(outro && !serve(outro, slots[onde])){
+        avisarSubstituicoes(`${nomeCurto(outro.nome)} não joga a ${slots[onde].papel}: tira-o primeiro.`);
+        $('#escolha').close();
+        return;
+      }
+      meuOnze[onde] = meuOnze[posicaoAberta];
     }
-
-    if(onde >= 0 && onde !== posicaoAberta) meuOnze[onde] = meuOnze[posicaoAberta];
     meuOnze[posicaoAberta] = nome;
-
-    if(trazDeFora) gastarSubstituicao();
     guardarFormacao();
     pintarFormacao();
     $('#escolha').close();
@@ -3171,6 +3165,7 @@ function ligarEscolha(){
   $('#escolha-procura').addEventListener('input', e => listarCandidatos(e.target.value));
   $('#escolha-tirar').addEventListener('click', () => {
     meuOnze[posicaoAberta] = null;
+    if(capitaoIdx === posicaoAberta) capitaoIdx = -1;
     guardarFormacao();
     pintarFormacao();
     dlg.close();
@@ -3180,11 +3175,7 @@ function ligarEscolha(){
 
   $('#escolher-formacao').addEventListener('change', e => mudarDesenho(e.target.value));
   $('#formacao-auto').addEventListener('click', preencherAuto);
-  $('#formacao-limpar').addEventListener('click', () => {
-    meuOnze = meuOnze.map(() => null);
-    guardarFormacao();
-    pintarFormacao();
-  });
+  $('#formacao-limpar').addEventListener('click', limparOnze);
 }
 /* =========================================================================
    7c-bis. DIA DE JOGO — faixa do topo e Centro de jogo (ver js/centro.js)
@@ -3811,7 +3802,7 @@ async function sincronizar(){
       detetarMovimentos();
       pintarPlantel();
       /* só agora há plantel a sério para pôr no campo */
-      carregarFormacaoGuardada();
+      plantelChegou();
       /* estes dois usam as fotos do plantel, por isso repintam-se agora */
       pintarMercado();
       pintarClube();

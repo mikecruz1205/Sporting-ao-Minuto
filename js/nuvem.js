@@ -294,7 +294,8 @@ const Nuvem = (() => {
       desenho: data.desenho, onze: data.onze, capitao: data.capitao,
       pontos: data.pontos, jogadores: data.jogadores,
       trancada: data.trancada, jornada: data.jornada,
-      substituicoes: data.substituicoes_usadas
+      substituicoes: data.substituicoes_usadas,
+      atualizado: data.atualizado_em
     };
   }
 
