@@ -934,7 +934,11 @@ button.jl-linha:hover, .jl.aberta .jl-linha{ background:var(--cartao-alto); }
   position:relative;
   /* limita-se a LARGURA e deixa-se a altura sair do aspect-ratio: se se
      limitasse a altura, o campo esticava de lado e perdia as proporções */
-  width:100%; max-width:520px; margin:0 auto;
+  width:100%; margin:0 auto;
+  /* cabe no ecrã: nunca mais largo do que 440px nem mais alto do que a
+     janela (tirando o cabeçalho) — a altura vem do aspect-ratio 2:3 */
+  max-width:min(440px, calc((100svh - 230px) * 0.6667));
+  min-width:min(100%, 300px);
   aspect-ratio: 100 / 150;
   border-radius:var(--raio); overflow:hidden;
   border:1px solid var(--linha);
