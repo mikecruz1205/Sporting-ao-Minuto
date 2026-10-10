@@ -2,7 +2,7 @@
    servidor nem página: o ficheiro corre numa sandbox com um Supabase falso.
 
    Correr:  node --test tests/
-   (o python -m unittest também os corre, por tests/test_fantasy_js.py)
+   (o python -m unittest também os corre, por tests/test_javascript.py)
 
    Os números de configuração são os da migração
    supabase/migrations/20261009120100_fantasy_tabelas.sql. */

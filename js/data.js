@@ -459,32 +459,122 @@ const CLUBE = {
   lugares: "50.095",
   alcunha: "Leões",
   cores: "Verde e branco",
-  /* taca: liga · taca · supertaca · ligacup · europa (desenhos em arte.js) */
-  titulos: [
-    { nome:"Campeonatos Nacionais", n:21, taca:"liga",      ultima:"2024/25", cor:"#e8c56a" },
-    { nome:"Taças de Portugal",     n:18, taca:"taca",      ultima:"2024/25", cor:"#dfe6e9" },
-    { nome:"Supertaças",            n:11, taca:"supertaca", ultima:"",        cor:"#e8c56a" },
-    { nome:"Taças da Liga",         n:5,  taca:"ligacup",   ultima:"",        cor:"#dfe6e9" },
-    { nome:"Taça das Taças",        n:1,  taca:"europa",    ultima:"1963/64", cor:"#9fe3bd" }
-  ],
+  /* o palmarés está em PALMARES, logo a seguir */
 
-  /* Jogadores do plantel atual que já levantaram troféus pelo clube.
-     Lista à mão — acrescenta ou tira à vontade. As caras vêm das
-     fotografias que já estão em img/players/. */
+  /* Jogadores com títulos pelo Sporting (futebol sénior), como estão na
+     secção de palmarés de cada um na Wikipédia inglesa — verificado a 10 de
+     outubro de 2026. Só aparecem os que estão no plantel atual. */
   campeoes: [
-    { nome:"Gonçalo Inácio",       titulos:"2 Campeonatos · Taça · Supertaça" },
-    { nome:"Pedro Gonçalves",      titulos:"2 Campeonatos · Taça · Supertaça" },
-    { nome:"Ousmane Diomande",     titulos:"2 Campeonatos · Taça" },
-    { nome:"Eduardo Quaresma",     titulos:"2 Campeonatos · Taça" },
-    { nome:"Daniel Bragança",      titulos:"2 Campeonatos · Taça" },
-    { nome:"Nuno Santos",          titulos:"2 Campeonatos · Taça · Supertaça" },
-    { nome:"Geny Catamo",          titulos:"2 Campeonatos · Taça" },
-    { nome:"João Virgínia",        titulos:"2 Campeonatos · Taça" },
-    { nome:"Iván Fresneda",        titulos:"2 Campeonatos · Taça" },
-    { nome:"Maximiliano Araújo",   titulos:"Campeonato · Taça" },
-    { nome:"Georgios Vagiannidis", titulos:"Campeonato · Taça" },
-    { nome:"Rui Silva",            titulos:"Campeonato · Taça" },
-    { nome:"João Simões",          titulos:"Campeonato" }
+    { nome:"Gonçalo Inácio",     titulos:{ liga:['2020–21','2023–24','2024–25'], taca:['2024–25'], ligacup:['2020–21','2021–22'], supertaca:['2021'] } },
+    { nome:"Pedro Gonçalves",    titulos:{ liga:['2020–21','2023–24','2024–25'], taca:['2024–25'], ligacup:['2020–21','2021–22'], supertaca:['2021'] } },
+    { nome:"Nuno Santos",        titulos:{ liga:['2020–21','2023–24','2024–25'], taca:['2024–25'], ligacup:['2020–21','2021–22'], supertaca:['2021'] } },
+    { nome:"Daniel Bragança",    titulos:{ liga:['2020–21','2023–24','2024–25'], taca:['2024–25'], ligacup:['2020–21','2021–22'] } },
+    { nome:"Eduardo Quaresma",   titulos:{ liga:['2020–21','2023–24','2024–25'], taca:['2024–25'], ligacup:['2020–21'] } },
+    { nome:"Ousmane Diomande",   titulos:{ liga:['2023–24','2024–25'], taca:['2024–25'] } },
+    { nome:"Geny Catamo",        titulos:{ liga:['2023–24','2024–25'], taca:['2024–25'] } },
+    { nome:"Iván Fresneda",      titulos:{ liga:['2023–24','2024–25'], taca:['2024–25'] } },
+    { nome:"Maximiliano Araújo", titulos:{ liga:['2024–25'], taca:['2024–25'] } },
+    { nome:"Rui Silva",          titulos:{ liga:['2024–25'], taca:['2024–25'] } },
+    { nome:"Zeno Debast",        titulos:{ liga:['2024–25'], taca:['2024–25'] } },
+    { nome:"Eduardo Felicíssimo", titulos:{ liga:['2024–25'], taca:['2024–25'] } },
+    { nome:"João Simões",        titulos:{ liga:['2024–25'], taca:['2024–25'] } },
+    { nome:"João Virgínia",      titulos:{ ligacup:['2021–22'] } }
+  ]
+};
+
+/* =========================================================================
+   PALMARÉS — futebol sénior masculino, para o museu (js/museu.js)
+   -------------------------------------------------------------------------
+   Verificado a 10 de outubro de 2026 nas secções de palmarés da Wikipédia
+   em português e em inglês (as duas dão os mesmos números nas competições
+   principais). Em 2025/26 o Sporting não ganhou nenhuma destas provas.
+   Cada época leva o título do artigo da Wikipédia em português quando ele
+   existe; sem artigo fica null e a ficha liga à página da competição.
+   "so_pt": só aparece na Wikipédia em português — mostra-se à parte.
+   Não entram equipas B nem torneios particulares.
+   ========================================================================= */
+const PALMARES = {
+  verificado: '10 de outubro de 2026',
+  fontes: [
+    ['Wikipédia — Sporting Clube de Portugal, Palmarés', 'https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal#Palmarés'],
+    ['Wikipedia — Sporting CP, Honours', 'https://en.wikipedia.org/wiki/Sporting_CP#Honours']
+  ],
+  imagem: {
+    src: 'img/museu/tricampeonato-1280.webp', src800: 'img/museu/tricampeonato-800.webp',
+    alt: 'Taças dos Campeonatos Nacionais de 1943/44, 1946/47, 1947/48, 1948/49 e 1950/51 em vitrines no Museu Sporting',
+    legenda: 'Taças dos Campeonatos de 1943/44 a 1950/51 no Museu Sporting',
+    autor: 'Threeohsix', licenca: 'CC BY-SA 4.0', licencaUrl: 'https://creativecommons.org/licenses/by-sa/4.0/deed.pt',
+    origem: 'https://commons.wikimedia.org/wiki/File:Trof%C3%A9us_do_tricampeonato_do_Sporting_de_1947_a_1949_no_Museu_Sporting.jpg',
+    alteracao: 'reduzida e convertida para WebP'
+  },
+  competicoes: [
+    { id:'liga', nome:'Campeonato Nacional', plural:'Campeonatos Nacionais', curto:'Campeonato',
+      grupo:'principal', ambito:'nacional', extinta:false, taca:'liga', artigo:'Primeira Liga',
+      sobre:'O campeonato principal do futebol português.',
+      epocas:[
+        ['1940–41','Primeira Divisão de 1940–41'], ['1943–44','Primeira Divisão de 1943–44'], ['1946–47','Primeira Divisão de 1946–47'],
+        ['1947–48','Primeira Divisão de 1947–48'], ['1948–49','Primeira Divisão de 1948–49'], ['1950–51','Primeira Divisão de 1950–51'],
+        ['1951–52','Primeira Divisão de 1951–52'], ['1952–53','Primeira Divisão de 1952–53'], ['1953–54','Primeira Divisão de 1953–54'],
+        ['1957–58','Primeira Divisão de 1957–58'], ['1961–62','Primeira Divisão de 1961–62'], ['1965–66','Primeira Divisão de 1965–66'],
+        ['1969–70','Primeira Divisão de 1969–70'], ['1973–74','Primeira Divisão de 1973–74'], ['1979–80','Primeira Divisão de 1979–80'],
+        ['1981–82','Primeira Divisão de 1981–82'], ['1999–00','Primeira Liga de 1999–00'], ['2001–02','Primeira Liga de 2001–02'],
+        ['2020–21','Primeira Liga de 2020–21'], ['2023–24','Primeira Liga de 2023–24'], ['2024–25','Primeira Liga de 2024–25']
+      ] },
+    { id:'taca', nome:'Taça de Portugal', plural:'Taças de Portugal', curto:'Taça de Portugal',
+      grupo:'principal', ambito:'nacional', extinta:false, taca:'taca', artigo:'Taça de Portugal',
+      sobre:'A taça nacional, disputada por eliminatórias desde 1938/39.',
+      epocas:[
+        ['1940–41','Taça de Portugal de 1940–41'], ['1944–45',null], ['1945–46',null], ['1947–48',null], ['1953–54',null],
+        ['1962–63',null], ['1970–71',null], ['1972–73',null], ['1973–74',null], ['1977–78',null], ['1981–82',null],
+        ['1994–95','Taça de Portugal de 1994–95'], ['2001–02','Taça de Portugal de 2001–02'], ['2006–07','Taça de Portugal de 2006–07'],
+        ['2007–08','Taça de Portugal de 2007–08'], ['2014–15','Taça de Portugal de 2014–15'], ['2018–19','Taça de Portugal de 2018–19'],
+        ['2024–25','Taça de Portugal de 2024–25']
+      ] },
+    { id:'supertaca', nome:'Supertaça Cândido de Oliveira', plural:'Supertaças', curto:'Supertaça',
+      grupo:'principal', ambito:'nacional', extinta:false, taca:'supertaca', artigo:'Supertaça Cândido de Oliveira',
+      sobre:'O jogo entre o campeão nacional e o vencedor da Taça de Portugal. Conta-se pelo ano em que se jogou.',
+      epocas:[
+        ['1982',null], ['1987',null], ['1995',null], ['2000',null], ['2002','Supertaça Cândido de Oliveira de 2002'],
+        ['2007','Supertaça Cândido de Oliveira de 2007'], ['2008','Supertaça Cândido de Oliveira de 2008'],
+        ['2015','Supertaça Cândido de Oliveira de 2015'], ['2021','Supertaça Cândido de Oliveira de 2021']
+      ] },
+    { id:'ligacup', nome:'Taça da Liga', plural:'Taças da Liga', curto:'Taça da Liga',
+      grupo:'principal', ambito:'nacional', extinta:false, taca:'ligacup', artigo:'Taça da Liga',
+      sobre:'A taça organizada pela Liga Portugal, disputada desde 2007/08.',
+      epocas:[
+        ['2017–18','Taça da Liga de 2017–18'], ['2018–19','Taça da Liga de 2018–19'],
+        ['2020–21','Taça da Liga de 2020–21'], ['2021–22','Taça da Liga de 2021–22']
+      ] },
+    { id:'europa', nome:'Taça das Taças', plural:'Taça das Taças', curto:'Taça das Taças',
+      grupo:'principal', ambito:'europeu', extinta:true, taca:'europa', artigo:'Taça dos Clubes Vencedores de Taças',
+      sobre:'A Taça dos Clubes Vencedores de Taças da UEFA, para os vencedores das taças nacionais, disputada entre 1960/61 e 1998/99.',
+      epocas:[ ['1963–64','Taça dos Clubes Vencedores de Taças de 1963–64'] ] },
+    { id:'cpt', nome:'Campeonato de Portugal', plural:'Campeonatos de Portugal', curto:'Campeonato de Portugal',
+      grupo:'principal', ambito:'nacional', extinta:true, taca:'taca', artigo:'Campeonato de Portugal (1922–1938)',
+      sobre:'A prova nacional por eliminatórias disputada entre 1922 e 1938, antes da Taça de Portugal. O clube expõe estes títulos no Museu Sporting.',
+      epocas:[ ['1922–23','Campeonato de Portugal de 1922–23'], ['1933–34',null], ['1935–36',null], ['1937–38',null] ] },
+    { id:'imperio', nome:'Taça Império', plural:'Taça Império', curto:'Taça Império',
+      grupo:'outra', ambito:'nacional', extinta:true, taca:'taca', artigo:'Taça Império', so_pt:true,
+      sobre:'Competição extinta, jogada uma única vez, em 1944.',
+      epocas:[ ['1944',null] ] },
+    { id:'intertoto', nome:'Taça Intertoto', plural:'Taça Intertoto', curto:'Intertoto',
+      grupo:'outra', ambito:'europeu', extinta:true, taca:'europa', artigo:'Taça Intertoto', so_pt:true,
+      sobre:'Competição europeia de verão, hoje extinta.',
+      epocas:[ ['1968',null] ] },
+    { id:'iberica', nome:'Taça Ibérica', plural:'Taça Ibérica', curto:'Taça Ibérica',
+      grupo:'outra', ambito:'europeu', extinta:true, taca:'supertaca', artigo:'Taça Ibérica', so_pt:true,
+      sobre:'Jogo entre clubes de Portugal e de Espanha, hoje extinto.',
+      epocas:[ ['2000',null] ] },
+    { id:'lisboa', nome:'Campeonato de Lisboa', plural:'Campeonatos de Lisboa', curto:'Campeonato de Lisboa',
+      grupo:'regional', ambito:'regional', extinta:true, taca:'liga', artigo:'Campeonato Regional de Lisboa', so_pt:true,
+      sobre:'O campeonato regional da Associação de Futebol de Lisboa, hoje extinto.',
+      epocas:['1914–15','1918–19','1921–22','1922–23','1924–25','1927–28','1930–31','1933–34','1934–35','1935–36',
+              '1936–37','1937–38','1938–39','1940–41','1941–42','1942–43','1944–45','1946–47'].map(e => [e, null]) },
+    { id:'honra', nome:'Taça de Honra de Lisboa', plural:'Taças de Honra de Lisboa', curto:'Taça de Honra',
+      grupo:'regional', ambito:'regional', extinta:false, taca:'taca', artigo:'Taça de Honra da AF Lisboa (1.ª Divisão)', so_pt:true,
+      sobre:'A taça da Associação de Futebol de Lisboa.',
+      epocas:['1914–15','1915–16','1916–17','1947–48','1961–62','1963–64','1965–66','1970–71','1984–85','1990–91',
+              '1991–92','2013–14','2014–15'].map(e => [e, null]) }
   ]
 };
 

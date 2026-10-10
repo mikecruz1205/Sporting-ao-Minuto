@@ -1,0 +1,224 @@
+/* =========================================================================
+   MUSEU DO SPORTING CP (js/museu.js)
+   -------------------------------------------------------------------------
+   Entrada com fotografia, sala dos troféus com uma vitrine por competição,
+   linha do tempo por décadas e a ficha de cada conquista. Cada competição
+   tem a sua cor (--mu), afinada para o tema escuro e para o claro.
+   ========================================================================= */
+#vista-clube, .mu-ficha{
+  --mu-liga: #e8c56a; --mu-taca: #d5dde0; --mu-supertaca: #f0a24a; --mu-ligacup: #7cc6fe;
+  --mu-europa: #2fd98a; --mu-cpt: #d9a46f; --mu-outra: #b9a3f0; --mu-regional: #98a8b0;
+}
+:root[data-tema="claro"] #vista-clube, :root[data-tema="claro"] .mu-ficha{
+  --mu-liga: #946c0c; --mu-taca: #56646a; --mu-supertaca: #a85a06; --mu-ligacup: #1c6aa8;
+  --mu-europa: #087a49; --mu-cpt: #8a5726; --mu-outra: #6447bd; --mu-regional: #52626a;
+}
+/* a entrada é sempre escura: lá dentro ficam as cores do tema escuro */
+.mu-entrada{
+  --mu-liga: #e8c56a; --mu-taca: #d5dde0; --mu-supertaca: #f0a24a; --mu-ligacup: #7cc6fe; --mu-europa: #2fd98a;
+}
+.mu-c--liga{ --mu: var(--mu-liga); } .mu-c--taca{ --mu: var(--mu-taca); } .mu-c--supertaca{ --mu: var(--mu-supertaca); }
+.mu-c--ligacup{ --mu: var(--mu-ligacup); } .mu-c--europa{ --mu: var(--mu-europa); } .mu-c--cpt{ --mu: var(--mu-cpt); }
+.mu-c--imperio, .mu-c--intertoto, .mu-c--iberica{ --mu: var(--mu-outra); }
+.mu-c--lisboa, .mu-c--honra{ --mu: var(--mu-regional); }
+
+.museu{ display: flex; flex-direction: column; gap: 18px; }
+
+/* ---------- entrada */
+.mu-entrada{
+  position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end;
+  min-height: 460px; border-radius: 18px; background: #070908; color: var(--texto);
+}
+.mu-entrada__foto{ position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: 70% 46%;
+  animation: mu-foto 1.6s ease-out both; }
+@keyframes mu-foto{ from{ transform: scale(1.06); opacity: .4; } }
+.mu-entrada__veu{ position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(90deg, rgba(5,8,6,.96) 0%, rgba(5,8,6,.88) 34%, rgba(5,8,6,.45) 62%, rgba(5,8,6,.15) 100%),
+              linear-gradient(180deg, transparent 55%, rgba(5,8,6,.85) 100%),
+              radial-gradient(120% 70% at 0% 100%, rgba(10,90,52,.45), transparent 60%); }
+@media (max-width: 640px){
+  .mu-entrada__veu{ background: linear-gradient(180deg, rgba(5,8,6,.2) 0%, rgba(5,8,6,.7) 30%, rgba(5,8,6,.95) 55%),
+                                radial-gradient(120% 70% at 0% 100%, rgba(10,90,52,.45), transparent 60%); }
+  .mu-entrada__foto{ height: 52%; object-position: center 40%; }
+}
+.mu-entrada__texto{ padding: 120px 28px 16px; max-width: 860px; }
+.mu-entrada__sobre{ font: 800 12px/1 var(--f-ui); letter-spacing: .18em; text-transform: uppercase; color: var(--mu-liga); }
+.mu-entrada__titulo{ margin-top: 8px; font: 700 clamp(38px, 6vw, 64px)/.92 var(--f-tit); text-transform: uppercase; letter-spacing: .01em; }
+.mu-entrada__lead{ margin-top: 10px; max-width: 560px; font-size: 15px; line-height: 1.5; color: var(--texto-2); }
+.mu-numeros{ display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.mu-numeros div{ display: flex; flex-direction: column-reverse; min-width: 104px; padding: 10px 14px 9px; border-radius: 12px;
+  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); box-shadow: inset 0 2px 0 var(--mu); backdrop-filter: blur(6px); }
+.mu-numeros dd{ font: 700 34px/1 var(--f-num); color: #fff; font-variant-numeric: tabular-nums; }
+.mu-numeros dt{ margin-top: 3px; font-size: 11.5px; font-weight: 700; color: var(--texto-2); }
+.mu-entrada__total{ margin-top: 14px; font-size: 14px; color: var(--texto-2); }
+.mu-entrada__total b{ font: 700 22px/1 var(--f-num); color: var(--mu-liga); }
+.mu-entrada__total span{ color: var(--texto-3); font-size: 12.5px; }
+.mu-entrada__ir{ display: inline-flex; align-items: center; gap: 8px; margin-top: 16px; min-height: 44px; padding: 0 18px; border-radius: 999px;
+  font-weight: 800; font-size: 14px; color: #04150d; background: var(--mu-liga); text-decoration: none; transition: transform var(--t-rapida); }
+.mu-entrada__ir::after{ content: '↓'; }
+.mu-entrada__ir:hover{ transform: translateY(-2px); }
+.mu-entrada__ir:focus-visible{ outline: 2px solid #fff; outline-offset: 3px; }
+.mu-credito{ padding: 6px 28px 14px; font-size: 11px; color: var(--texto-3); }
+.mu-credito a{ color: inherit; text-decoration: underline; }
+
+/* ---------- blocos */
+.mu-bloco{ padding: 20px; border-radius: 18px; background: var(--cartao); border: 1px solid var(--linha); }
+.mu-bloco__topo{ display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; margin-bottom: 16px; }
+.mu-bloco__topo h3{ font: 700 26px/1 var(--f-tit); text-transform: uppercase; letter-spacing: .02em; }
+.mu-bloco__topo p{ font-size: 13px; color: var(--texto-3); }
+
+/* ---------- sala dos troféus */
+.mu-galeria{ display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 12px; }
+.mu-vitrine{ position: relative; animation: mu-sobe .5s cubic-bezier(.2,.9,.3,1) both; animation-delay: calc(var(--i, 0) * 60ms); }
+@keyframes mu-sobe{ from{ opacity: 0; transform: translateY(14px); } }
+.mu-vitrine.is-aberta{ grid-column: 1 / -1; }
+.mu-vitrine__botao{
+  position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; width: 100%; height: 100%;
+  padding: 20px 12px 16px; border-radius: 14px; text-align: center; color: var(--texto);
+  background: linear-gradient(170deg, var(--cartao-alto), var(--fundo-2));
+  border: 1px solid var(--linha); box-shadow: inset 0 3px 0 var(--mu);
+  transition: transform var(--t-rapida), border-color var(--t-rapida), box-shadow var(--t-rapida);
+}
+.mu-vitrine__botao:hover{ transform: translateY(-3px); border-color: color-mix(in srgb, var(--mu) 55%, transparent); }
+.mu-vitrine__botao:focus-visible{ outline: 2px solid var(--mu); outline-offset: 3px; }
+.mu-vitrine.is-aberta .mu-vitrine__botao{ height: auto; flex-direction: row; align-items: center; justify-content: flex-start; gap: 14px; text-align: left; border-radius: 14px 14px 0 0; }
+.mu-vitrine__brilho{ position: absolute; top: -45%; left: 50%; width: 150%; height: 120%; translate: -50% 0; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, var(--mu) 20%, transparent), transparent 62%); }
+.mu-taca{ position: relative; display: block; width: 64px; color: var(--mu); }
+.mu-taca svg{ display: block; width: 100%; height: auto; filter: drop-shadow(0 6px 12px rgba(0,0,0,.35)); }
+.mu-vitrine__botao:hover .mu-taca{ animation: baloica 1.4s ease-in-out; }
+.mu-vitrine__n{ position: relative; margin-top: 8px; font: 700 46px/.9 var(--f-num); font-variant-numeric: tabular-nums; }
+.mu-vitrine.is-aberta .mu-vitrine__n{ margin-top: 0; }
+.mu-vitrine__nome{ position: relative; margin-top: 6px; font-size: 12.5px; font-weight: 800; letter-spacing: .02em; }
+.mu-vitrine.is-aberta .mu-vitrine__nome{ margin-top: 0; font-size: 15px; }
+.mu-selo{ display: inline-block; margin-top: 8px; padding: 2px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 800; letter-spacing: .03em;
+  color: var(--mu, var(--texto-2)); background: color-mix(in srgb, var(--mu, var(--texto-3)) 14%, transparent); }
+.mu-vitrine.is-aberta .mu-selo{ margin-top: 0; }
+.mu-vitrine__periodo{ margin-top: 6px; font-size: 11px; color: var(--texto-3); font-variant-numeric: tabular-nums; }
+.mu-vitrine.is-aberta .mu-vitrine__periodo{ margin-top: 0; margin-left: auto; }
+.mu-vitrine__mais{ padding: 14px 16px 16px; border: 1px solid var(--linha); border-top: 0; border-radius: 0 0 14px 14px; background: var(--fundo-2);
+  animation: mu-abre .28s ease-out; }
+@keyframes mu-abre{ from{ opacity: 0; transform: translateY(-6px); } }
+.mu-vitrine__mais > p:first-child{ font-size: 14px; color: var(--texto-2); }
+.mu-epocas{ display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; list-style: none; }
+.mu-epoca{ position: relative; min-height: 36px; padding: 0 12px; border-radius: 999px; font: 700 15px/1 var(--f-num); font-variant-numeric: tabular-nums;
+  color: var(--texto); background: var(--cartao); border: 1px solid color-mix(in srgb, var(--mu) 45%, var(--linha)); transition: background var(--t-rapida); }
+.mu-epoca:hover{ background: color-mix(in srgb, var(--mu) 16%, var(--cartao)); }
+.mu-epoca:focus-visible{ outline: 2px solid var(--mu); outline-offset: 2px; }
+.mu-epoca i{ display: inline-grid; place-items: center; width: 16px; height: 16px; margin-left: 6px; border-radius: 50%; vertical-align: 1px;
+  font: 800 9px/1 var(--f-ui); font-style: normal; color: #1a1300; background: var(--mu-liga); }
+.mu-vitrine__acoes{ display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 14px; font-size: 13px; }
+.mu-vitrine__acoes a{ color: var(--verde-claro); }
+.mu-outras{ margin-top: 16px; }
+.mu-outras summary{ cursor: pointer; padding: 10px 0; font-weight: 800; font-size: 14px; }
+.mu-outras summary span{ margin-left: 6px; padding: 1px 8px; border-radius: 999px; font-size: 12px; color: var(--texto-2); background: var(--veu-2, rgba(127,127,127,.15)); }
+.mu-nota{ margin-bottom: 12px; font-size: 12.5px; color: var(--texto-3); }
+.mu-galeria--pequena{ grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.mu-galeria--pequena .mu-taca{ width: 44px; }
+.mu-galeria--pequena .mu-vitrine__n{ font-size: 34px; }
+
+/* ---------- linha do tempo */
+.mu-filtros{ display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+.mu-chips{ display: flex; flex-wrap: wrap; gap: 6px; }
+.mu-chips .chip{ min-height: 38px; }
+.mu-filtros__linha{ display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.mu-busca{ flex: 1 1 220px; }
+.mu-busca input{ width: 100%; min-height: 40px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 14px;
+  color: var(--texto); background: var(--fundo-2); border: 1px solid var(--linha); }
+.mu-busca input:focus-visible{ outline: 2px solid var(--verde-claro); outline-offset: 1px; }
+.mu-tempo{ position: relative; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.mu-tempo::before{ content: ''; position: absolute; top: 8px; bottom: 8px; left: 121px; width: 2px; border-radius: 2px;
+  background: linear-gradient(var(--verde), color-mix(in srgb, var(--mu-liga) 70%, transparent)); opacity: .5; }
+.mu-decada{ display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 14px; padding: 10px 0;
+  animation: mu-sobe .45s ease-out both; animation-delay: calc(var(--i, 0) * 40ms); }
+.mu-decada__cab{ position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding-right: 24px; }
+.mu-decada__cab::before{ content: ''; position: absolute; right: 2px; top: 5px; width: 12px; height: 12px; border-radius: 50%;
+  background: var(--cartao); border: 2px solid var(--verde-claro); }
+.mu-decada__cab b{ font: 700 20px/1 var(--f-tit); text-transform: uppercase; white-space: nowrap; }
+.mu-decada__cab span{ font-size: 11.5px; color: var(--texto-3); white-space: nowrap; }
+.mu-decada__barra{ display: block; width: 48px; height: 4px; margin-top: 4px; border-radius: 4px; background: var(--linha); overflow: hidden; }
+.mu-decada__barra::after{ content: ''; display: block; height: 100%; width: calc(var(--p) * 100%); background: var(--mu-liga); border-radius: inherit; }
+.mu-marcos{ list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.mu-marco{ display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 12px 0 10px; border-radius: 10px;
+  color: var(--texto); background: var(--fundo-2); border: 1px solid var(--linha); text-align: left;
+  transition: transform var(--t-rapida), border-color var(--t-rapida), background var(--t-rapida); }
+.mu-marco:hover{ transform: translateY(-2px); border-color: color-mix(in srgb, var(--mu) 60%, transparent); background: color-mix(in srgb, var(--mu) 8%, var(--fundo-2)); }
+.mu-marco:focus-visible{ outline: 2px solid var(--mu); outline-offset: 2px; }
+.mu-marco__ponto{ width: 10px; height: 10px; border-radius: 50%; background: var(--mu); box-shadow: 0 0 0 3px color-mix(in srgb, var(--mu) 22%, transparent); flex: none; }
+.mu-marco__ep{ font: 700 16px/1 var(--f-num); font-variant-numeric: tabular-nums; }
+.mu-marco__comp{ font-size: 12px; color: var(--texto-2); }
+.mu-marco__extra{ padding: 1px 6px; border-radius: 999px; font-size: 10px; font-weight: 800; color: #1a1300; background: var(--mu-liga); }
+.mu-vazio{ padding: 26px 12px; text-align: center; color: var(--texto-2); font-size: 14px; display: grid; gap: 8px; justify-items: center; }
+
+/* ---------- ficha de uma conquista */
+.mu-ficha{ width: min(560px, calc(100vw - 24px)); max-height: calc(100svh - 32px); margin: auto; padding: 0; border: 1px solid var(--linha);
+  border-radius: 18px; color: var(--texto); background: var(--cartao); box-shadow: 0 30px 80px rgba(0,0,0,.5); overflow: auto; }
+.mu-ficha[open]{ animation: mu-ficha .28s cubic-bezier(.2,.9,.3,1.1); }
+@keyframes mu-ficha{ from{ opacity: 0; transform: translateY(14px) scale(.97); } }
+.mu-ficha::backdrop{ background: rgba(4,8,6,.66); backdrop-filter: blur(3px); }
+.mu-ficha__topo{ position: relative; display: flex; align-items: center; gap: 16px; padding: 22px 56px 18px 20px;
+  background: radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--mu) 22%, transparent), transparent 60%), var(--cartao-alto);
+  border-bottom: 1px solid var(--linha); }
+.mu-taca--grande{ width: 86px; flex: none; }
+.mu-ficha__comp{ font-size: 13px; font-weight: 800; color: var(--mu); }
+.mu-ficha__epoca{ font: 700 46px/1 var(--f-num); font-variant-numeric: tabular-nums; }
+.mu-ficha__selos{ display: flex; flex-wrap: wrap; gap: 6px; }
+.mu-ficha__selos .mu-selo{ margin-top: 6px; }
+.mu-selo--ouro{ color: #1a1300; background: var(--mu-liga); }
+.mu-ficha__fechar{ position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%;
+  font-size: 24px; line-height: 1; color: var(--texto-2); background: transparent; }
+.mu-ficha__fechar:hover{ background: var(--veu-2, rgba(127,127,127,.15)); color: var(--texto); }
+.mu-ficha__fechar:focus-visible{ outline: 2px solid var(--verde-claro); }
+.mu-ficha__factos{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: 16px 20px 0; border-radius: 12px; overflow: hidden;
+  background: var(--linha); border: 1px solid var(--linha); }
+.mu-ficha__factos > div{ padding: 10px 12px; background: var(--fundo-2); }
+.mu-ficha__factos > div:last-child:nth-child(odd){ grid-column: 1 / -1; }
+.mu-ficha__factos dt{ font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--texto-3); }
+.mu-ficha__factos dd{ margin-top: 3px; font-size: 15px; font-weight: 700; }
+.mu-ficha__factos small{ font-weight: 500; color: var(--texto-3); }
+.mu-ligacao{ padding: 0; font: inherit; color: var(--verde-claro); text-decoration: underline; background: none; }
+.mu-ficha__sobre{ margin: 14px 20px 0; font-size: 14px; color: var(--texto-2); line-height: 1.5; }
+.mu-ficha__wiki{ margin: 10px 20px 0; font-size: 14px; }
+.mu-ficha__wiki a{ color: var(--verde-claro); font-weight: 700; }
+.mu-ficha__nota{ margin: 12px 20px 0; font-size: 12px; color: var(--texto-3); line-height: 1.5; }
+.mu-ficha__nav{ display: flex; justify-content: space-between; gap: 8px; padding: 16px 20px 20px; }
+.mu-ficha__nav .chip{ min-height: 40px; }
+
+/* ---------- fontes */
+.mu-fontes{ margin-top: 16px; padding: 16px 20px; border-radius: 14px; border: 1px dashed var(--linha); font-size: 13px; color: var(--texto-2); }
+.mu-fontes h3{ font: 700 18px/1 var(--f-tit); text-transform: uppercase; color: var(--texto); }
+.mu-fontes ul{ margin: 8px 0; padding-left: 18px; display: grid; gap: 4px; }
+.mu-fontes a{ color: var(--verde-claro); }
+.mu-fontes p{ color: var(--texto-3); font-size: 12px; }
+
+/* ---------- campeões: esqueleto enquanto o plantel não chega */
+.campeao--osso{ display: grid; justify-items: center; gap: 8px; }
+.campeao--osso .osso--redondo{ width: 66px; height: 66px; }
+.campeao--osso .osso--linha{ width: 70%; }
+
+/* ---------- telemóvel */
+@media (max-width: 640px){
+  .mu-entrada{ min-height: 520px; border-radius: 14px; }
+  .mu-entrada__texto{ padding: 140px 16px 12px; }
+  .mu-credito{ padding: 4px 16px 12px; }
+  .mu-numeros{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .mu-numeros div{ min-width: 0; padding: 8px 10px; }
+  .mu-numeros dd{ font-size: 28px; }
+  .mu-numeros dt{ font-size: 10.5px; }
+  .mu-bloco{ padding: 16px 14px; border-radius: 14px; }
+  .mu-galeria{ grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .mu-vitrine.is-aberta .mu-vitrine__botao{ flex-wrap: wrap; }
+  .mu-vitrine.is-aberta .mu-vitrine__periodo{ margin-left: 0; width: 100%; }
+  .mu-tempo::before{ left: 7px; }
+  .mu-decada{ grid-template-columns: minmax(0, 1fr); gap: 8px; padding-left: 24px; }
+  .mu-decada__cab{ flex-direction: row; align-items: baseline; gap: 10px; padding-right: 0; }
+  .mu-decada__cab::before{ right: auto; left: -23px; top: 4px; }
+  .mu-ficha__epoca{ font-size: 38px; }
+  .mu-taca--grande{ width: 64px; }
+  .mu-ficha__factos{ grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce){
+  .mu-entrada__foto, .mu-vitrine, .mu-decada, .mu-vitrine__mais, .mu-ficha[open]{ animation: none; }
+  .mu-vitrine__botao:hover .mu-taca{ animation: none; }
+  .mu-vitrine__botao:hover, .mu-marco:hover, .mu-entrada__ir:hover{ transform: none; }
+}

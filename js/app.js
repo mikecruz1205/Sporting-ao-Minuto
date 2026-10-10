@@ -1986,15 +1986,24 @@ function ligarFotos(){
    por isso cada jogador só é pedido uma vez.
    ------------------------------------------------------------------------- */
 const carreiraCache = new Map();
+/* sem chave no servidor (503) não vale a pena insistir: lembra-se durante
+   30 minutos nesta sessão, para não encher a consola de erros */
+const CHAVE_SEM_API = 'scp-api-indisponivel';
+const apiIndisponivel = () => { try{ return Date.now() - Number(sessionStorage.getItem(CHAVE_SEM_API) || 0) < 30 * 60e3; }catch(e){ return false; } };
 
 async function buscarCarreira(id){
   if(carreiraCache.has(id)) return carreiraCache.get(id);
+  if(apiIndisponivel()) return null;
 
   const linhas = [];
   for(const epoca of EPOCAS_API){
     try{
       const p = `players?id=${id}&season=${epoca}`;
       const r = await fetch('/api/api?p=' + encodeURIComponent(p), {cache:'no-store'});
+      if(r.status === 503){
+        try{ sessionStorage.setItem(CHAVE_SEM_API, String(Date.now())); }catch(e){}
+        return null;
+      }
       if(!r.ok) continue;
       const d = await r.json();
       const jog = d.response?.[0];
@@ -2024,6 +2033,10 @@ function pintarCarreira(linhas){
   const alvo = $('#carreira-corpo');
   if(!alvo) return;
 
+  if(linhas === null){
+    alvo.innerHTML = `<div class="esperar">A carreira não está disponível de momento: a fonte de dados (API-Football) não responde.</div>`;
+    return;
+  }
   if(!linhas.length){
     alvo.innerHTML = `<div class="esperar">Sem registos nas épocas que a API disponibiliza.</div>`;
     return;
@@ -2673,6 +2686,9 @@ let meuOnze = [];              // um nome (ou null) por posição do desenho
 let posicaoAberta = -1;
 let capitaoIdx = -1;           // posição do capitão (só para mostrar o (C))
 let plantelReal = false;       // o plantel a sério (Wikipédia/zerozero) já chegou
+let plantelFalhou = false;     // nem o Wikipédia nem o retrato do zerozero responderam
+const textoEsperaPlantel = () => plantelFalhou
+  ? 'Não foi possível carregar o plantel. Tenta outra vez mais tarde.' : 'A carregar o plantel…';
 let formacaoCarregada = false;
 
 /* A chave separa as contas: com sessão no Supabase usa-se o id da conta
@@ -2902,7 +2918,7 @@ function pintarFormacao(){
         <span class="posicao__nome">${nomeCurto(p.nome)}${capitaoIdx === i ? ' <i>(C)</i>' : ''}</span>${etiquetaPapel(slot.papel, g)}</button>`;
     }).join('')}
     <span class="campo__desenho" aria-hidden="true">${desenhoAtual}</span>
-    ${plantelReal ? '' : '<p class="campo__espera" role="status">A carregar o plantel…</p>'}`;
+    ${plantelReal ? '' : `<p class="campo__espera" role="status">${textoEsperaPlantel()}</p>`}`;
 
   /* listas à direita: a escalação e o resto do plantel */
   $('#lista-titulares').innerHTML = slots.map((slot, i) => {
@@ -2924,7 +2940,7 @@ function pintarFormacao(){
   const naoJogam = PLANTEL.filter(p => !meuOnze.includes(p.nome))
     .sort((a, b) => ['GR', 'DEF', 'MED', 'AVA'].indexOf(a.posGrupo) - ['GR', 'DEF', 'MED', 'AVA'].indexOf(b.posGrupo));
   $('#lista-suplentes').innerHTML = !plantelReal
-    ? '<li class="onze--vazio"><span class="onze__nome">a carregar o plantel…</span></li>'
+    ? `<li class="onze--vazio"><span class="onze__nome">${textoEsperaPlantel()}</span></li>`
     : naoJogam.map(p => `
     <li data-nome="${p.nome}">
       ${etiquetaPapel(p.posGrupo, p.posGrupo)}
@@ -3121,7 +3137,7 @@ function listarCandidatos(procura){
   $('#escolha-nota').textContent = (meuOnze[posicaoAberta] ? 'está lá ' + nomeCurto(meuOnze[posicaoAberta]) + ' · ' : '')
     + 'servem: ' + grupos.map(g => NOME_GRUPO[g] + 's').join(' e ');
 
-  $('#escolha-lista').innerHTML = !plantelReal ? '<div class="vazio">O plantel ainda está a carregar.</div>'
+  $('#escolha-lista').innerHTML = !plantelReal ? `<div class="vazio">${textoEsperaPlantel()}</div>`
     : ordenado.map(p => {
     const onde = meuOnze.indexOf(p.nome);
     const jaJoga = onde >= 0 && onde !== posicaoAberta;
@@ -3711,48 +3727,51 @@ function pintarMercado(){
 }
 
 function pintarClube(){
-  const total = CLUBE.titulos.reduce((s,t) => s + t.n, 0);
-
   $('#clube').innerHTML = `
     <div class="clube__bloco"><h4>FUNDAÇÃO</h4><p>${CLUBE.fundacao}</p></div>
     <div class="clube__bloco"><h4>ESTÁDIO</h4><p>${CLUBE.estadio}<br><span style="color:var(--texto-3)">${CLUBE.lugares} lugares</span></p></div>
     <div class="clube__bloco"><h4>TREINADOR</h4><p>${CLUBE.treinador || CONFIG.treinador}</p></div>
     <div class="clube__bloco"><h4>CORES</h4><p>${CLUBE.cores}</p></div>`;
 
-  /* ---- palmarés ---- */
-  $('#palmares-total').textContent = `${total} troféus`;
-  const icone = $('#icone-palmares');
-  if(icone && !icone.innerHTML) icone.innerHTML = tacaSVG('liga', 'var(--ouro)');
-  $('#palmares').innerHTML = CLUBE.titulos.map((t,i) => `
-    <article class="trofeu" style="animation-delay:${i*.07}s">
-      <div class="trofeu__brilho"></div>
-      <div class="trofeu__taca">${tacaSVG(t.taca, t.cor)}</div>
-      <b class="trofeu__n">${t.n}</b>
-      <span class="trofeu__nome">${t.nome}</span>
-      ${t.ultima ? `<span class="trofeu__ultima">última em ${t.ultima}</span>`
-                 : `<span class="trofeu__ultima trofeu__ultima--vazia">—</span>`}
-    </article>`).join('');
+  /* ---- o museu: desenha-se uma vez (os filtros e a vitrine aberta ficam) ---- */
+  if(window.Museu && !$('#museu')?.children.length) Museu.pintar();
 
   /* ---- campeões que ainda estão no plantel ---- */
+  const alvo = $('#campeoes'), nota = $('#campeoes-nota');
+  if(!alvo) return;
+  if(!plantelReal){
+    nota.textContent = plantelFalhou ? '' : 'a carregar…';
+    alvo.innerHTML = plantelFalhou
+      ? '<div class="vazio">Não foi possível carregar o plantel atual, por isso não dá para saber quem lá está. Tenta outra vez mais tarde.</div>'
+      : Array.from({ length: 6 }, () => '<div class="campeao campeao--osso" aria-hidden="true"><span class="osso osso--redondo"></span><span class="osso osso--linha"></span></div>').join('')
+        + '<p class="so-leitor" role="status">A carregar o plantel…</p>';
+    return;
+  }
+  const NOMES_TITULO = { liga: ['Campeonato', 'Campeonatos'], taca: ['Taça de Portugal', 'Taças de Portugal'],
+                         ligacup: ['Taça da Liga', 'Taças da Liga'], supertaca: ['Supertaça', 'Supertaças'] };
+  const resumoTitulos = t => Object.entries(NOMES_TITULO).filter(([k]) => t[k]?.length)
+    .map(([k, [um, varios]]) => `${t[k].length} ${t[k].length > 1 ? varios : um}`).join(' · ');
+  const epocasTitulos = t => Object.entries(NOMES_TITULO).filter(([k]) => t[k]?.length)
+    .map(([k, [um, varios]]) => `${t[k].length > 1 ? varios : um}: ${t[k].map(e => e.replace('–', '/')).join(', ')}`).join('; ');
   const lista = (CLUBE.campeoes || [])
     .map(c => ({...c, jogador: acharJogador(c.nome)}))
-    .filter(c => c.jogador);
+    .filter(c => c.jogador)
+    .sort((a, b) => Object.values(b.titulos).flat().length - Object.values(a.titulos).flat().length);
 
-  $('#campeoes-nota').textContent = lista.length
-    ? `${lista.length} no plantel atual`
-    : '';
-  $('#campeoes').innerHTML = lista.length
+  nota.textContent = lista.length ? `${lista.length} no plantel atual` : '';
+  alvo.innerHTML = lista.length
     ? lista.map((c,i) => `
-        <button class="campeao" data-nome="${c.jogador.nome}" style="animation-delay:${i*.04}s">
+        <button class="campeao" data-nome="${c.jogador.nome}" style="animation-delay:${i*.04}s"
+                title="${epocasTitulos(c.titulos)}" aria-label="${c.jogador.nome}: ${epocasTitulos(c.titulos)}. Abrir a ficha">
           <span class="campeao__foto">
-            <img src="${c.jogador.foto}" alt="${c.nome}" loading="lazy"
+            <img src="${c.jogador.foto}" alt="" loading="lazy"
                  onerror="this.onerror=null;this.src='${avatarJogador(c.jogador)}'">
             <i class="campeao__n">${c.jogador.n ?? ''}</i>
           </span>
           <b>${ALCUNHAS[c.jogador.nome] || nomeCurto(c.nome)}</b>
-          <span>${c.titulos}</span>
+          <span>${resumoTitulos(c.titulos)}</span>
         </button>`).join('')
-    : `<div class="vazio">Ninguém do plantel atual está na lista — edita CLUBE.campeoes em js/data.js.</div>`;
+    : '<div class="vazio">Nenhum jogador do plantel atual tem títulos pelo Sporting registados aqui.</div>';
 
   $$('#campeoes .campeao').forEach(b => b.addEventListener('click', () => {
     const p = PLANTEL.find(x => x.nome === b.dataset.nome);
@@ -3823,6 +3842,20 @@ async function sincronizar(){
     if(vistaAtual === 'agenda') pintarAgenda();
     if(vistaAtual === 'modalidades') pintarModalidades();
   }catch(e){ falhas.push('plantel/jogos'); }
+
+  /* o Wikipédia falhou: o plantel vem do retrato do zerozero que o site traz
+     (dados/plantel_zz.json), para o quadro tático e os campeões não ficarem
+     à espera para sempre. Sem nenhum dos dois, diz-se que falhou. */
+  if(!plantelReal){
+    if(PLANTEL_ZZ?.jogadores?.length){
+      PLANTEL = juntarComZerozero([]).map(p => ({ ...p, stats: { jogos: 0, golos: 0, provas: {} } }));
+      ligarFotos(); pintarPlantel(); plantelChegou(); pintarMercado(); pintarClube();
+    }else{
+      plantelFalhou = true;
+      pintarFormacao();
+      pintarClube();
+    }
+  }
 
   const hora = new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
   const noRodape = $('#rodape-estado');

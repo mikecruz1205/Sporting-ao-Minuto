@@ -1,7 +1,8 @@
 """Corre os testes de JavaScript (node --test) dentro do python -m unittest.
 
-As regras da equipa Fantasy no browser estão em js/fantasy.js e os testes em
-tests/*.test.js. Sem Node instalado, o teste é saltado (não falha).
+Os testes estão em tests/*.test.js: as regras da equipa Fantasy
+(js/fantasy.js) e o museu com os dados do palmarés (js/museu.js, js/data.js).
+Sem Node instalado, o teste é saltado (não falha).
 """
 import shutil
 import subprocess

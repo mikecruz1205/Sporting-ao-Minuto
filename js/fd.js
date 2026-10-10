@@ -21,13 +21,21 @@ const FD = (() => {
 
   /* Quando não há token o proxy responde 503. Descobre-se uma vez e depois
      nem se tenta, para não encher a consola de erros a cada sincronização. */
-  let disponivel = null;
+  const CHAVE = 'scp-fd-indisponivel';
+  let disponivel = (() => {
+    try{ return Date.now() - Number(sessionStorage.getItem(CHAVE) || 0) < 30 * 60e3 ? false : null; }catch(e){ return null; }
+  })();
 
   async function pedir(caminho){
     if(disponivel === false) return null;
     try{
       const r = await fetch(BASE + encodeURIComponent(caminho), {cache:'no-store'});
-      if(r.status === 503){ disponivel = false; return null; }
+      if(r.status === 503){
+        disponivel = false;
+        /* lembra-se durante 30 minutos nesta sessão, também ao recarregar */
+        try{ sessionStorage.setItem(CHAVE, String(Date.now())); }catch(e){}
+        return null;
+      }
       if(!r.ok) return null;
       disponivel = true;
       return await r.json();

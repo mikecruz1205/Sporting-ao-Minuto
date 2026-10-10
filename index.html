@@ -135,17 +135,18 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Manrope:wght@400..800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/base.css?v=122">
-<link rel="stylesheet" href="css/componentes.css?v=122">
-<link rel="stylesheet" href="css/style.css?v=122">
-<link rel="stylesheet" href="css/portal.css?v=122">
-<link rel="stylesheet" href="css/inicio.css?v=122">
-<link rel="stylesheet" href="css/app.css?v=122">
-<link rel="stylesheet" href="css/fantasy.css?v=122">
-<link rel="stylesheet" href="css/editorial.css?v=122">
-<link rel="stylesheet" href="css/entrada.css?v=122">
-<link rel="stylesheet" href="css/centro.css?v=122">
-<link rel="stylesheet" href="css/casa.css?v=122">
+<link rel="stylesheet" href="css/base.css?v=124">
+<link rel="stylesheet" href="css/componentes.css?v=124">
+<link rel="stylesheet" href="css/style.css?v=124">
+<link rel="stylesheet" href="css/portal.css?v=124">
+<link rel="stylesheet" href="css/inicio.css?v=124">
+<link rel="stylesheet" href="css/app.css?v=124">
+<link rel="stylesheet" href="css/fantasy.css?v=124">
+<link rel="stylesheet" href="css/museu.css?v=124">
+<link rel="stylesheet" href="css/editorial.css?v=124">
+<link rel="stylesheet" href="css/entrada.css?v=124">
+<link rel="stylesheet" href="css/centro.css?v=124">
+<link rel="stylesheet" href="css/casa.css?v=124">
 </head>
 <body class="trancado">
 <!-- ============================ ECRÃ DE CARREGAMENTO (modo aplicação) ============================ -->
@@ -1095,35 +1096,29 @@
 </main>
 
 <main class="vista" id="vista-clube">
-  <section class="cartao">
+  <!-- o museu (js/museu.js): entrada, sala dos troféus e linha do tempo -->
+  <div class="museu" id="museu"></div>
+
+  <section class="cartao" style="margin-top:16px">
     <div class="cartao__topo"><h2>O CLUBE</h2></div>
     <div class="cartao__corpo"><div class="clube" id="clube"></div></div>
   </section>
 
-  <section class="cartao" style="margin-top:16px">
+  <section class="cartao" style="margin-top:16px" aria-labelledby="campeoes-t">
     <div class="cartao__topo">
-      <h2><span class="icone-taca" id="icone-palmares" aria-hidden="true"></span>PALMARÉS</h2>
-      <span class="sub-inline" id="palmares-total">—</span>
-    </div>
-    <div class="cartao__corpo">
-      <div class="palmares" id="palmares"></div>
-    </div>
-  </section>
-
-  <section class="cartao" style="margin-top:16px">
-    <div class="cartao__topo">
-      <h2>CAMPEÕES NO PLANTEL</h2>
+      <h2 id="campeoes-t">CAMPEÕES NO PLANTEL</h2>
       <span class="sub-inline" id="campeoes-nota">—</span>
     </div>
     <div class="cartao__corpo">
-      <div class="campeoes" id="campeoes"></div>
+      <div class="campeoes" id="campeoes" aria-live="polite"></div>
       <div class="formacao__aviso">
-        Jogadores do plantel atual que já levantaram troféus pelo clube.
-        Lista escrita à mão em <b>js/data.js</b> (<b>CLUBE.campeoes</b>) — as caras
-        vêm das fotografias da API. Carrega num para abrir a ficha.
+        Jogadores do plantel atual que já ganharam títulos pelo Sporting, segundo a secção de palmarés
+        de cada um na Wikipédia. Toca num para abrir a ficha.
       </div>
     </div>
   </section>
+
+  <div id="museu-fontes"></div>
 </main>
 
 <!-- ============ ESCOLHER JOGADOR PARA UMA POSIÇÃO ============ -->
@@ -1239,20 +1234,21 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.min.js" defer></script>
-<script src="js/nuvem.js?v=122" defer></script>
-<script src="js/fd.js?v=122" defer></script>
-<script src="js/componentes.js?v=122" defer></script>
-<script src="js/contas.js?v=122" defer></script>
-<script src="js/arte.js?v=122" defer></script>
-<script src="js/data.js?v=122" defer></script>
-<script src="js/wiki.js?v=122" defer></script>
-<script src="js/tema.js?v=122" defer></script>
-<script src="js/notificacoes.js?v=122" defer></script>
-<script src="js/pwa.js?v=122" defer></script>
-<script src="js/arquivo.js?v=122" defer></script>
-<script src="js/fantasy.js?v=122" defer></script>
-<script src="js/entrada.js?v=122" defer></script>
-<script src="js/centro.js?v=122" defer></script>
-<script src="js/app.js?v=122" defer></script>
+<script src="js/nuvem.js?v=124" defer></script>
+<script src="js/fd.js?v=124" defer></script>
+<script src="js/componentes.js?v=124" defer></script>
+<script src="js/contas.js?v=124" defer></script>
+<script src="js/arte.js?v=124" defer></script>
+<script src="js/data.js?v=124" defer></script>
+<script src="js/wiki.js?v=124" defer></script>
+<script src="js/tema.js?v=124" defer></script>
+<script src="js/notificacoes.js?v=124" defer></script>
+<script src="js/pwa.js?v=124" defer></script>
+<script src="js/arquivo.js?v=124" defer></script>
+<script src="js/fantasy.js?v=124" defer></script>
+<script src="js/museu.js?v=124" defer></script>
+<script src="js/entrada.js?v=124" defer></script>
+<script src="js/centro.js?v=124" defer></script>
+<script src="js/app.js?v=124" defer></script>
 </body>
 </html>
