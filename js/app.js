@@ -721,11 +721,11 @@ function pintarHome(){
     const noPalco = new Set(heroLista.map(n => n.link));
     const restantes = lista.filter(n => !noPalco.has(n.link))
                            .filter(n => noSeparador(n, categoriaHome))
-                           .slice(0, 13);
+                           .slice(0, 8);
     alvoUltimas.innerHTML = !NOTICIAS.length
-      ? Componentes.esqueletoEditorial()
+      ? (primeiraLeituraFeita || navigator.onLine === false ? estadoSemNoticias() : Componentes.esqueletoLista(5))
       : restantes.length
-        ? composicaoEditorial(restantes)
+        ? restantes.map(Componentes.itemCurto).join('')
         : Componentes.vazio('Nada nesta categoria',
             'Experimenta outro filtro — as notícias entram de minuto a minuto.',
             tacaSVG('taca', 'var(--texto-3)'));
@@ -1157,7 +1157,7 @@ function pintarNoticias(){
 
   const rumores = NOTICIAS.filter(n => n.categoria === 'MERCADO');
   $('#rumores-todos').innerHTML = rumores.length ? rumores.slice(0,40).map(itemNoticia).join('') : vazio('Sem rumores de mercado neste momento.');
-  $('#rumores-curtos').innerHTML = rumores.slice(0,3).map(n => `
+  if($('#rumores-curtos')) $('#rumores-curtos').innerHTML = rumores.slice(0,3).map(n => `
     <li><a href="${n.link}" target="_blank" rel="noopener">
       <img src="${n.imagem || escudoIniciais('SCP')}" alt="" loading="lazy"
            onerror="this.src='${escudoIniciais('SCP')}'">
@@ -1260,6 +1260,8 @@ let jogosSincronizados = false;
 /* a fonte dos jogos falhou e nunca chegou nada: diz-se, com nova tentativa
    (antes mostrava-se o retrato guardado no código, de julho, como se fosse atual) */
 let jogosFalharam = false;
+let HORA_JOGOS = null;            // quando chegaram o calendário e os resultados
+const fonteDosJogos = () => `Fonte: Wikipédia${HORA_JOGOS ? ` · atualizada às ${HORA_JOGOS.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}` : ''}`;
 /* jogos e golos de cada jogador vêm do Wikipédia; com o plantel de recurso
    (retrato do zerozero) não os há, e não se mostram zeros no lugar deles */
 let estatisticasPlantel = false;
@@ -1327,8 +1329,9 @@ function minutoPorDia(lista){
 }
 
 let vivoVisto = 0, avisoVivoTimer = null;
+let filtroMinuto = 'todos';
 function pintarLinhaTempo(){
-  const filtro = $('#minuto-filtro').value;
+  const filtro = filtroMinuto;
   let l = NOTICIAS;
   if(filtro === 'quente')  l = l.filter(n => n.categoria === 'DESTAQUE' || /\boficial\b/i.test(n.titulo));
   if(filtro === 'mercado') l = l.filter(n => n.categoria === 'MERCADO');
@@ -1343,7 +1346,8 @@ function pintarLinhaTempo(){
     : (primeiraLeituraFeita || navigator.onLine === false)
       ? Componentes.erroLeitura(navigator.onLine === false)
       : Componentes.esqueletoMinuto(5);
-  $('#linha-tempo').innerHTML = l.length ? l.slice(0, 12).map((n, i) => itemMinuto(n, i, false)).join('') : vazio;
+  const curta = $('#linha-tempo');
+  if(curta) curta.innerHTML = l.length ? l.slice(0, 12).map((n, i) => itemMinuto(n, i, false)).join('') : vazio;
 
   /* aviso discreto quando entram novidades */
   const maisRecente = NOTICIAS[0]?.data.getTime() || 0;
@@ -1602,12 +1606,14 @@ function ligarItensAgenda(raiz){
 function pintarCalendario(){
   const alvo = $('#calendario');
   if(!alvo) return;
-  const prox = porJogar().slice(0, 5);
+  const prox = porJogar().slice(1, 6);
+  const fonte = $('#calendario-fonte');
+  if(fonte) fonte.textContent = jogosSincronizados && HORA_JOGOS ? fonteDosJogos() : '';
   alvo.innerHTML = prox.length
     ? agendaPorDia(prox)
     : jogosFalharam ? `<li>${falhaDados('Não foi possível carregar os próximos jogos.')}</li>`
     : jogosSincronizados
-      ? `<li class="estado"><p class="estado__texto">Sem jogos marcados para já.</p></li>`
+      ? `<li class="estado"><p class="estado__texto">${porJogar().length ? 'Depois do próximo jogo ainda não há outros marcados.' : 'Sem jogos marcados para já.'}</p></li>`
       : Array.from({ length: 4 }, () => `<li class="ag ag--osso" aria-hidden="true"><div class="osso"></div></li>`).join('');
   ligarItensAgenda(alvo);
 }
@@ -2665,6 +2671,11 @@ function pintarEstatisticas(){
       ? caixasDe(todosFeitos)
       : `<div class="vazio" style="grid-column:1/-1">Ainda não há jogos oficiais com resultado nesta época.</div>`;
 
+  const epocaFonte = $('#epoca-fonte');
+  if(epocaFonte) epocaFonte.textContent = jogosSincronizados ? `${fonteDosJogos()} · os marcadores contam todas as provas` : '';
+  const jogFonte = $('#jogadores-fonte');
+  if(jogFonte) jogFonte.textContent = estatisticasPlantel ? fonteDosJogos() : '';
+
   /* ---- filtro por competição ---- */
   const temPreEpoca = JOGOS.some(j => jogado(j) && provaDoJogo(j) === 'Pré-época');
   const opcoes = [...PROVAS_DISPONIVEIS, ...(temPreEpoca ? ['Pré-época'] : [])];
@@ -2783,6 +2794,8 @@ function pintarEstatisticasEpoca(){
     $('#est-casa-fora').innerHTML = $('#est-provas').innerHTML = '<div class="osso" style="height:120px" aria-hidden="true"></div>';
     return;
   }
+  const estFonte = $('#est-fonte');
+  if(estFonte) estFonte.textContent = fonteDosJogos() + ' · contas feitas com os resultados do calendário';
   if(!oficiais.length){
     const msg = 'Ainda não há jogos oficiais com resultado nesta época.';
     forma.innerHTML = `<li class="vazio">${msg}</li>`;
@@ -4131,7 +4144,7 @@ async function sincronizar(){
   if(noRodape) noRodape.textContent = falhas.length
     ? 'dados parciais · ' + hora
     : 'dados atualizados às ' + hora;
-  if(!falhas.includes('plantel/jogos')){ jogosSincronizados = true; jogosFalharam = false; }
+  if(!falhas.includes('plantel/jogos')){ jogosSincronizados = true; jogosFalharam = false; HORA_JOGOS = new Date(); }
   else if(!jogosSincronizados) jogosFalharam = true;
   pintarProximoJogo(); pintarCalendario(); pintarResultados(); pintarJogosTodos();
   pintarEstatisticas(); pintarPlantel(); pintarPreviaEntrada();
@@ -4848,10 +4861,9 @@ async function arranque(){
   $$('[data-ir]').forEach(b =>
     b.addEventListener('click', () => irPara(b.dataset.ir)));
 
-  $('#minuto-filtro').addEventListener('change', pintarLinhaTempo);
   $$('[data-segmentos-minuto] .segmento').forEach(b => b.addEventListener('click', () => {
-    $('#minuto-filtro').value = b.dataset.valor;
-    pintarLinhaTempo();      // acende o segmento certo nos dois sítios
+    filtroMinuto = b.dataset.valor;
+    pintarLinhaTempo();
   }));
   pintarSeloVivo();
   ligarCabeca();

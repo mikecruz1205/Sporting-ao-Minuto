@@ -135,18 +135,18 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Manrope:wght@400..800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/base.css?v=130">
-<link rel="stylesheet" href="css/componentes.css?v=130">
-<link rel="stylesheet" href="css/style.css?v=130">
-<link rel="stylesheet" href="css/portal.css?v=130">
-<link rel="stylesheet" href="css/inicio.css?v=130">
-<link rel="stylesheet" href="css/app.css?v=130">
-<link rel="stylesheet" href="css/fantasy.css?v=130">
-<link rel="stylesheet" href="css/museu.css?v=130">
-<link rel="stylesheet" href="css/editorial.css?v=130">
-<link rel="stylesheet" href="css/entrada.css?v=130">
-<link rel="stylesheet" href="css/centro.css?v=130">
-<link rel="stylesheet" href="css/casa.css?v=130">
+<link rel="stylesheet" href="css/base.css?v=131">
+<link rel="stylesheet" href="css/componentes.css?v=131">
+<link rel="stylesheet" href="css/style.css?v=131">
+<link rel="stylesheet" href="css/portal.css?v=131">
+<link rel="stylesheet" href="css/inicio.css?v=131">
+<link rel="stylesheet" href="css/app.css?v=131">
+<link rel="stylesheet" href="css/fantasy.css?v=131">
+<link rel="stylesheet" href="css/museu.css?v=131">
+<link rel="stylesheet" href="css/editorial.css?v=131">
+<link rel="stylesheet" href="css/entrada.css?v=131">
+<link rel="stylesheet" href="css/centro.css?v=131">
+<link rel="stylesheet" href="css/casa.css?v=131">
 </head>
 <body class="trancado">
 <!-- ============================ ECRÃ DE CARREGAMENTO (modo aplicação) ============================ -->
@@ -537,7 +537,7 @@
   <!-- 1. JOGO AGORA — só quando o jogo do dia já devia ter começado (js/app.js pintarJogoAgora) -->
   <section class="jogo-agora sempre-escuro" id="jogo-agora" hidden aria-live="polite" aria-label="Jogo de hoje"></section>
 
-  <!-- 2 e 3. PRÓXIMO JOGO e ÚLTIMOS RESULTADOS, lado a lado -->
+  <!-- 1. JOGO: o próximo e os últimos resultados, lado a lado -->
   <div class="topo-jogos">
     <section class="cartaz sempre-escuro" id="cartao-proximo" aria-labelledby="tit-proximo">
       <header class="cartaz__topo">
@@ -566,7 +566,7 @@
   <!-- ACESSO RÁPIDO -->
   <nav class="atalhos" id="atalhos" aria-label="Acesso rápido"></nav>
 
-  <!-- 4. NOTÍCIAS: o destaque e as últimas -->
+  <!-- 2. DESTAQUES -->
   <section class="palco palco--largo sempre-escuro" aria-labelledby="tit-hero" aria-roledescription="carrossel">
     <h2 class="so-leitor" id="tit-hero">Notícias em destaque</h2>
     <div class="hero-caixa">
@@ -581,65 +581,32 @@
     </div>
   </section>
 
-  <!-- IMPORTANTES — as notícias fortes das últimas 24 horas -->
-  <section class="importantes" id="importantes" aria-labelledby="tit-importantes" hidden>
-    <h2 class="importantes__titulo" id="tit-importantes">Importantes · 24 h</h2>
-    <ol class="importantes__lista" id="importantes-lista"></ol>
-  </section>
-
-  <div class="pagina">
-    <div class="pagina__principal">
-      <!-- ÚLTIMAS NOTÍCIAS — composição editorial -->
-      <section class="seccao seccao--ultimas" aria-labelledby="tit-ultimas">
-        <div class="seccao__topo">
-          <div>
-            <p class="seccao__sobre">Ao minuto, de 12 jornais</p>
-            <h2 class="seccao__titulo" id="tit-ultimas">Últimas notícias</h2>
-          </div>
-          <button class="seccao__mais" data-ir="noticias">Ver todas <i aria-hidden="true">→</i></button>
+  <!-- 3. PAINEL — notícias, jogos e classificação; lado a lado em ecrãs largos -->
+  <div class="painel-casa">
+    <section class="seccao painel-casa__noticias" aria-labelledby="tit-ultimas">
+      <div class="seccao__topo">
+        <div>
+          <p class="seccao__sobre">Ao minuto, de 12 jornais</p>
+          <h2 class="seccao__titulo" id="tit-ultimas">Últimas notícias</h2>
         </div>
-        <div class="temas" id="filtros-categoria" role="group" aria-label="Filtrar por tema"></div>
-        <div class="editorial" id="ultimas"></div>
-      </section>
-    </div>
+        <button class="seccao__mais" data-ir="noticias">Ver todas <i aria-hidden="true">→</i></button>
+      </div>
+      <div class="temas" id="filtros-categoria" role="group" aria-label="Filtrar por tema"></div>
+      <ol class="noticias-curtas" id="ultimas" aria-live="polite"></ol>
+    </section>
 
-    <aside class="pagina__lado" aria-label="Ao minuto e mais lidas">
-      <!-- AO MINUTO — feed ao vivo -->
-      <section class="cartao cartao--vivo" aria-labelledby="tit-aominuto">
-        <div class="cartao__topo">
-          <h2 id="tit-aominuto">Ao minuto</h2>
-          <span class="selo-vivo" data-selo-vivo role="status"></span>
-        </div>
-        <div class="cartao__corpo">
-          <div class="segmentos" id="minuto-segmentos" data-segmentos-minuto role="group" aria-label="Filtrar eventos">
-            <button type="button" class="segmento is-on" data-valor="todos" aria-pressed="true">Tudo</button>
-            <button type="button" class="segmento" data-valor="quente" aria-pressed="false">Destaques</button>
-            <button type="button" class="segmento" data-valor="mercado" aria-pressed="false">Mercado</button>
-          </div>
-          <select class="so-leitor" id="minuto-filtro" tabindex="-1" aria-hidden="true">
-            <option value="todos">Todos os eventos</option>
-            <option value="quente">Só destaques</option>
-            <option value="mercado">Só mercado</option>
-          </select>
-          <p class="vivo-novas" id="vivo-novas" hidden role="status"></p>
-          <ol class="linha-tempo" id="linha-tempo"><li class="ev ev--osso" aria-hidden="true"><span class="ev__ligacao"><span class="ev__hora"><span class="osso"></span></span><span class="ev__marca"><span class="osso ev__sigla"></span><i class="ev__linha"></i></span><span class="ev__txt"><span class="osso osso--titulo"></span><span class="osso osso--titulo osso--curto"></span><span class="osso osso--linha osso--curto"></span></span></span></li><li class="ev ev--osso" aria-hidden="true"><span class="ev__ligacao"><span class="ev__hora"><span class="osso"></span></span><span class="ev__marca"><span class="osso ev__sigla"></span><i class="ev__linha"></i></span><span class="ev__txt"><span class="osso osso--titulo"></span><span class="osso osso--titulo osso--curto"></span><span class="osso osso--linha osso--curto"></span></span></span></li><li class="ev ev--osso" aria-hidden="true"><span class="ev__ligacao"><span class="ev__hora"><span class="osso"></span></span><span class="ev__marca"><span class="osso ev__sigla"></span><i class="ev__linha"></i></span><span class="ev__txt"><span class="osso osso--titulo"></span><span class="osso osso--titulo osso--curto"></span><span class="osso osso--linha osso--curto"></span></span></span></li></ol>
-          <button class="botao-largo botao-largo--fantasma" data-ir="aominuto">Ver ao minuto completo</button>
-        </div>
-      </section>
+    <section class="cartao painel-casa__jogos" aria-labelledby="tit-calendario">
+      <div class="cartao__topo">
+        <h2 id="tit-calendario">A seguir</h2>
+        <button class="seccao__mais" data-ir="agenda">Agenda <i aria-hidden="true">→</i></button>
+      </div>
+      <div class="cartao__corpo">
+        <ol class="agenda agenda--curta" id="calendario"></ol>
+        <p class="fonte-tabela" id="calendario-fonte"></p>
+      </div>
+    </section>
 
-      <section class="cartao" aria-labelledby="tit-lidas">
-        <div class="cartao__topo">
-          <h2 id="tit-lidas">Mais lidas</h2>
-          <span class="tag" title="Contadas neste browser">Tuas</span>
-        </div>
-        <div class="cartao__corpo"><ol class="lista-compacta" id="mais-lidas"></ol></div>
-      </section>
-    </aside>
-  </div>
-
-  <!-- 5 e 6. CLASSIFICAÇÃO e ESTATÍSTICAS -->
-  <div class="banda-dados">
-    <section class="cartao cartao--tabela" aria-labelledby="tit-tabela">
+    <section class="cartao cartao--tabela painel-casa__tabela" aria-labelledby="tit-tabela">
       <div class="cartao__topo">
         <h2 id="tit-tabela">Classificação</h2>
         <span class="tag" id="tabela-casa-jornada">Liga</span>
@@ -649,28 +616,32 @@
         <button class="botao-largo botao-largo--fantasma" data-ir="classificacao">Ver classificação completa</button>
       </div>
     </section>
+  </div>
 
-    <section class="seccao seccao--desempenho" aria-labelledby="tit-desempenho">
-      <div class="seccao__topo">
-        <div>
-          <p class="seccao__sobre">Época em números · resultados do Wikipédia</p>
-          <h2 class="seccao__titulo" id="tit-desempenho">Estatísticas da equipa</h2>
-        </div>
-        <button class="seccao__mais" data-ir="estatisticas">Ver tudo <i aria-hidden="true">→</i></button>
+  <!-- 4. ÉPOCA EM NÚMEROS -->
+  <section class="seccao seccao--desempenho seccao--epoca" aria-labelledby="tit-desempenho">
+    <div class="seccao__topo">
+      <div>
+        <p class="seccao__sobre">Época em números</p>
+        <h2 class="seccao__titulo" id="tit-desempenho">Estatísticas da equipa</h2>
       </div>
+      <button class="seccao__mais" data-ir="estatisticas">Ver tudo <i aria-hidden="true">→</i></button>
+    </div>
+    <div class="epoca-casa">
       <div class="caixas" id="caixas-equipa"></div>
       <div class="banda-dados__marcadores">
         <h3 class="banda-dados__sub" id="tit-marcadores">Melhores marcadores</h3>
         <ol class="marcadores" id="marcadores" aria-labelledby="tit-marcadores"></ol>
       </div>
-    </section>
-  </div>
+    </div>
+    <p class="fonte-tabela" id="epoca-fonte"></p>
+  </section>
 
-  <!-- 7. FANTASY E COMUNIDADE -->
+  <!-- 5. JOGAR E CONVERSAR -->
   <section class="seccao seccao--comunidade" aria-labelledby="tit-comunidade">
     <div class="seccao__topo">
       <div>
-        <p class="seccao__sobre">Fantasy e comunidade</p>
+        <p class="seccao__sobre">Fantasy, jogos e comunidade</p>
         <h2 class="seccao__titulo" id="tit-comunidade">Jogar e conversar</h2>
       </div>
     </div>
@@ -685,74 +656,6 @@
       </article>
     </div>
   </section>
-
-  <!-- PRÓXIMOS JOGOS -->
-  <section class="seccao seccao--agenda seccao--agenda-casa" aria-labelledby="tit-calendario">
-    <div class="seccao__topo">
-      <div>
-        <p class="seccao__sobre">O que aí vem</p>
-        <h2 class="seccao__titulo" id="tit-calendario">Próximos jogos</h2>
-      </div>
-      <button class="seccao__mais" data-ir="agenda">Agenda <i aria-hidden="true">→</i></button>
-    </div>
-    <ol class="agenda agenda--curta" id="calendario"></ol>
-  </section>
-
-  <!-- MODALIDADES -->
-  <section class="seccao seccao--modalidades" aria-labelledby="tit-modalidades-casa">
-    <div class="seccao__topo">
-      <div>
-        <p class="seccao__sobre">Muito mais do que futebol</p>
-        <h2 class="seccao__titulo" id="tit-modalidades-casa">Modalidades</h2>
-      </div>
-      <button class="seccao__mais" data-ir="modalidades">Ver modalidades <i aria-hidden="true">→</i></button>
-    </div>
-    <div class="mod-mosaico" id="modalidades-casa"></div>
-  </section>
-
-  <div class="pagina pagina--segunda">
-    <div class="pagina__principal">
-      <!-- MERCADO -->
-      <section class="seccao seccao--mercado" aria-labelledby="tit-mercado-home">
-        <div class="seccao__topo">
-          <div>
-            <p class="seccao__sobre">Entradas, saídas e rumores</p>
-            <h2 class="seccao__titulo" id="tit-mercado-home">Mercado</h2>
-          </div>
-          <button class="seccao__mais" data-ir="rumores">Ver mercado <i aria-hidden="true">→</i></button>
-        </div>
-        <div class="grelha-cartoes" id="mercado-home"></div>
-      </section>
-
-      <!-- VÍDEOS -->
-      <section class="seccao seccao--videos" aria-labelledby="tit-videos">
-        <div class="seccao__topo">
-          <div>
-            <p class="seccao__sobre">Golos, resumos e conferências</p>
-            <h2 class="seccao__titulo" id="tit-videos">Vídeos</h2>
-          </div>
-        </div>
-        <div class="grelha-cartoes" id="videos"></div>
-      </section>
-    </div>
-
-    <aside class="pagina__lado" aria-label="Rumores">
-      <section class="cartao" aria-labelledby="tit-rumores">
-        <div class="cartao__topo">
-          <h2 id="tit-rumores">Rumores</h2>
-          <button class="ver-todos" data-ir="rumores">Ver todos</button>
-        </div>
-        <div class="cartao__corpo"><ul class="lista-rumores" id="rumores-curtos"></ul></div>
-      </section>
-    </aside>
-  </div>
-
-  <!-- LEVA O SPORTING CONTIGO -->
-  <section class="levar sempre-escuro" id="levar" aria-labelledby="tit-levar" hidden></section>
-
-  <!-- a tabela antiga da coluna continua no documento (o pintarTabela escreve
-       nela), mas a homepage mostra a versão nova em #tabela-casa -->
-  <table hidden id="tabela-curta"><tbody></tbody></table>
 </main>
 
 <!-- o carrossel antigo continua a existir para não partir nada, mas escondido -->
@@ -901,6 +804,7 @@
         <thead><tr><th></th><th>JOGADOR</th><th>POS</th><th>Nº</th><th>JOGOS</th><th>GOLOS</th></tr></thead>
         <tbody></tbody>
       </table>
+      <p class="fonte-tabela" id="jogadores-fonte"></p>
     </div>
   </section>
 
@@ -923,7 +827,7 @@
     </section>
     <section class="cartao est-bloco" aria-labelledby="tit-est-provas">
       <div class="cartao__topo"><h2 id="tit-est-provas">POR COMPETIÇÃO</h2><span class="sub-inline">golos marcados e sofridos</span></div>
-      <div class="cartao__corpo"><div class="est-tabela-rolo" id="est-provas"></div></div>
+      <div class="cartao__corpo"><div class="est-tabela-rolo" id="est-provas"></div><p class="fonte-tabela" id="est-fonte"></p></div>
     </section>
   </div>
 
@@ -1252,21 +1156,21 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.min.js" defer></script>
-<script src="js/nuvem.js?v=130" defer></script>
-<script src="js/fd.js?v=130" defer></script>
-<script src="js/componentes.js?v=130" defer></script>
-<script src="js/contas.js?v=130" defer></script>
-<script src="js/arte.js?v=130" defer></script>
-<script src="js/data.js?v=130" defer></script>
-<script src="js/wiki.js?v=130" defer></script>
-<script src="js/tema.js?v=130" defer></script>
-<script src="js/notificacoes.js?v=130" defer></script>
-<script src="js/pwa.js?v=130" defer></script>
-<script src="js/arquivo.js?v=130" defer></script>
-<script src="js/fantasy.js?v=130" defer></script>
-<script src="js/museu.js?v=130" defer></script>
-<script src="js/entrada.js?v=130" defer></script>
-<script src="js/centro.js?v=130" defer></script>
-<script src="js/app.js?v=130" defer></script>
+<script src="js/nuvem.js?v=131" defer></script>
+<script src="js/fd.js?v=131" defer></script>
+<script src="js/componentes.js?v=131" defer></script>
+<script src="js/contas.js?v=131" defer></script>
+<script src="js/arte.js?v=131" defer></script>
+<script src="js/data.js?v=131" defer></script>
+<script src="js/wiki.js?v=131" defer></script>
+<script src="js/tema.js?v=131" defer></script>
+<script src="js/notificacoes.js?v=131" defer></script>
+<script src="js/pwa.js?v=131" defer></script>
+<script src="js/arquivo.js?v=131" defer></script>
+<script src="js/fantasy.js?v=131" defer></script>
+<script src="js/museu.js?v=131" defer></script>
+<script src="js/entrada.js?v=131" defer></script>
+<script src="js/centro.js?v=131" defer></script>
+<script src="js/app.js?v=131" defer></script>
 </body>
 </html>

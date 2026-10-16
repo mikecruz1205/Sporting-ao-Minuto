@@ -200,6 +200,24 @@ const Componentes = (() => {
   }
 
   /* manchete numa lista: hora, título e jornal — para as que não têm foto */
+  /* notícia curta para a página inicial: jornal e hora, título e um excerto
+     curto, com ligação para o artigo no site do jornal (nunca o texto inteiro) */
+  function itemCurto(n){
+    const minutos = (Date.now() - n.data.getTime()) / 60000;
+    const hoje = n.data.toDateString() === new Date().toDateString();
+    const hora = minutos >= 0 && minutos < 60 ? haQuanto(n.data) : hoje ? horaCurta(n.data) : dataCurta(n.data);
+    const excerto = resumir(n.resumo, 120);
+    return `
+    <li class="nc">
+      <a class="nc__ligacao" href="${ligacao(n.link)}" target="_blank" rel="noopener" data-link="${seguro(n.link)}">
+        <span class="nc__meta">${etiquetaFonte(n)}
+          <time datetime="${n.data.toISOString()}" title="${seguro(n.data.toLocaleString('pt-PT'))}">${hora}</time></span>
+        <span class="nc__titulo">${seguro(n.titulo)}</span>
+        ${excerto ? `<span class="nc__excerto">${seguro(excerto)}</span>` : ''}
+      </a>
+    </li>`;
+  }
+
   function manchete(n, destaque = ''){
     return `
     <li class="manchete">
@@ -394,7 +412,7 @@ const Componentes = (() => {
 
   return {
     seguro, destacar, haQuanto, dataCurta, horaCurta, resumir,
-    cartaoNoticia, cartaoEditorial, manchete, itemLista, capa, hero, itemCompacto, categoriaClasse, imagemGrande,
+    cartaoNoticia, cartaoEditorial, manchete, itemLista, itemCurto, capa, hero, itemCompacto, categoriaClasse, imagemGrande,
     esqueletoCartao, esqueletoEditorial, esqueletoHero, esqueletoCompacto, esqueletoLista, esqueletoMinuto, erroLeitura, vazio,
     etiquetaFonte, siglaFonte, sigla, classeFonte
   };
