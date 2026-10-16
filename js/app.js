@@ -1939,13 +1939,15 @@ function pintarTabela(){
     return;
   }
 
-  tabela.tBodies[0].innerHTML = ordenarLinhas(dados).map(t => `
+  tabela.tBodies[0].innerHTML = dados.map(t => `
     <tr class="${eSporting(t.equipa)?'eu':''} ${naChampions ? zonaChampions(t.pos) : ''}">
       <td class="np">${t.pos}</td>
       <th scope="row" class="eq-celula"><span class="eq"><img src="${emblemaEquipa(t.equipa)}" alt="" loading="lazy">${t.equipa}</span></th>
       <td>${t.j}</td><td>${t.v}</td><td>${t.e}</td><td>${t.d}</td>
       <td>${t.gm}</td><td>${t.gs}</td><td>${t.gm - t.gs}</td><td class="pts">${t.p}</td>
     </tr>`).join('');
+  tornarOrdenavel(tabela);
+  aplicarOrdem(tabela);
 
   $('#tabela-legenda').innerHTML = naChampions
     ? `<i class="leg leg--direto"></i> 1.º a 8.º passam aos oitavos ·
@@ -1957,16 +1959,54 @@ function pintarTabela(){
   pintarResumoLiga(!naChampions && comecou);
 }
 
-/* ordem das linhas: a da fonte, salvo se se escolher outra no cabeçalho */
-let ordemTabela = null;          // { coluna, sentido } ou null
-function ordenarLinhas(dados){
-  if(!ordemTabela) return dados;
-  const { coluna, sentido } = ordemTabela;
-  const valor = t => coluna === 'equipa' ? t.equipa : coluna === 'dg' ? t.gm - t.gs : t[coluna];
-  return [...dados].sort((a, b) => {
-    const x = valor(a), y = valor(b);
-    const r = typeof x === 'string' ? x.localeCompare(y, 'pt') : x - y;
-    return (r || a.pos - b.pos) * sentido;
+/* ---------------------------------------------------------------------
+   TABELAS ORDENÁVEIS — clicar num cabeçalho ordena por essa coluna;
+   clicar outra vez inverte. Números ordenam-se como números (o maior
+   primeiro), texto por ordem alfabética, e "—" (sem dados) fica no fim.
+   A escolha fica na tabela e volta a aplicar-se quando os dados chegam.
+   --------------------------------------------------------------------- */
+function valorCelula(c){
+  const t = (c?.dataset.valor ?? c?.textContent ?? '').trim();
+  if(/^[+−-]?\d/.test(t)) return parseFloat(t.replace('−', '-').replace(',', '.').replace(/^\+/, ''));
+  return t === '—' || t === '–' || t === '' ? null : t;
+}
+function tornarOrdenavel(tabela){
+  if(!tabela?.tHead || tabela.dataset.ordenavel) return;
+  tabela.dataset.ordenavel = '1';
+  [...tabela.tHead.rows[0].cells].forEach((th, i) => {
+    if(!th.textContent.trim()) return;                      // colunas sem título (fotografia)
+    th.setAttribute('aria-sort', 'none');
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'ordenar';
+    b.innerHTML = `${th.innerHTML}<span class="ordenar__seta" aria-hidden="true"></span>`;
+    b.title = 'Ordenar por esta coluna';
+    th.replaceChildren(b);
+    b.addEventListener('click', () => {
+      const mesma = tabela.dataset.ordemCol === String(i);
+      /* números: primeiro do maior para o menor; texto e posição: A→Z, 1→n */
+      const primeira = i === 0 || typeof valorCelula(tabela.tBodies[0].rows[0]?.cells[i]) !== 'number' ? 'asc' : 'desc';
+      tabela.dataset.ordemCol = i;
+      tabela.dataset.ordemSentido = mesma ? (tabela.dataset.ordemSentido === 'asc' ? 'desc' : 'asc') : primeira;
+      aplicarOrdem(tabela);
+    });
+  });
+}
+function aplicarOrdem(tabela){
+  if(!tabela?.tHead || tabela.dataset.ordemCol == null) return;
+  const i = Number(tabela.dataset.ordemCol), sentido = tabela.dataset.ordemSentido === 'desc' ? -1 : 1;
+  const corpo = tabela.tBodies[0];
+  const linhas = [...corpo.rows].filter(r => r.cells.length > i && !r.querySelector('[colspan]'));
+  linhas.forEach((r, k) => { if(r.dataset.ordemOriginal == null) r.dataset.ordemOriginal = k; });
+  linhas.sort((a, b) => {
+    const x = valorCelula(a.cells[i]), y = valorCelula(b.cells[i]);
+    if(x == null || y == null) return (x == null) - (y == null) || a.dataset.ordemOriginal - b.dataset.ordemOriginal;
+    const r = typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y), 'pt');
+    return r ? r * sentido : a.dataset.ordemOriginal - b.dataset.ordemOriginal;
+  });
+  linhas.forEach(r => corpo.appendChild(r));
+  [...tabela.tHead.rows[0].cells].forEach((th, k) => {
+    if(th.hasAttribute('aria-sort')) th.setAttribute('aria-sort', k === i ? (sentido === 1 ? 'ascending' : 'descending') : 'none');
   });
 }
 
@@ -2075,6 +2115,7 @@ function ligarTrocaProva(){
     if(!b) return;
     if(b.dataset.tentar === 'tabela'){ b.disabled = true; carregarClassificacao(); }
     if(b.dataset.tentar === 'comunidade'){ b.disabled = true; pintarComunidade(); }
+    if(b.dataset.tentar === 'individuais'){ b.disabled = true; individuaisLidos = null; pintarEstatisticasEpoca(); }
     if(b.dataset.tentar === 'chat'){ b.disabled = true; pintarChat(); }
     if(b.dataset.tentar === 'dados'){
       $$('[data-tentar="dados"]').forEach(x => { x.disabled = true; x.textContent = 'A tentar…'; });
@@ -2697,6 +2738,8 @@ function pintarEstatisticas(){
          Ninguém jogou ${provaAtiva === 'Total' ? 'em provas oficiais' : 'nesta prova'} até agora,
          por isso ninguém tem golos.
        </td></tr>`;
+  tornarOrdenavel($('#tabela-jogadores'));
+  aplicarOrdem($('#tabela-jogadores'));
 }
 
 /* =========================================================================
@@ -2787,13 +2830,16 @@ async function pintarIndividuais(jogosOficiais){
   if(!individuaisLidos){
     alvo.innerHTML = Componentes.esqueletoCompacto(3);
     try{
-      const [{ data: linhas }, { data: jogadores }] = await Promise.all([
+      const [{ data: linhas, error: e1 }, { data: jogadores, error: e2 }] = await Promise.all([
         db.from('desporto_estatisticas_jogo').select('jogo_id, jogador_id, minutos, golos, assistencias, amarelos, vermelhos, defesas, fonte'),
         db.from('desporto_jogadores').select('id, nome, nome_curto, posicao')
       ]);
+      if(e1 || e2) throw e1 || e2;
       individuaisLidos = { linhas: linhas || [], jogadores: new Map((jogadores || []).map(j => [j.id, j])) };
     }catch(e){
-      alvo.innerHTML = '<p class="vazio">Não foi possível ler as estatísticas individuais. Tenta mais tarde.</p>';
+      alvo.innerHTML = `<div class="estado-falha" role="alert"><p><b>Não foi possível ler as estatísticas individuais.</b></p>
+        <p>O servidor não respondeu. Tenta outra vez daqui a pouco.</p>
+        <button type="button" class="botao-tentar" data-tentar="individuais">Tentar outra vez</button></div>`;
       return;
     }
   }
@@ -2827,6 +2873,9 @@ async function pintarIndividuais(jogosOficiais){
       <td>${x.jogos}</td><td>${v(x.minutos)}</td><td>${v(x.golos)}</td><td>${v(x.assistencias)}</td><td>${v(x.amarelos)}</td><td>${v(x.vermelhos)}</td><td>${v(x.defesas)}</td></tr>`).join('')}
     </tbody></table></div>
     <p class="est-nota">Só os ${nJogos} jogos com estatísticas individuais na base de dados (fonte: ${Componentes.seguro(fontes)}). «—» = sem dados.</p>`;
+  const tabela = alvo.querySelector('table');
+  tornarOrdenavel(tabela);
+  aplicarOrdem(tabela);
 }
 
 /* a que prova pertence um jogo do calendário */
@@ -4834,6 +4883,19 @@ async function arranque(){
   });
   addEventListener('keydown', e => {
     if(e.key === 'Escape'){ caixaProcura.classList.remove('is-aberta'); fecharSugestoes(); }
+  });
+  /* atalho para a pesquisa: "/" (fora de campos de texto) ou Ctrl+K (⌘K no Mac) */
+  addEventListener('keydown', e => {
+    const ctrlK = (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'k';
+    const barra = e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey;
+    if(!ctrlK && !barra) return;
+    if(barra && e.target.closest?.('input, textarea, select, [contenteditable]:not([contenteditable="false"])')) return;
+    if(document.querySelector('dialog[open]')) return;
+    e.preventDefault();
+    caixaProcura.classList.add('is-aberta');
+    const campo = $('#procura');
+    campo.focus();
+    campo.select();
   });
 }
 

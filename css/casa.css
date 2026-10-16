@@ -309,3 +309,17 @@
 .jl-osso .osso{ height: 56px; margin-bottom: 6px; }
 .marcadores li.marcador--osso, #est-forma li.forma--osso{ display: block; }
 .estado-falha--curto{ padding: 10px 0; justify-items: start; text-align: left; }
+
+/* =========================================================================
+   TABELAS ORDENÁVEIS (computador e telemóvel)
+   ========================================================================= */
+.ordenar{ display: inline-flex; align-items: center; gap: 3px; min-height: 32px; padding: 0; border: 0; background: none;
+  font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; cursor: pointer; white-space: nowrap; }
+.ordenar:hover{ color: var(--texto); }
+.ordenar:focus-visible{ outline: 2px solid var(--verde-claro); outline-offset: 2px; border-radius: 4px; }
+.ordenar abbr{ cursor: inherit; }
+.ordenar__seta{ display: inline-block; width: 8px; font-size: 8px; line-height: 1; }
+th[aria-sort="ascending"] .ordenar__seta::after{ content: '▲'; }
+th[aria-sort="descending"] .ordenar__seta::after{ content: '▼'; }
+th[aria-sort="ascending"], th[aria-sort="descending"]{ color: var(--verde-claro) !important; }
+@media (max-width: 640px){ .ordenar{ min-height: 44px; } }
