@@ -1,0 +1,961 @@
+{
+ "nome": "Quiz Leonino",
+ "verificado": "16 de outubro de 2026",
+ "nota": "Cada pergunta tem a fonte de onde o facto foi lido. A primeira opção é a certa (índice em \"correta\"); o jogo baralha-as.",
+ "perguntas": [
+  {
+   "id": "fundacao-ano",
+   "pergunta": "Em que ano foi fundado o Sporting Clube de Portugal?",
+   "opcoes": [
+    "1906",
+    "1904",
+    "1910",
+    "1902"
+   ],
+   "correta": 0,
+   "dificuldade": "facil",
+   "categoria": "historia",
+   "fonte": {
+    "nome": "Wikipédia — Sporting Clube de Portugal",
+    "url": "https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal"
+   },
+   "explicacao": "O Sporting foi fundado a 1 de julho de 1906, em Lisboa."
+  },
+  {
+   "id": "estadio-nome",
+   "pergunta": "Como se chama o estádio onde o Sporting joga em casa?",
+   "opcoes": [
+    "Estádio José Alvalade",
+    "Estádio da Luz",
+    "Estádio do Dragão",
+    "Estádio do Restelo"
+   ],
+   "correta": 0,
+   "dificuldade": "facil",
+   "categoria": "estadio",
+   "fonte": {
+    "nome": "Wikipédia — Estádio José Alvalade",
+    "url": "https://pt.wikipedia.org/wiki/Est%C3%A1dio_Jos%C3%A9_Alvalade"
+   },
+   "explicacao": "O Estádio José Alvalade, propriedade do Sporting, fica em Lisboa e tem o nome do fundador do clube."
+  },
+  {
+   "id": "cores",
+   "pergunta": "Quais são as cores do Sporting?",
+   "opcoes": [
+    "Verde e branco",
+    "Vermelho e branco",
+    "Azul e branco",
+    "Verde e preto"
+   ],
+   "correta": 0,
+   "dificuldade": "facil",
+   "categoria": "historia",
+   "fonte": {
+    "nome": "Wikipédia — Sporting Clube de Portugal",
+    "url": "https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal"
+   },
+   "explicacao": "As cores verde e branca foram adotadas em 1907 e usadas praticamente desde a fundação."
+  },
+  {
+   "id": "emblema-animal",
+   "pergunta": "Que animal aparece no emblema do Sporting?",
+   "opcoes": [
+    "Leão",
+    "Águia",
+    "Dragão",
+    "Lobo"
+   ],
+   "correta": 0,
+   "dificuldade": "facil",
+   "categoria": "historia",
+   "fonte": {
+    "nome": "Wikipédia — Sporting Clube de Portugal",
+    "url": "https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal"
+   },
+   "explicacao": "O emblema tem um leão rampante sobre fundo verde."
+  },
+  {
+   "id": "maior-feito",
+   "pergunta": "Qual é o maior feito internacional do Sporting no futebol?",
+   "opcoes": [
+    "A Taça das Taças de 1963/64",
+    "Uma Liga dos Campeões",
+    "Uma Taça UEFA",
+    "Uma Supertaça Europeia"
+   ],
+   "correta": 0,
+   "dificuldade": "facil",
+   "categoria": "titulos",
+   "fonte": {
+    "nome": "Wikipédia — Sporting Clube de Portugal",
+    "url": "https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal"
+   },
+   "explicacao": "A nível internacional, o maior feito do Sporting foi a conquista da Taça das Taças de 1963/64."
+  },
+  {
+   "id": "ronaldo-manchester",
+   "pergunta": "Que jogador saiu do Sporting para o Manchester United em 2003, com apenas 18 anos?",
+   "opcoes": [
+    "Cristiano Ronaldo",
+    "Luís Figo",
+    "Nani",
+    "Ricardo Quaresma"
+   ],
+   "correta": 0,
+   "dificuldade": "facil",
+   "categoria": "jogadores",
+   "fonte": {
+    "nome": "Wikipédia — Cristiano Ronaldo",
+    "url": "https://pt.wikipedia.org/wiki/Cristiano_Ronaldo"
+   },
+   "explicacao": "Em 2003, com 18 anos, Cristiano Ronaldo assinou pelo Manchester United, que pagou cerca de 15 milhões de euros ao Sporting."
+  },
+  {
+   "id": "cidade",
+   "pergunta": "Em que cidade fica a sede do Sporting?",
+   "opcoes": [
+    "Lisboa",
+    "Porto",
+    "Setúbal",
+    "Coimbra"
+   ],
+   "correta": 0,
+   "dificuldade": "facil",
+   "categoria": "historia",
+   "fonte": {
+    "nome": "Wikipédia — Sporting Clube de Portugal",
+    "url": "https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal"
+   },
+   "explicacao": "O Sporting está sediado na freguesia do Lumiar, em Lisboa."
+  },
+  {
+   "id": "adeptos-nome",
+   "pergunta": "Como são chamados os adeptos do Sporting?",
+   "opcoes": [
+    "Sportinguistas",
+    "Benfiquistas",
+    "Portistas",
+    "Belenenses"
+   ],
+   "correta": 0,
+   "dificuldade": "facil",
+   "categoria": "historia",
+   "fonte": {
+    "nome": "Wikipédia — Sporting Clube de Portugal",
+    "url": "https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal"
+   },
+   "explicacao": "Os adeptos do Sporting são apelidados de sportinguistas."
+  },
+  {
+   "id": "ultimo-campeonato",
+   "pergunta": "Em que época o Sporting ganhou o seu Campeonato Nacional mais recente (até 2025/26)?",
+   "opcoes": [
+    "2024/25",
+    "2020/21",
+    "2021/22",
+    "2022/23"
+   ],
+   "correta": 0,
+   "dificuldade": "facil",
+   "categoria": "titulos",
+   "fonte": {
+    "nome": "Wikipédia — Sporting Clube de Portugal, Palmarés",
+    "url": "https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal#Palmarés"
+   },
+   "explicacao": "O 21.º Campeonato Nacional foi o de 2024/25, logo a seguir ao de 2023/24."
+  },
+  {
+   "id": "figo-bola-ouro",
+   "pergunta": "Qual destes jogadores, que começou a carreira profissional no Sporting, ganhou a Bola de Ouro em 2000?",
+   "opcoes": [
+    "Luís Figo",
+    "Cristiano Ronaldo",
+    "Paulo Futre",
+    "Rui Costa"
+   ],
+   "correta": 0,
+   "dificuldade": "facil",
+   "categoria": "jogadores",
+   "fonte": {
+    "nome": "Wikipédia — Luís Figo",
+    "url": "https://pt.wikipedia.org/wiki/Lu%C3%ADs_Figo"
+   },
+   "explicacao": "Luís Figo jogou no Sporting de 1989 a 1995 e venceu a Bola de Ouro em 2000."
+  },
+  {
+   "id": "pavilhao-nome",
+   "pergunta": "Como se chama o pavilhão onde jogam as modalidades do Sporting?",
+   "opcoes": [
+    "Pavilhão João Rocha",
+    "Pavilhão Fidelidade",
+    "Dragão Arena",
+    "Pavilhão Atlântico"
+   ],
+   "correta": 0,
+   "dificuldade": "facil",
+   "categoria": "modalidades",
+   "fonte": {
+    "nome": "Wikipédia — Pavilhão João Rocha",
+    "url": "https://pt.wikipedia.org/wiki/Pavilh%C3%A3o_Jo%C3%A3o_Rocha"
+   },
+   "explicacao": "O Pavilhão João Rocha, junto ao Estádio José Alvalade, é a casa do andebol, basquetebol, futsal, hóquei em patins e voleibol."
+  },
+  {
+   "id": "inauguracao-adversario",
+   "pergunta": "Que clube inglês jogou a inauguração do novo Estádio José Alvalade, em 2003?",
+   "opcoes": [
+    "Manchester United",
+    "Liverpool",
+    "Arsenal",
+    "Chelsea"
+   ],
+   "correta": 0,
+   "dificuldade": "facil",
+   "categoria": "estadio",
+   "fonte": {
+    "nome": "Wikipédia — Estádio José Alvalade",
+    "url": "https://pt.wikipedia.org/wiki/Est%C3%A1dio_Jos%C3%A9_Alvalade"
+   },
+   "explicacao": "O estádio foi inaugurado a 6 de agosto de 2003 com uma vitória do Sporting por 3–1 sobre o Manchester United."
+  },
+  {
+   "id": "presidente-atual",
+   "pergunta": "Quem é o presidente do Sporting desde 2018?",
+   "opcoes": [
+    "Frederico Varandas",
+    "Bruno de Carvalho",
+    "Godinho Lopes",
+    "Sousa Cintra"
+   ],
+   "correta": 0,
+   "dificuldade": "facil",
+   "categoria": "presidentes",
+   "fonte": {
+    "nome": "Wikipédia — Lista de presidentes do Sporting Clube de Portugal",
+    "url": "https://pt.wikipedia.org/wiki/Lista_de_presidentes_do_Sporting_Clube_de_Portugal"
+   },
+   "explicacao": "O atual presidente, desde 2018, é Frederico Varandas."
+  },
+  {
+   "id": "tres-grandes",
+   "pergunta": "Com o Sporting e o Benfica, que outro clube forma os chamados \"Três Grandes\" do futebol português?",
+   "opcoes": [
+    "FC Porto",
+    "Belenenses",
+    "Vitória de Guimarães",
+    "Sporting de Braga"
+   ],
+   "correta": 0,
+   "dificuldade": "facil",
+   "categoria": "historia",
+   "fonte": {
+    "nome": "Wikipédia — Sporting Clube de Portugal",
+    "url": "https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal"
+   },
+   "explicacao": "O Sporting é um dos \"Três Grandes\", juntamente com o FC Porto e o Benfica."
+  },
+  {
+   "id": "regresso-titulo",
+   "pergunta": "Depois do título de 2001/02, em que época o Sporting voltou a ser campeão nacional?",
+   "opcoes": [
+    "2020/21",
+    "2015/16",
+    "2017/18",
+    "2019/20"
+   ],
+   "correta": 0,
+   "dificuldade": "facil",
+   "categoria": "titulos",
+   "fonte": {
+    "nome": "Wikipédia — Sporting Clube de Portugal, Palmarés",
+    "url": "https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal#Palmarés"
+   },
+   "explicacao": "Depois de 2001/02, o título seguinte chegou em 2020/21; seguiram-se os de 2023/24 e 2024/25."
+  },
+  {
+   "id": "campeonatos-total",
+   "pergunta": "Quantos Campeonatos Nacionais tem o Sporting (até à época 2025/26)?",
+   "opcoes": [
+    "21",
+    "19",
+    "23",
+    "18"
+   ],
+   "correta": 0,
+   "dificuldade": "media",
+   "categoria": "titulos",
+   "fonte": {
+    "nome": "Wikipédia — Sporting Clube de Portugal, Palmarés",
+    "url": "https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal#Palmarés"
+   },
+   "explicacao": "São 21, de 1940/41 a 2024/25."
+  },
+  {
+   "id": "tacas-total",
+   "pergunta": "Quantas Taças de Portugal tem o Sporting?",
+   "opcoes": [
+    "18",
+    "15",
+    "20",
+    "12"
+   ],
+   "correta": 0,
+   "dificuldade": "media",
+   "categoria": "titulos",
+   "fonte": {
+    "nome": "Wikipédia — Sporting Clube de Portugal, Palmarés",
+    "url": "https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal#Palmarés"
+   },
+   "explicacao": "São 18 Taças de Portugal, a mais recente em 2024/25."
+  },
+  {
+   "id": "violinos-um",
+   "pergunta": "Qual destes jogadores fazia parte dos \"Cinco Violinos\"?",
+   "opcoes": [
+    "Fernando Peyroteo",
+    "Eusébio",
+    "Héctor Yazalde",
+    "Manuel Fernandes"
+   ],
+   "correta": 0,
+   "dificuldade": "media",
+   "categoria": "jogadores",
+   "fonte": {
+    "nome": "Wikipédia — Cinco Violinos",
+    "url": "https://pt.wikipedia.org/wiki/Cinco_Violinos"
+   },
+   "explicacao": "Os Cinco Violinos eram Jesus Correia, Manuel Vasques, Fernando Peyroteo, José Travassos e Albano Pereira."
+  },
+  {
+   "id": "estadio-ano",
+   "pergunta": "Em que ano foi inaugurado o atual Estádio José Alvalade?",
+   "opcoes": [
+    "2003",
+    "2004",
+    "2001",
+    "2006"
+   ],
+   "correta": 0,
+   "dificuldade": "media",
+   "categoria": "estadio",
+   "fonte": {
+    "nome": "Wikipédia — Estádio José Alvalade",
+    "url": "https://pt.wikipedia.org/wiki/Est%C3%A1dio_Jos%C3%A9_Alvalade"
+   },
+   "explicacao": "Foi inaugurado a 6 de agosto de 2003, a tempo do Euro 2004."
+  },
+  {
+   "id": "pavilhao-ano",
+   "pergunta": "Em que ano foi inaugurado o Pavilhão João Rocha?",
+   "opcoes": [
+    "2017",
+    "2015",
+    "2019",
+    "2012"
+   ],
+   "correta": 0,
+   "dificuldade": "media",
+   "categoria": "modalidades",
+   "fonte": {
+    "nome": "Wikipédia — Pavilhão João Rocha",
+    "url": "https://pt.wikipedia.org/wiki/Pavilh%C3%A3o_Jo%C3%A3o_Rocha"
+   },
+   "explicacao": "O Pavilhão João Rocha foi inaugurado a 21 de junho de 2017."
+  },
+  {
+   "id": "academia-nome",
+   "pergunta": "Que nome passou a ter a academia do Sporting em Alcochete, em 2020?",
+   "opcoes": [
+    "Academia Cristiano Ronaldo",
+    "Academia Luís Figo",
+    "Academia Aurélio Pereira",
+    "Academia José Alvalade"
+   ],
+   "correta": 0,
+   "dificuldade": "media",
+   "categoria": "historia",
+   "fonte": {
+    "nome": "Wikipédia — Academia Cristiano Ronaldo",
+    "url": "https://pt.wikipedia.org/wiki/Academia_Cristiano_Ronaldo"
+   },
+   "explicacao": "Em setembro de 2020 o Sporting anunciou que a academia de Alcochete passava a chamar-se Academia Cristiano Ronaldo."
+  },
+  {
+   "id": "tacas-tacas-epoca",
+   "pergunta": "Em que época o Sporting conquistou a Taça das Taças?",
+   "opcoes": [
+    "1963/64",
+    "1960/61",
+    "1972/73",
+    "1981/82"
+   ],
+   "correta": 0,
+   "dificuldade": "media",
+   "categoria": "titulos",
+   "fonte": {
+    "nome": "Wikipédia — Sporting Clube de Portugal, Palmarés",
+    "url": "https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal#Palmarés"
+   },
+   "explicacao": "A Taça das Taças foi conquistada em 1963/64."
+  },
+  {
+   "id": "yazalde-golos",
+   "pergunta": "Quantos golos marcou Héctor Yazalde no campeonato de 1973/74, recorde português numa época?",
+   "opcoes": [
+    "46",
+    "42",
+    "38",
+    "50"
+   ],
+   "correta": 0,
+   "dificuldade": "media",
+   "categoria": "jogadores",
+   "fonte": {
+    "nome": "Wikipédia — Héctor Yazalde",
+    "url": "https://pt.wikipedia.org/wiki/H%C3%A9ctor_Yazalde"
+   },
+   "explicacao": "Yazalde marcou 46 golos em 30 jornadas e ganhou a Bota de Ouro europeia."
+  },
+  {
+   "id": "jardel-bota",
+   "pergunta": "Que avançado do Sporting ganhou a Bota de Ouro europeia em 2002?",
+   "opcoes": [
+    "Mário Jardel",
+    "Liedson",
+    "Bas Dost",
+    "Héctor Yazalde"
+   ],
+   "correta": 0,
+   "dificuldade": "media",
+   "categoria": "jogadores",
+   "fonte": {
+    "nome": "Wikipédia — Jardel",
+    "url": "https://pt.wikipedia.org/wiki/Jardel_(futebolista,_1973)"
+   },
+   "explicacao": "Jardel marcou 42 golos em 30 jogos do campeonato de 2001/02 e ganhou a segunda Bota de Ouro da carreira."
+  },
+  {
+   "id": "rocha-mandato",
+   "pergunta": "João Rocha teve o mandato mais longo da história do Sporting. Quantos anos durou?",
+   "opcoes": [
+    "13",
+    "8",
+    "10",
+    "20"
+   ],
+   "correta": 0,
+   "dificuldade": "media",
+   "categoria": "presidentes",
+   "fonte": {
+    "nome": "Wikipédia — João Rocha",
+    "url": "https://pt.wikipedia.org/wiki/Jo%C3%A3o_Rocha"
+   },
+   "explicacao": "João Rocha foi presidente de setembro de 1973 a 1986: 13 anos, o mandato mais longo do clube."
+  },
+  {
+   "id": "hino",
+   "pergunta": "Que música é reconhecida pelos sportinguistas como o hino do clube?",
+   "opcoes": [
+    "Marcha do Sporting",
+    "Leão de Alvalade",
+    "Hino Leonino",
+    "Verde e Branco"
+   ],
+   "correta": 0,
+   "dificuldade": "media",
+   "categoria": "historia",
+   "fonte": {
+    "nome": "Wikipédia — Sporting Clube de Portugal",
+    "url": "https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal"
+   },
+   "explicacao": "A Marcha do Sporting, com letra de Eduardo Damas e música de Manuel Paião, foi gravada pela primeira vez em 1960."
+  },
+  {
+   "id": "tacas-liga-total",
+   "pergunta": "Quantas Taças da Liga tem o Sporting?",
+   "opcoes": [
+    "4",
+    "2",
+    "6",
+    "5"
+   ],
+   "correta": 0,
+   "dificuldade": "media",
+   "categoria": "titulos",
+   "fonte": {
+    "nome": "Wikipédia — Sporting Clube de Portugal, Palmarés",
+    "url": "https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal#Palmarés"
+   },
+   "explicacao": "São 4: 2017/18, 2018/19, 2020/21 e 2021/22."
+  },
+  {
+   "id": "listas-ano",
+   "pergunta": "Em que ano, numa digressão ao Brasil, o futebol do Sporting adotou de vez as camisolas às listas horizontais verdes e brancas?",
+   "opcoes": [
+    "1928",
+    "1906",
+    "1946",
+    "1956"
+   ],
+   "correta": 0,
+   "dificuldade": "media",
+   "categoria": "historia",
+   "fonte": {
+    "nome": "Wikipédia — Sporting Clube de Portugal",
+    "url": "https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal"
+   },
+   "explicacao": "As listas vinham da equipa de râguebi; foram adotadas definitivamente pelo futebol na digressão ao Brasil de 1928."
+  },
+  {
+   "id": "estadio-lugares",
+   "pergunta": "Quantos lugares tem o Estádio José Alvalade depois das obras de 2025?",
+   "opcoes": [
+    "52 095",
+    "50 095",
+    "48 000",
+    "65 000"
+   ],
+   "correta": 0,
+   "dificuldade": "media",
+   "categoria": "estadio",
+   "fonte": {
+    "nome": "Wikipédia — Estádio José Alvalade",
+    "url": "https://pt.wikipedia.org/wiki/Est%C3%A1dio_Jos%C3%A9_Alvalade"
+   },
+   "explicacao": "As obras concluídas em 2025, com a remoção do fosso, juntaram cerca de 2 mil lugares: o estádio passou de 50 095 para 52 095."
+  },
+  {
+   "id": "lumiar",
+   "pergunta": "Em que freguesia de Lisboa está sediado o Sporting?",
+   "opcoes": [
+    "Lumiar",
+    "Belém",
+    "Benfica",
+    "Estrela"
+   ],
+   "correta": 0,
+   "dificuldade": "media",
+   "categoria": "historia",
+   "fonte": {
+    "nome": "Wikipédia — Sporting Clube de Portugal",
+    "url": "https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal"
+   },
+   "explicacao": "O Sporting está sediado na freguesia do Lumiar, em Lisboa."
+  },
+  {
+   "id": "figo-saida",
+   "pergunta": "Para que clube se transferiu Luís Figo quando saiu do Sporting, em 1995?",
+   "opcoes": [
+    "Barcelona",
+    "Real Madrid",
+    "Juventus",
+    "Parma"
+   ],
+   "correta": 0,
+   "dificuldade": "media",
+   "categoria": "jogadores",
+   "fonte": {
+    "nome": "Wikipédia — Luís Figo",
+    "url": "https://pt.wikipedia.org/wiki/Lu%C3%ADs_Figo"
+   },
+   "explicacao": "Figo jogou no Sporting de 1989 a 1995 e seguiu para o Barcelona, depois de um diferendo entre a Juventus e o Parma."
+  },
+  {
+   "id": "fundador",
+   "pergunta": "Quem é considerado o fundador do Sporting e foi o sócio n.º 1?",
+   "opcoes": [
+    "José Alvalade",
+    "Francisco Stromp",
+    "Visconde de Alvalade",
+    "António Stromp"
+   ],
+   "correta": 0,
+   "dificuldade": "media",
+   "categoria": "historia",
+   "fonte": {
+    "nome": "Wikipédia — José Alvalade",
+    "url": "https://pt.wikipedia.org/wiki/Jos%C3%A9_Alvalade"
+   },
+   "explicacao": "José Alvalade (José Alfredo Holtreman Roquette) fundou o clube e foi o sócio n.º 1; o estádio tem o seu nome."
+  },
+  {
+   "id": "carlos-lopes",
+   "pergunta": "Que atleta do Sporting foi o primeiro português a ganhar uma medalha de ouro olímpica, na maratona de Los Angeles?",
+   "opcoes": [
+    "Carlos Lopes",
+    "Fernando Mamede",
+    "Rosa Mota",
+    "António Leitão"
+   ],
+   "correta": 0,
+   "dificuldade": "media",
+   "categoria": "modalidades",
+   "fonte": {
+    "nome": "Wikipédia — Sporting Clube de Portugal",
+    "url": "https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal"
+   },
+   "explicacao": "Carlos Lopes ganhou a maratona dos Jogos Olímpicos de Los Angeles; antes já tinha sido prata nos 10 000 metros em Montreal."
+  },
+  {
+   "id": "utrecht",
+   "pergunta": "Em 1957/58 o Sporting foi a primeira equipa portuguesa a passar uma eliminatória da Taça dos Clubes Campeões Europeus. Contra quem?",
+   "opcoes": [
+    "VV DOS Utrecht",
+    "Ajax",
+    "PSV",
+    "Feyenoord"
+   ],
+   "correta": 0,
+   "dificuldade": "dificil",
+   "categoria": "historia",
+   "fonte": {
+    "nome": "Wikipédia — Sporting Clube de Portugal",
+    "url": "https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal"
+   },
+   "explicacao": "Venceu o VV DOS Utrecht (hoje FC Utrecht) por 3–4 na Holanda e 2–1 em Alvalade."
+  },
+  {
+   "id": "supertacas-total",
+   "pergunta": "Quantas Supertaças Cândido de Oliveira tem o Sporting?",
+   "opcoes": [
+    "9",
+    "11",
+    "7",
+    "13"
+   ],
+   "correta": 0,
+   "dificuldade": "dificil",
+   "categoria": "titulos",
+   "fonte": {
+    "nome": "Wikipédia — Sporting Clube de Portugal, Palmarés",
+    "url": "https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal#Palmarés"
+   },
+   "explicacao": "São 9: 1982, 1987, 1995, 2000, 2002, 2007, 2008, 2015 e 2021."
+  },
+  {
+   "id": "primeiro-campeonato",
+   "pergunta": "Em que época o Sporting ganhou o seu primeiro Campeonato Nacional?",
+   "opcoes": [
+    "1940/41",
+    "1934/35",
+    "1946/47",
+    "1951/52"
+   ],
+   "correta": 0,
+   "dificuldade": "dificil",
+   "categoria": "titulos",
+   "fonte": {
+    "nome": "Wikipédia — Sporting Clube de Portugal, Palmarés",
+    "url": "https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal#Palmarés"
+   },
+   "explicacao": "O primeiro dos 21 Campeonatos Nacionais foi o de 1940/41."
+  },
+  {
+   "id": "tetra",
+   "pergunta": "Entre 1950/51 e 1953/54, quantas vezes seguidas o Sporting foi campeão nacional?",
+   "opcoes": [
+    "4",
+    "3",
+    "5",
+    "2"
+   ],
+   "correta": 0,
+   "dificuldade": "dificil",
+   "categoria": "titulos",
+   "fonte": {
+    "nome": "Wikipédia — Sporting Clube de Portugal",
+    "url": "https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal"
+   },
+   "explicacao": "De 1950/51 a 1953/54 o Sporting foi tetracampeão, com o treinador Randolph Galloway."
+  },
+  {
+   "id": "peyroteo-golos",
+   "pergunta": "Quantos golos marcou Fernando Peyroteo em jogos oficiais pelo Sporting?",
+   "opcoes": [
+    "556",
+    "336",
+    "412",
+    "610"
+   ],
+   "correta": 0,
+   "dificuldade": "dificil",
+   "categoria": "jogadores",
+   "fonte": {
+    "nome": "Wikipédia — Fernando Peyroteo",
+    "url": "https://pt.wikipedia.org/wiki/Fernando_Peyroteo"
+   },
+   "explicacao": "Peyroteo fez 323 jogos oficiais pelo Sporting (1937–1949) e marcou 556 golos."
+  },
+  {
+   "id": "primeiro-presidente",
+   "pergunta": "Quem foi o primeiro presidente do Sporting?",
+   "opcoes": [
+    "Alfredo Holtreman, Visconde de Alvalade",
+    "José Alvalade",
+    "Francisco Stromp",
+    "João Rocha"
+   ],
+   "correta": 0,
+   "dificuldade": "dificil",
+   "categoria": "presidentes",
+   "fonte": {
+    "nome": "Wikipédia — Lista de presidentes do Sporting Clube de Portugal",
+    "url": "https://pt.wikipedia.org/wiki/Lista_de_presidentes_do_Sporting_Clube_de_Portugal"
+   },
+   "explicacao": "O primeiro presidente foi Alfredo Holtreman, Visconde de Alvalade, avô do fundador José Alvalade."
+  },
+  {
+   "id": "estadio-1956",
+   "pergunta": "Em que data foi inaugurado o antigo Estádio José Alvalade?",
+   "opcoes": [
+    "10 de junho de 1956",
+    "1 de julho de 1956",
+    "6 de agosto de 1956",
+    "10 de junho de 1966"
+   ],
+   "correta": 0,
+   "dificuldade": "dificil",
+   "categoria": "estadio",
+   "fonte": {
+    "nome": "Wikipédia — Estádio José Alvalade (1956)",
+    "url": "https://pt.wikipedia.org/wiki/Est%C3%A1dio_Jos%C3%A9_Alvalade_(1956)"
+   },
+   "explicacao": "Foi inaugurado a 10 de junho de 1956, perante cerca de 60 mil pessoas."
+  },
+  {
+   "id": "arquiteto-atual",
+   "pergunta": "Que arquiteto desenhou o atual Estádio José Alvalade?",
+   "opcoes": [
+    "Tomás Taveira",
+    "Álvaro Siza Vieira",
+    "Eduardo Souto de Moura",
+    "Anselmo Fernandez"
+   ],
+   "correta": 0,
+   "dificuldade": "dificil",
+   "categoria": "estadio",
+   "fonte": {
+    "nome": "Wikipédia — Estádio José Alvalade",
+    "url": "https://pt.wikipedia.org/wiki/Est%C3%A1dio_Jos%C3%A9_Alvalade"
+   },
+   "explicacao": "O estádio de 2003 foi desenhado pelo arquiteto Tomás Taveira."
+  },
+  {
+   "id": "arquiteto-1956",
+   "pergunta": "O antigo Estádio José Alvalade foi desenhado por um arquiteto que depois foi treinador na conquista da Taça das Taças. Quem?",
+   "opcoes": [
+    "Anselmo Fernandez",
+    "Cândido de Oliveira",
+    "Joseph Szabo",
+    "Tomás Taveira"
+   ],
+   "correta": 0,
+   "dificuldade": "dificil",
+   "categoria": "estadio",
+   "fonte": {
+    "nome": "Wikipédia — Estádio José Alvalade (1956)",
+    "url": "https://pt.wikipedia.org/wiki/Est%C3%A1dio_Jos%C3%A9_Alvalade_(1956)"
+   },
+   "explicacao": "O estádio de 1956 seguiu o projeto do arquiteto Anselmo Fernandez, mais tarde técnico da conquista da Taça das Taças."
+  },
+  {
+   "id": "violinos-nome",
+   "pergunta": "Quem criou a designação \"Cinco Violinos\" para o ataque do Sporting dos anos 40?",
+   "opcoes": [
+    "O jornalista Tavares da Silva",
+    "O treinador Cândido de Oliveira",
+    "O treinador Joseph Szabo",
+    "O presidente Ribeiro Ferreira"
+   ],
+   "correta": 0,
+   "dificuldade": "dificil",
+   "categoria": "jogadores",
+   "fonte": {
+    "nome": "Wikipédia — Cinco Violinos",
+    "url": "https://pt.wikipedia.org/wiki/Cinco_Violinos"
+   },
+   "explicacao": "A designação é do jornalista, e mais tarde treinador, João Joaquim Tavares da Silva."
+  },
+  {
+   "id": "hoquei-europeu",
+   "pergunta": "Em que ano o hóquei em patins do Sporting ganhou a Taça dos Campeões Europeus?",
+   "opcoes": [
+    "1977",
+    "1984",
+    "1991",
+    "2015"
+   ],
+   "correta": 0,
+   "dificuldade": "dificil",
+   "categoria": "modalidades",
+   "fonte": {
+    "nome": "Wikipédia — Sporting Clube de Portugal",
+    "url": "https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal"
+   },
+   "explicacao": "O hóquei em patins ganhou a Taça dos Campeões Europeus em 1977; mais tarde juntou Taças das Taças e Taças CERS."
+  },
+  {
+   "id": "stromp-olimpico",
+   "pergunta": "Quem foi o primeiro atleta do Sporting a participar nos Jogos Olímpicos, em Estocolmo, em 1912?",
+   "opcoes": [
+    "António Stromp",
+    "Francisco Stromp",
+    "Carlos Lopes",
+    "José Alvalade"
+   ],
+   "correta": 0,
+   "dificuldade": "dificil",
+   "categoria": "modalidades",
+   "fonte": {
+    "nome": "Wikipédia — Sporting Clube de Portugal",
+    "url": "https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal"
+   },
+   "explicacao": "O sócio-fundador António Stromp participou nos Jogos Olímpicos de Estocolmo de 1912."
+  },
+  {
+   "id": "leao-brasao",
+   "pergunta": "Quem autorizou, em 1907, que o leão rampante do seu brasão fosse usado no emblema do Sporting?",
+   "opcoes": [
+    "D. Fernando de Castelo Branco (Pombeiro)",
+    "O Visconde de Alvalade",
+    "José Alvalade",
+    "Francisco Stromp"
+   ],
+   "correta": 0,
+   "dificuldade": "dificil",
+   "categoria": "historia",
+   "fonte": {
+    "nome": "Wikipédia — Sporting Clube de Portugal",
+    "url": "https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal"
+   },
+   "explicacao": "Em 1907, D. Fernando de Castelo Branco (Pombeiro) autorizou o uso do leão rampante do seu brasão."
+  },
+  {
+   "id": "ronaldo-estreia",
+   "pergunta": "Contra que equipa Cristiano Ronaldo marcou dois golos na estreia pela equipa principal do Sporting?",
+   "opcoes": [
+    "Moreirense",
+    "Manchester United",
+    "Inter de Milão",
+    "Benfica"
+   ],
+   "correta": 0,
+   "dificuldade": "dificil",
+   "categoria": "jogadores",
+   "fonte": {
+    "nome": "Wikipédia — Cristiano Ronaldo",
+    "url": "https://pt.wikipedia.org/wiki/Cristiano_Ronaldo"
+   },
+   "explicacao": "Ronaldo marcou dois golos ao Moreirense na estreia pela equipa principal."
+  },
+  {
+   "id": "fundacao-dia",
+   "pergunta": "Em que dia do ano foi fundado o Sporting?",
+   "opcoes": [
+    "1 de julho",
+    "13 de abril",
+    "10 de junho",
+    "6 de agosto"
+   ],
+   "correta": 0,
+   "dificuldade": "dificil",
+   "categoria": "historia",
+   "fonte": {
+    "nome": "Wikipédia — José Alvalade",
+    "url": "https://pt.wikipedia.org/wiki/Jos%C3%A9_Alvalade"
+   },
+   "explicacao": "O Sporting foi fundado num domingo, 1 de julho de 1906."
+  },
+  {
+   "id": "museu-ano",
+   "pergunta": "Em que ano foi inaugurado o Museu Sporting no estádio atual?",
+   "opcoes": [
+    "2004",
+    "1994",
+    "2008",
+    "2001"
+   ],
+   "correta": 0,
+   "dificuldade": "dificil",
+   "categoria": "historia",
+   "fonte": {
+    "nome": "Wikipédia — Sporting Clube de Portugal",
+    "url": "https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal"
+   },
+   "explicacao": "O Museu Sporting no novo estádio foi inaugurado a 31 de agosto de 2004; em 1994 tinha aberto uma nova Sala dos Troféus."
+  },
+  {
+   "id": "jardel-final",
+   "pergunta": "Jardel marcou o único golo da final da Taça de Portugal de 2001/02. Contra que equipa?",
+   "opcoes": [
+    "Leixões",
+    "Boavista",
+    "Benfica",
+    "Marítimo"
+   ],
+   "correta": 0,
+   "dificuldade": "dificil",
+   "categoria": "jogadores",
+   "fonte": {
+    "nome": "Wikipédia — Jardel",
+    "url": "https://pt.wikipedia.org/wiki/Jardel_(futebolista,_1973)"
+   },
+   "explicacao": "Na final de 2001/02, o golo de Jardel deu a Taça ao Sporting frente ao Leixões."
+  },
+  {
+   "id": "dobradinhas",
+   "pergunta": "Quantas vezes o Sporting ganhou o Campeonato e a Taça de Portugal na mesma época (a \"dobradinha\")?",
+   "opcoes": [
+    "7",
+    "5",
+    "9",
+    "4"
+   ],
+   "correta": 0,
+   "dificuldade": "dificil",
+   "categoria": "titulos",
+   "fonte": {
+    "nome": "Wikipédia — Sporting Clube de Portugal, Palmarés",
+    "url": "https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal#Palmarés"
+   },
+   "explicacao": "Sete dobradinhas: 1940/41, 1947/48, 1953/54, 1973/74, 1981/82, 2001/02 e 2024/25."
+  },
+  {
+   "id": "primeira-taca-liga",
+   "pergunta": "Em que época o Sporting ganhou a sua primeira Taça da Liga?",
+   "opcoes": [
+    "2017/18",
+    "2007/08",
+    "2008/09",
+    "2020/21"
+   ],
+   "correta": 0,
+   "dificuldade": "dificil",
+   "categoria": "titulos",
+   "fonte": {
+    "nome": "Wikipédia — Sporting Clube de Portugal, Palmarés",
+    "url": "https://pt.wikipedia.org/wiki/Sporting_Clube_de_Portugal#Palmarés"
+   },
+   "explicacao": "A primeira Taça da Liga foi a de 2017/18; seguiram-se 2018/19, 2020/21 e 2021/22."
+  },
+  {
+   "id": "presidentes-total",
+   "pergunta": "Quantas pessoas já foram presidentes do Sporting, segundo a lista de presidentes do clube?",
+   "opcoes": [
+    "43",
+    "32",
+    "50",
+    "38"
+   ],
+   "correta": 0,
+   "dificuldade": "dificil",
+   "categoria": "presidentes",
+   "fonte": {
+    "nome": "Wikipédia — Lista de presidentes do Sporting Clube de Portugal",
+    "url": "https://pt.wikipedia.org/wiki/Lista_de_presidentes_do_Sporting_Clube_de_Portugal"
+   },
+   "explicacao": "Na sua história, foram 43 os presidentes do Sporting."
+  }
+ ]
+}

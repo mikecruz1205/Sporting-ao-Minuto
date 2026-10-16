@@ -450,7 +450,7 @@ const FIXTURES = [
 const CLUBE = {
   fundacao: "1 de julho de 1906",
   estadio: "Estádio José Alvalade",
-  lugares: "50.095",
+  lugares: "52.095",              // depois das obras de 2025 (Wikipédia, verificado a 16-10-2026)
   alcunha: "Leões",
   cores: "Verde e branco",
   /* o palmarés está em PALMARES, logo a seguir */

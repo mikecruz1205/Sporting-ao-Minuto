@@ -135,18 +135,19 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Manrope:wght@400..800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/base.css?v=131">
-<link rel="stylesheet" href="css/componentes.css?v=131">
-<link rel="stylesheet" href="css/style.css?v=131">
-<link rel="stylesheet" href="css/portal.css?v=131">
-<link rel="stylesheet" href="css/inicio.css?v=131">
-<link rel="stylesheet" href="css/app.css?v=131">
-<link rel="stylesheet" href="css/fantasy.css?v=131">
-<link rel="stylesheet" href="css/museu.css?v=131">
-<link rel="stylesheet" href="css/editorial.css?v=131">
-<link rel="stylesheet" href="css/entrada.css?v=131">
-<link rel="stylesheet" href="css/centro.css?v=131">
-<link rel="stylesheet" href="css/casa.css?v=131">
+<link rel="stylesheet" href="css/base.css?v=133">
+<link rel="stylesheet" href="css/componentes.css?v=133">
+<link rel="stylesheet" href="css/style.css?v=133">
+<link rel="stylesheet" href="css/portal.css?v=133">
+<link rel="stylesheet" href="css/inicio.css?v=133">
+<link rel="stylesheet" href="css/app.css?v=133">
+<link rel="stylesheet" href="css/fantasy.css?v=133">
+<link rel="stylesheet" href="css/museu.css?v=133">
+<link rel="stylesheet" href="css/quiz.css?v=133">
+<link rel="stylesheet" href="css/editorial.css?v=133">
+<link rel="stylesheet" href="css/entrada.css?v=133">
+<link rel="stylesheet" href="css/centro.css?v=133">
+<link rel="stylesheet" href="css/casa.css?v=133">
 </head>
 <body class="trancado">
 <!-- ============================ ECRÃ DE CARREGAMENTO (modo aplicação) ============================ -->
@@ -499,6 +500,8 @@
     <div class="menu__sub" id="sub-comunidade" role="group" aria-label="Comunidade">
       <button class="menu__item" data-vista="chat">Chat<small>Fala com outros leões</small></button>
       <button class="menu__item" data-vista="formacao">Fantasy<small>Plantel, capitão, transferências e ligas</small></button>
+      <button class="menu__item" data-vista="quiz">Quiz Leonino<small>15 perguntas sobre o Sporting</small></button>
+      <button class="menu__item" data-vista="desafio">Desafio do Dia<small>Uma pergunta por dia, igual para todos</small></button>
     </div>
   </div>
   <button class="menu__item menu__item--topo menu__item--taca" data-vista="clube"><span class="menu__ico-caixa" aria-hidden="true"><span class="menu__taca"></span></span>Clube</button>
@@ -649,6 +652,18 @@
       <article class="comu__cartao comu__cartao--fantasy" id="comu-fantasy" aria-labelledby="comu-fantasy-tit">
         <h3 id="comu-fantasy-tit">Fantasy do Sporting</h3>
         <div class="comu__corpo" id="comu-fantasy-corpo"><span class="osso osso--titulo"></span><span class="osso osso--linha osso--curto"></span></div>
+      </article>
+      <article class="comu__cartao comu__cartao--quiz" id="comu-quiz" aria-labelledby="comu-quiz-tit">
+        <h3 id="comu-quiz-tit">Quiz Leonino</h3>
+        <div class="comu__corpo" id="comu-quiz-corpo">
+          <p class="comu__linha">15 perguntas sobre a história, os títulos, os jogadores, o estádio, as modalidades e os presidentes do Sporting, das fáceis às difíceis.</p>
+          <p class="comu__linha" id="comu-quiz-recorde"></p>
+          <div class="comu__acoes"><button type="button" class="p1" data-ir="quiz">Jogar</button></div>
+        </div>
+      </article>
+      <article class="comu__cartao comu__cartao--desafio" id="comu-desafio" aria-labelledby="comu-desafio-tit">
+        <h3 id="comu-desafio-tit">Desafio do Dia</h3>
+        <div class="comu__corpo" id="comu-desafio-corpo"><span class="osso osso--titulo"></span><span class="osso osso--linha osso--curto"></span></div>
       </article>
       <article class="comu__cartao comu__cartao--chat" id="comu-chat" aria-labelledby="comu-chat-tit">
         <h3 id="comu-chat-tit">Chat dos adeptos</h3>
@@ -1017,6 +1032,19 @@
   </section>
 </main>
 
+<main class="vista" id="vista-quiz" aria-label="Quiz Leonino">
+  <!-- o jogo (js/quiz.js); as perguntas estão em dados/quiz.json, cada uma com a fonte -->
+  <section class="qz" id="quiz"></section>
+</main>
+
+<main class="vista" id="vista-desafio" aria-labelledby="tit-desafio">
+  <header class="vista__cabeca">
+    <p class="seccao__sobre">Uma pergunta por dia, igual para todos</p>
+    <h2 class="vista__titulo" id="tit-desafio">Desafio do Dia</h2>
+  </header>
+  <section class="qz" id="desafio"></section>
+</main>
+
 <main class="vista" id="vista-clube">
   <!-- o museu (js/museu.js): entrada, sala dos troféus e linha do tempo -->
   <div class="museu" id="museu"></div>
@@ -1156,21 +1184,22 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.min.js" defer></script>
-<script src="js/nuvem.js?v=131" defer></script>
-<script src="js/fd.js?v=131" defer></script>
-<script src="js/componentes.js?v=131" defer></script>
-<script src="js/contas.js?v=131" defer></script>
-<script src="js/arte.js?v=131" defer></script>
-<script src="js/data.js?v=131" defer></script>
-<script src="js/wiki.js?v=131" defer></script>
-<script src="js/tema.js?v=131" defer></script>
-<script src="js/notificacoes.js?v=131" defer></script>
-<script src="js/pwa.js?v=131" defer></script>
-<script src="js/arquivo.js?v=131" defer></script>
-<script src="js/fantasy.js?v=131" defer></script>
-<script src="js/museu.js?v=131" defer></script>
-<script src="js/entrada.js?v=131" defer></script>
-<script src="js/centro.js?v=131" defer></script>
-<script src="js/app.js?v=131" defer></script>
+<script src="js/nuvem.js?v=133" defer></script>
+<script src="js/fd.js?v=133" defer></script>
+<script src="js/componentes.js?v=133" defer></script>
+<script src="js/contas.js?v=133" defer></script>
+<script src="js/arte.js?v=133" defer></script>
+<script src="js/data.js?v=133" defer></script>
+<script src="js/wiki.js?v=133" defer></script>
+<script src="js/tema.js?v=133" defer></script>
+<script src="js/notificacoes.js?v=133" defer></script>
+<script src="js/pwa.js?v=133" defer></script>
+<script src="js/arquivo.js?v=133" defer></script>
+<script src="js/fantasy.js?v=133" defer></script>
+<script src="js/museu.js?v=133" defer></script>
+<script src="js/quiz.js?v=133" defer></script>
+<script src="js/entrada.js?v=133" defer></script>
+<script src="js/centro.js?v=133" defer></script>
+<script src="js/app.js?v=133" defer></script>
 </body>
 </html>

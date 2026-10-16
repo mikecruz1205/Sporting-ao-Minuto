@@ -18,7 +18,7 @@
    são apagadas na ativação.
    ========================================================================= */
 
-const VERSAO = 'v3-2026-10-10';
+const VERSAO = 'v4-2026-10-16';
 const CACHE_CASCA   = `casca-${VERSAO}`;
 const CACHE_ESTATICO = `estatico-${VERSAO}`;
 const CACHE_DADOS   = `dados-${VERSAO}`;

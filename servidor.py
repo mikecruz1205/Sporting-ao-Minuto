@@ -66,7 +66,7 @@ CABECALHO_NAVEGADOR = {
 # e aos rewrites do vercel.json)
 ROTAS_DO_SITE = {
     "/noticias", "/ao-minuto", "/mercado", "/jogos", "/agenda", "/classificacao",
-    "/ao-vivo", "/plantel", "/estatisticas", "/modalidades", "/chat", "/fantasy", "/clube",
+    "/ao-vivo", "/plantel", "/estatisticas", "/modalidades", "/chat", "/fantasy", "/quiz", "/desafio", "/clube",
     "/privacidade", "/termos",
 }
 

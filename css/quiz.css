@@ -1,0 +1,141 @@
+/* =========================================================================
+   QUIZ LEONINO e DESAFIO DO DIA (js/quiz.js)
+   -------------------------------------------------------------------------
+   Identidade do clube: verde, branco e o dourado do emblema, listas
+   horizontais discretas no fundo. Tokens do base.css, com o tema claro.
+   ========================================================================= */
+.qz{ --qz-ouro: #e8c56a; --qz-certo: #2fd98a; --qz-errado: #ff6b6b; max-width: 1080px; }
+:root[data-tema="claro"] .qz{ --qz-ouro: #946c0c; --qz-certo: #087a49; --qz-errado: #c0392b; }
+
+.qz-sobre{ font: 800 12px/1 var(--f-ui); letter-spacing: .16em; text-transform: uppercase; color: var(--qz-ouro); }
+.qz-titulo{ margin-top: 6px; font: 700 clamp(36px, 6vw, 56px)/.95 var(--f-tit); text-transform: uppercase; color: var(--texto); }
+.qz-lead{ margin-top: 10px; max-width: 560px; font-size: 15.5px; line-height: 1.55; color: var(--texto-2); }
+
+/* ---------- ecrã inicial */
+.qz-inicio, .qz-jogo{ display: grid; grid-template-columns: minmax(0, 1fr) 230px; gap: 24px; align-items: start; }
+.qz-inicio__texto, .qz-jogo__principal, .qz-fim, .dz{
+  position: relative; overflow: hidden; padding: 26px; border-radius: 20px;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 34px, color-mix(in srgb, var(--verde) 5%, transparent) 34px 68px),
+    radial-gradient(120% 90% at 0% 0%, color-mix(in srgb, var(--verde) 22%, transparent), transparent 60%),
+    var(--cartao);
+  border: 1px solid var(--linha);
+}
+.qz-regras{ margin: 18px 0 22px; padding-left: 18px; display: grid; gap: 8px; font-size: 14.5px; color: var(--texto-2); }
+.qz-regras b{ color: var(--texto); }
+.qz-recorde{ margin-top: 14px; font-size: 14px; color: var(--texto-2); }
+.qz-recorde b{ color: var(--qz-ouro); font-family: var(--f-num); font-size: 18px; }
+.qz-aviso{ margin-top: 10px; font-size: 13.5px; color: var(--qz-errado); }
+
+.qz-botao{ display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 22px; border-radius: 999px;
+  font-weight: 800; font-size: 15px; color: var(--texto); background: var(--cartao-alto); border: 1px solid var(--linha-forte, var(--linha));
+  transition: transform var(--rapido, .15s), background var(--rapido, .15s); }
+.qz-botao:hover{ transform: translateY(-1px); }
+.qz-botao:focus-visible{ outline: 2px solid var(--verde-claro); outline-offset: 3px; }
+.qz-botao--forte{ color: var(--sobre-verde, #04150d); background: var(--verde); border-color: var(--verde); }
+.qz-botao--forte:hover{ background: var(--verde-claro); }
+
+/* ---------- escada de pontos */
+.qz-escada{ list-style: none; display: grid; gap: 3px; padding: 12px; border-radius: 18px; background: var(--cartao); border: 1px solid var(--linha);
+  position: sticky; top: calc(var(--altura-topo, 64px) + 16px); }
+.qz-degrau{ display: grid; grid-template-columns: 26px 1fr auto; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 10px;
+  font-size: 13.5px; color: var(--texto-3); font-variant-numeric: tabular-nums; }
+.qz-degrau__n{ font: 700 13px/1 var(--f-num); text-align: right; }
+.qz-degrau__v{ font-weight: 700; }
+.qz-degrau__seg{ padding: 1px 6px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--qz-ouro); background: color-mix(in srgb, var(--qz-ouro) 14%, transparent); }
+.qz-degrau.is-seguro{ color: var(--texto-2); }
+.qz-degrau.is-feito{ color: var(--verde-claro); }
+.qz-degrau.is-agora{ color: var(--sobre-verde, #04150d); background: var(--qz-ouro); }
+.qz-degrau.is-agora .qz-degrau__seg{ color: inherit; background: rgba(0,0,0,.12); }
+.qz-degrau:first-child .qz-degrau__v::after{ content: ' 🦁'; }
+
+/* ---------- pergunta */
+.qz-topo, .dz__topo{ display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; color: var(--texto-3); }
+.qz-n{ font-weight: 800; color: var(--texto-2); }
+.qz-vale{ margin-left: auto; font-weight: 800; color: var(--qz-ouro); }
+.qz-etiqueta{ padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 800; letter-spacing: .03em;
+  color: var(--texto-2); background: var(--veu-2, rgba(127,127,127,.14)); }
+.qz-etiqueta--facil{ color: var(--verde-claro); }
+.qz-etiqueta--media{ color: var(--qz-ouro); }
+.qz-etiqueta--dificil{ color: var(--qz-errado); }
+.qz-pergunta{ margin: 18px 0 20px; font: 700 clamp(22px, 2.8vw, 30px)/1.2 var(--f-ui); color: var(--texto); }
+.qz-pergunta:focus{ outline: none; }
+.qz-opcoes{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.qz-opcao{ position: relative; overflow: hidden; display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 12px 14px;
+  border-radius: 14px; text-align: left; color: var(--texto); background: var(--cartao-alto); border: 2px solid var(--linha);
+  transition: border-color var(--rapido, .15s), transform var(--rapido, .15s), background var(--rapido, .15s); }
+.qz-opcao:hover:not([disabled]){ border-color: var(--verde-claro); transform: translateY(-1px); }
+.qz-opcao:focus-visible{ outline: 3px solid var(--qz-ouro); outline-offset: 2px; }
+.qz-opcao__letra{ display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 50%;
+  font: 800 15px/1 var(--f-num); color: var(--sobre-verde, #04150d); background: var(--verde); }
+.qz-opcao__texto{ position: relative; z-index: 1; font-size: 16px; font-weight: 650; line-height: 1.3; }
+.qz-opcao[aria-hidden="true"]{ opacity: .25; }
+.qz-opcao.is-certa{ border-color: var(--qz-certo); background: color-mix(in srgb, var(--qz-certo) 16%, var(--cartao-alto)); animation: qz-certa .5s ease-out; }
+.qz-opcao.is-errada{ border-color: var(--qz-errado); background: color-mix(in srgb, var(--qz-errado) 14%, var(--cartao-alto)); animation: qz-errada .4s ease-out; }
+.qz-opcao.is-apagada{ opacity: .45; }
+.qz-opcao[disabled]{ cursor: default; }
+@keyframes qz-certa{ 40%{ transform: scale(1.02); } }
+@keyframes qz-errada{ 25%{ transform: translateX(-5px); } 75%{ transform: translateX(5px); } }
+/* votos do público: barra por trás do texto */
+.qz-opcao__voto{ position: absolute; inset: 0 auto 0 0; width: var(--p); background: color-mix(in srgb, var(--qz-ouro) 18%, transparent); }
+.qz-opcao__pct{ position: relative; z-index: 1; margin-left: auto; padding-left: 8px; font: 800 15px/1 var(--f-num); color: var(--qz-ouro); }
+
+.qz-ajudas{ display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.qz-ajuda{ min-height: 44px; padding: 0 16px; border-radius: 999px; font-weight: 800; font-size: 13.5px;
+  color: var(--texto); background: none; border: 1px solid var(--linha-forte, var(--linha)); }
+.qz-ajuda:hover:not([disabled]){ border-color: var(--qz-ouro); color: var(--qz-ouro); }
+.qz-ajuda:focus-visible{ outline: 2px solid var(--qz-ouro); outline-offset: 2px; }
+.qz-ajuda[disabled]{ opacity: .4; text-decoration: line-through; cursor: not-allowed; }
+.qz-ajuda--parar{ margin-left: auto; }
+.qz-nota{ margin-top: 10px; font-size: 13px; color: var(--texto-3); }
+
+/* ---------- depois de responder */
+.qz-retorno{ display: grid; gap: 8px; margin-top: 18px; padding: 16px 18px; border-radius: 14px; font-size: 14.5px; line-height: 1.5;
+  color: var(--texto-2); border: 1px solid var(--linha); background: var(--fundo-2); animation: qz-entra .3s ease-out; }
+.qz-retorno.is-certo{ border-color: color-mix(in srgb, var(--qz-certo) 50%, var(--linha)); }
+.qz-retorno.is-errado{ border-color: color-mix(in srgb, var(--qz-errado) 50%, var(--linha)); }
+.qz-retorno__titulo{ font-weight: 800; font-size: 16px; color: var(--texto); }
+.qz-retorno .qz-botao{ justify-self: start; margin-top: 4px; }
+.qz-fonte{ font-size: 13px; }
+.qz-fonte a{ color: var(--verde-claro); }
+@keyframes qz-entra{ from{ opacity: 0; transform: translateY(6px); } }
+
+/* ---------- fim */
+.qz-fim{ display: grid; gap: 10px; justify-items: start; text-align: left; font-size: 15px; color: var(--texto-2); }
+.qz-fim__pontos b{ font: 700 64px/1 var(--f-num); color: var(--qz-ouro); }
+.qz-fim__acoes{ display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+
+/* ---------- Desafio do Dia */
+.dz{ max-width: 760px; }
+.dz__seq{ margin-left: auto; font-weight: 800; color: var(--qz-ouro); }
+.dz .qz-opcoes{ grid-template-columns: minmax(0, 1fr); }
+
+/* ---------- cartões na página inicial */
+.comu{ grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.comu__pergunta{ font-size: 16px; font-weight: 700; line-height: 1.35; color: var(--texto); }
+.comu__cartao--quiz, .comu__cartao--desafio{
+  background: radial-gradient(120% 120% at 100% 0%, color-mix(in srgb, #e8c56a 14%, transparent), transparent 60%), var(--cartao); }
+
+/* ---------- telemóvel */
+@media (max-width: 860px){
+  .qz-inicio, .qz-jogo{ grid-template-columns: minmax(0, 1fr); }
+  .qz-escada{ position: static; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 8px; }
+  .qz-degrau{ grid-template-columns: 1fr; justify-items: center; gap: 0; padding: 6px 2px; font-size: 11px; text-align: center; }
+  .qz-degrau__n{ text-align: center; }
+  .qz-degrau__seg{ display: none; }
+  .qz-degrau.is-seguro{ box-shadow: inset 0 -2px 0 var(--qz-ouro); }
+  .qz-degrau:first-child .qz-degrau__v::after{ content: ''; }
+  .qz-jogo .qz-escada{ order: -1; }
+}
+@media (max-width: 640px){
+  .qz-inicio__texto, .qz-jogo__principal, .qz-fim, .dz{ padding: 18px 16px; border-radius: 16px; }
+  .qz-opcoes{ grid-template-columns: minmax(0, 1fr); }
+  .qz-vale{ margin-left: 0; }
+  .qz-ajuda--parar{ margin-left: 0; }
+  .qz-fim__pontos b{ font-size: 52px; }
+}
+@media (prefers-reduced-motion: reduce){
+  .qz-opcao.is-certa, .qz-opcao.is-errada, .qz-retorno{ animation: none; }
+  .qz-opcao:hover:not([disabled]), .qz-botao:hover{ transform: none; }
+}

@@ -94,6 +94,19 @@ function contaMudou(nome){
   pintarComunidade();
   if(vistaAtual === 'chat') pintarChat();
   if(vistaAtual === 'formacao') window.Fantasy?.abrir();
+  if(vistaAtual === 'quiz') window.Quiz?.abrir();
+  pintarCartoesJogos();
+}
+
+/* cartões do Quiz e do Desafio do Dia na página inicial */
+async function pintarCartoesJogos(){
+  window.Desafio?.pintarCartao();
+  const linha = $('#comu-quiz-recorde');
+  if(!linha || !window.QuizDados) return;
+  const { melhor, naConta } = await QuizDados.recorde();
+  linha.innerHTML = melhor
+    ? `O teu recorde: <b>${melhor.toLocaleString('pt-PT')} pts</b>${naConta ? ' (na tua conta)' : ''}`
+    : 'Ainda não jogaste. O topo da escada vale 1906 pontos — o ano da fundação.';
 }
 
 /* =========================================================================
@@ -2121,6 +2134,7 @@ function ligarTrocaProva(){
     if(!b) return;
     if(b.dataset.tentar === 'tabela'){ b.disabled = true; carregarClassificacao(); }
     if(b.dataset.tentar === 'comunidade'){ b.disabled = true; pintarComunidade(); }
+    if(b.dataset.tentar === 'desafio'){ b.disabled = true; window.Desafio?.pintarCartao(); }
     if(b.dataset.tentar === 'individuais'){ b.disabled = true; individuaisLidos = null; pintarEstatisticasEpoca(); }
     if(b.dataset.tentar === 'chat'){ b.disabled = true; pintarChat(); }
     if(b.dataset.tentar === 'dados'){
@@ -4349,14 +4363,14 @@ const ROTAS = {
   inicio:'/', noticias:'/noticias', aominuto:'/ao-minuto', rumores:'/mercado',
   jogos:'/jogos', agenda:'/agenda', classificacao:'/classificacao', aovivo:'/ao-vivo',
   equipa:'/plantel', estatisticas:'/estatisticas', modalidades:'/modalidades',
-  chat:'/chat', formacao:'/fantasy', clube:'/clube'
+  chat:'/chat', formacao:'/fantasy', quiz:'/quiz', desafio:'/desafio', clube:'/clube'
 };
 const TITULOS = {
   inicio:'Sporting ao Minuto — notícias, jogos e ao minuto do Sporting CP',
   noticias:'Notícias', aominuto:'Ao minuto', rumores:'Mercado', jogos:'Jogos',
   agenda:'Agenda', classificacao:'Classificação', aovivo:'Centro de jogo', equipa:'Plantel',
   estatisticas:'Estatísticas', modalidades:'Modalidades', chat:'Chat',
-  formacao:'Fantasy', clube:'O clube'
+  formacao:'Fantasy', quiz:'Quiz Leonino', desafio:'Desafio do Dia', clube:'O clube'
 };
 
 /* descrição de cada vista — vai para a meta description e para a partilha */
@@ -4374,6 +4388,8 @@ const DESCRICOES = {
   modalidades:'Futsal, andebol, basquetebol, hóquei, voleibol, atletismo, feminino e formação do Sporting CP.',
   chat:'Conversa entre adeptos do Sporting CP sobre os jogos.',
   formacao:'Fantasy do Sporting: plantel de 15, orçamento, capitão, transferências, jornadas e ligas privadas entre amigos.',
+  quiz:'Quiz Leonino: 15 perguntas sobre o Sporting CP, das fáceis às difíceis, com ajudas, escada de pontos e a fonte de cada resposta.',
+  desafio:'Desafio do Dia: uma pergunta sobre o Sporting CP por dia, igual para todos, com explicação e sequência de dias certos.',
   clube:'O Sporting Clube de Portugal: história, palmarés, estádio e números.'
 };
 
@@ -4426,6 +4442,9 @@ function irPara(vista, opcoes = {}){
   if(vista === 'equipa' && carreiraPorCarregar) carregarCarreira(carreiraPorCarregar);
   if(vista === 'chat') pintarChat();
   if(vista === 'formacao') window.Fantasy?.abrir();
+  if(vista === 'quiz') window.Quiz?.abrir();
+  if(vista === 'desafio') window.Desafio?.abrir();
+  if(vista === 'inicio') pintarCartoesJogos();
   if(vista === 'estatisticas') window.Arquivo?.abrir();
   if(vista === 'aovivo'){
     /* sem jogo escolhido, o Centro segue o jogo em foco (e muda com ele) */
@@ -4860,6 +4879,13 @@ async function arranque(){
   }
   $$('[data-ir]').forEach(b =>
     b.addEventListener('click', () => irPara(b.dataset.ir)));
+  /* botões de ir para uma vista dentro de conteúdo desenhado depois (quiz, desafio) */
+  window.irParaVista = irPara;
+  document.addEventListener('click', e => {
+    const b = e.target.closest('#quiz [data-ir], #desafio [data-ir]');
+    if(b) irPara(b.dataset.ir);
+  });
+  pintarCartoesJogos();
 
   $$('[data-segmentos-minuto] .segmento').forEach(b => b.addEventListener('click', () => {
     filtroMinuto = b.dataset.valor;
