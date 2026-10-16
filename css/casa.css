@@ -262,3 +262,41 @@
 .posicao--fantasma{ display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .posicao--fantasma .posicao__nome{ font: 800 11px/1 var(--f-ui); color: #fff; text-transform: uppercase; text-shadow: 0 1px 2px #000; }
 .cand__txt .papel{ margin-right: 4px; vertical-align: 1px; }
+
+/* =========================================================================
+   TELEMÓVEL ESTREITO (até 480 px, testado a 375 px)
+   A marca passa a duas linhas em vez de ser cortada, o "Entrar" mostra o
+   texto e todos os botões do cabeçalho têm pelo menos 44 × 44 px.
+   A barra inferior não muda.
+   ========================================================================= */
+@media (max-width: 480px){
+  .cabeca .topo, body.rolou .cabeca .topo{ padding: 8px 12px; gap: 8px; }
+  .cabeca .topo__marca{ gap: 8px; flex: 0 1 auto; }
+  .cabeca .emblema, body.rolou .cabeca .emblema{ width: 36px; height: 36px; flex: none; }
+  .cabeca .marca-txt .marca-txt__nome, body.rolou .cabeca .marca-txt .marca-txt__nome{
+    font-size: 17px; line-height: .95; white-space: normal; overflow: visible; text-overflow: clip; }
+  .cabeca .marca-txt .marca-txt__nome em{ display: block; }
+  .cabeca .marca-txt span#lema{ display: none; }
+  .acoes-capsula .ico, .ico.conta{ width: 44px; height: 44px; }
+  .botao-entrar{ min-height: 44px; padding: 0 14px; font-size: 13.5px; }
+  .botao-entrar span{ display: inline; }
+}
+@media (max-width: 400px){
+  /* sem o ícone o texto cabe; o nome do botão continua a ser "Entrar" */
+  .botao-entrar .icone{ display: none; }
+}
+/* a ligação para saltar o menu também é um alvo de toque */
+.saltar{ display: inline-flex; align-items: center; min-height: 44px; }
+/* rodapé no telemóvel: cada ligação é um alvo de toque de 44 px */
+@media (max-width: 640px){
+  .rodape-site__bloco ul{ gap: 0; }
+  .rodape-site__bloco a, .rodape-site__bloco button{ display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; }
+}
+/* chips de filtro, listas de escolha e posições do quadro tático: 44 px no telemóvel */
+@media (max-width: 640px){
+  /* !important só neste mínimo: há regras mais específicas que baixam a altura */
+  .chip{ min-height: 44px !important; }
+  select:not(.so-leitor){ min-height: 44px; }
+  #vista-formacao .posicao{ min-height: 44px; min-width: 44px; justify-content: center; }
+  #vista-formacao .convocados .onze li{ height: auto; min-height: 44px; }
+}

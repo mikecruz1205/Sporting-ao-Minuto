@@ -123,7 +123,7 @@
 .mu-chips .chip{ min-height: 38px; }
 .mu-filtros__linha{ display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .mu-busca{ flex: 1 1 220px; }
-.mu-busca input{ width: 100%; min-height: 40px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 14px;
+.mu-busca input{ width: 100%; min-height: 44px; padding: 0 14px; border-radius: 999px; font: inherit; font-size: 14px;
   color: var(--texto); background: var(--fundo-2); border: 1px solid var(--linha); }
 .mu-busca input:focus-visible{ outline: 2px solid var(--verde-claro); outline-offset: 1px; }
 .mu-tempo{ position: relative; list-style: none; display: flex; flex-direction: column; gap: 4px; }
@@ -221,4 +221,8 @@
   .mu-entrada__foto, .mu-vitrine, .mu-decada, .mu-vitrine__mais, .mu-ficha[open]{ animation: none; }
   .mu-vitrine__botao:hover .mu-taca{ animation: none; }
   .mu-vitrine__botao:hover, .mu-marco:hover, .mu-entrada__ir:hover{ transform: none; }
+}
+/* ligações das fontes e das vitrines: alvos de 44 px no telemóvel */
+@media (max-width: 640px){
+  .mu-fontes li a, .mu-vitrine__acoes a{ display: inline-flex; align-items: center; min-height: 44px; }
 }
