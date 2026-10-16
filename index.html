@@ -135,18 +135,18 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Manrope:wght@400..800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/base.css?v=124">
-<link rel="stylesheet" href="css/componentes.css?v=124">
-<link rel="stylesheet" href="css/style.css?v=124">
-<link rel="stylesheet" href="css/portal.css?v=124">
-<link rel="stylesheet" href="css/inicio.css?v=124">
-<link rel="stylesheet" href="css/app.css?v=124">
-<link rel="stylesheet" href="css/fantasy.css?v=124">
-<link rel="stylesheet" href="css/museu.css?v=124">
-<link rel="stylesheet" href="css/editorial.css?v=124">
-<link rel="stylesheet" href="css/entrada.css?v=124">
-<link rel="stylesheet" href="css/centro.css?v=124">
-<link rel="stylesheet" href="css/casa.css?v=124">
+<link rel="stylesheet" href="css/base.css?v=125">
+<link rel="stylesheet" href="css/componentes.css?v=125">
+<link rel="stylesheet" href="css/style.css?v=125">
+<link rel="stylesheet" href="css/portal.css?v=125">
+<link rel="stylesheet" href="css/inicio.css?v=125">
+<link rel="stylesheet" href="css/app.css?v=125">
+<link rel="stylesheet" href="css/fantasy.css?v=125">
+<link rel="stylesheet" href="css/museu.css?v=125">
+<link rel="stylesheet" href="css/editorial.css?v=125">
+<link rel="stylesheet" href="css/entrada.css?v=125">
+<link rel="stylesheet" href="css/centro.css?v=125">
+<link rel="stylesheet" href="css/casa.css?v=125">
 </head>
 <body class="trancado">
 <!-- ============================ ECRÃ DE CARREGAMENTO (modo aplicação) ============================ -->
@@ -950,27 +950,45 @@
 </main>
 
 <main class="vista" id="vista-classificacao">
-  <section class="cartao">
-    <div class="cartao__topo">
-      <h2>CLASSIFICAÇÃO</h2>
+  <section class="cartao classif">
+    <div class="cartao__topo classif__topo">
+      <h2 id="classif-titulo">CLASSIFICAÇÃO</h2>
       <div class="troca-prova" role="tablist" aria-label="Escolher a prova">
-        <button class="troca-prova__b is-on" data-prova="liga"      role="tab" aria-selected="true">LIGA</button>
-        <button class="troca-prova__b"       data-prova="champions" role="tab" aria-selected="false">CHAMPIONS</button>
+        <button type="button" class="troca-prova__b is-on" id="prova-liga" data-prova="liga" role="tab" aria-selected="true" aria-controls="classif-painel">LIGA</button>
+        <button type="button" class="troca-prova__b" id="prova-champions" data-prova="champions" role="tab" aria-selected="false" aria-controls="classif-painel" tabindex="-1">CHAMPIONS</button>
       </div>
-      <span class="sub-inline" id="tabela-nota"></span>
+      <p class="classif__nota"><span id="tabela-nota"></span><span class="classif__fonte" id="tabela-fonte"></span></p>
     </div>
 
-    <!-- só aparece na Champions: como corre ao Sporting na prova -->
-    <div class="cl-resumo" id="cl-resumo" hidden></div>
-    <!-- na Liga: o Sporting em destaque por cima da tabela -->
-    <div class="liga-resumo" id="liga-resumo" hidden></div>
+    <div id="classif-painel" role="tabpanel" aria-labelledby="prova-liga">
+      <p class="so-leitor" role="status" id="tabela-estado"></p>
+      <!-- só aparece na Champions: como corre ao Sporting na prova -->
+      <div class="cl-resumo" id="cl-resumo" hidden></div>
+      <!-- na Liga: o Sporting em destaque por cima da tabela -->
+      <div class="liga-resumo" id="liga-resumo" hidden></div>
 
-    <div class="cartao__corpo">
-      <table class="tabela tabela--completa" id="tabela-total">
-        <thead><tr><th>#</th><th>EQUIPA</th><th>J</th><th>V</th><th>E</th><th>D</th><th>GM</th><th>GS</th><th>DG</th><th>PTS</th></tr></thead>
-        <tbody></tbody>
-      </table>
-      <p class="tabela__legenda" id="tabela-legenda"></p>
+      <div class="cartao__corpo">
+        <!-- no telemóvel a tabela desliza para o lado; a coluna da equipa fica fixa -->
+        <div class="tabela-rolo" tabindex="0" role="region" aria-label="Tabela de classificação (desliza para o lado)">
+          <table class="tabela tabela--completa" id="tabela-total">
+            <caption class="so-leitor" id="tabela-legenda-leitor">Classificação</caption>
+            <thead><tr>
+              <th scope="col" data-ordem="pos"><abbr title="Posição">#</abbr></th>
+              <th scope="col" data-ordem="equipa">EQUIPA</th>
+              <th scope="col" data-ordem="j"><abbr title="Jogos">J</abbr></th>
+              <th scope="col" data-ordem="v"><abbr title="Vitórias">V</abbr></th>
+              <th scope="col" data-ordem="e"><abbr title="Empates">E</abbr></th>
+              <th scope="col" data-ordem="d"><abbr title="Derrotas">D</abbr></th>
+              <th scope="col" data-ordem="gm"><abbr title="Golos marcados">GM</abbr></th>
+              <th scope="col" data-ordem="gs"><abbr title="Golos sofridos">GS</abbr></th>
+              <th scope="col" data-ordem="dg"><abbr title="Diferença de golos">DG</abbr></th>
+              <th scope="col" data-ordem="p"><abbr title="Pontos">PTS</abbr></th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="tabela__legenda" id="tabela-legenda"></p>
+      </div>
     </div>
   </section>
 
@@ -1234,21 +1252,21 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.min.js" defer></script>
-<script src="js/nuvem.js?v=124" defer></script>
-<script src="js/fd.js?v=124" defer></script>
-<script src="js/componentes.js?v=124" defer></script>
-<script src="js/contas.js?v=124" defer></script>
-<script src="js/arte.js?v=124" defer></script>
-<script src="js/data.js?v=124" defer></script>
-<script src="js/wiki.js?v=124" defer></script>
-<script src="js/tema.js?v=124" defer></script>
-<script src="js/notificacoes.js?v=124" defer></script>
-<script src="js/pwa.js?v=124" defer></script>
-<script src="js/arquivo.js?v=124" defer></script>
-<script src="js/fantasy.js?v=124" defer></script>
-<script src="js/museu.js?v=124" defer></script>
-<script src="js/entrada.js?v=124" defer></script>
-<script src="js/centro.js?v=124" defer></script>
-<script src="js/app.js?v=124" defer></script>
+<script src="js/nuvem.js?v=125" defer></script>
+<script src="js/fd.js?v=125" defer></script>
+<script src="js/componentes.js?v=125" defer></script>
+<script src="js/contas.js?v=125" defer></script>
+<script src="js/arte.js?v=125" defer></script>
+<script src="js/data.js?v=125" defer></script>
+<script src="js/wiki.js?v=125" defer></script>
+<script src="js/tema.js?v=125" defer></script>
+<script src="js/notificacoes.js?v=125" defer></script>
+<script src="js/pwa.js?v=125" defer></script>
+<script src="js/arquivo.js?v=125" defer></script>
+<script src="js/fantasy.js?v=125" defer></script>
+<script src="js/museu.js?v=125" defer></script>
+<script src="js/entrada.js?v=125" defer></script>
+<script src="js/centro.js?v=125" defer></script>
+<script src="js/app.js?v=125" defer></script>
 </body>
 </html>

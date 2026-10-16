@@ -20,6 +20,10 @@
    de entrada: são "momentos de marca", escuros nos dois temas. A classe
    volta a declarar a paleta escura, e tudo lá dentro herda-a.
    ========================================================================= */
+/* o atributo hidden esconde sempre, mesmo em elementos com display próprio
+   (era por isto que o resumo da Champions aparecia na Liga) */
+[hidden]:not([hidden="until-found"]){ display: none !important; }
+
 :root, .sempre-escuro{
   color-scheme: dark;
 

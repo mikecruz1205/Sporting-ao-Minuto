@@ -15,8 +15,12 @@ const apelido    = s => chaveNome(s).split(' ').filter(Boolean).slice(-1)[0] || 
 let NOTICIAS = [];          // tudo o que vem dos RSS
 let PLANTEL  = [];          // jogadores (Wikipédia + fotos da API)
 let JOGOS    = [...FIXTURES];
-let TABELA   = [...TABLE];
-let TABELA_CL = [...TABLE_CL];   // fase de liga da Champions
+/* as tabelas só têm o que a fonte deu: enquanto não chega, mostra-se o
+   esqueleto (nunca uma lista com zeros, que parecia a época por começar) */
+let TABELA   = [];               // Liga Portugal
+let TABELA_CL = [];              // fase de liga da Champions
+const ESTADO_TABELA = { liga: 'a-carregar', champions: 'a-carregar' };   // a-carregar · pronto · erro
+const HORA_TABELA = { liga: null, champions: null };                    // quando chegou da fonte
 let FOTOS    = { jogadores: [], equipas: {} };
 let EMBLEMAS = {};          // nome da equipa -> ficheiro (dados/emblemas.json)
 let PLANTEL_ZZ = { jogadores: [] };  // plantel do zerozero (atualizar_plantel.py)
@@ -1812,9 +1816,14 @@ function pintarTabelaCasa(){
   if(nos && !linhas.includes(nos)) linhas = [...linhas, nos];
   const jornada = Math.max(0, ...TABELA.map(t => t.j || 0));
   const etiqueta = $('#tabela-casa-jornada');
-  if(etiqueta) etiqueta.textContent = comecou ? `Jornada ${jornada}` : 'Liga';
+  if(etiqueta) etiqueta.textContent = !TABELA.length ? 'Liga' : comecou ? `Jornada ${jornada}` : 'Época por começar';
 
-  if(!TABELA.length){ alvo.innerHTML = '<div class="osso" style="height:220px"></div>'; return; }
+  if(!TABELA.length){
+    alvo.innerHTML = ESTADO_TABELA.liga === 'erro'
+      ? falhaTabela('liga')
+      : '<div class="osso" style="height:220px" aria-hidden="true"></div><p class="so-leitor" role="status">A carregar a classificação…</p>';
+    return;
+  }
   alvo.innerHTML = `
     <table class="classif">
       <caption class="so-leitor">Liga Portugal, primeiros classificados</caption>
@@ -1829,18 +1838,49 @@ function pintarTabelaCasa(){
         </tr>`).join('')}
       </tbody>
     </table>
-    ${formaSporting().length ? `<div class="forma"><span class="forma__rotulo">Forma do Sporting</span><span class="forma__chips">${chipsForma(formaSporting())}</span></div>` : ''}`;
+    ${formaSporting().length ? `<div class="forma"><span class="forma__rotulo">Forma do Sporting</span><span class="forma__chips">${chipsForma(formaSporting())}</span></div>` : ''}
+    <p class="fonte-tabela">${fonteDaTabela('liga')}</p>`;
+}
+
+/* de onde veio cada tabela e quando chegou */
+const NOME_PROVA = { liga: 'Liga Portugal Betclic', champions: 'Liga dos Campeões' };
+const fonteDe = prova => prova === 'champions' ? 'Wikipédia' : FONTE_TABELA;
+function fonteDaTabela(prova){
+  const h = HORA_TABELA[prova];
+  return `Fonte: ${fonteDe(prova)}${h ? ` · atualizada às ${h.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}` : ''}`;
+}
+/* a fonte falhou e não há nada guardado: diz-se e deixa-se tentar outra vez */
+const falhaTabela = prova => `<div class="estado-falha" role="alert">
+    <p><b>Não foi possível carregar a classificação ${prova === 'champions' ? 'da Champions' : 'da Liga'}.</b></p>
+    <p>A fonte não respondeu. Verifica a ligação à internet e tenta outra vez.</p>
+    <button type="button" class="botao-tentar" data-tentar="tabela">Tentar outra vez</button>
+  </div>`;
+const linhasOsso = (n, colunas) => Array.from({ length: n }, () =>
+  `<tr class="linha-osso" aria-hidden="true"><td colspan="${colunas}"><span class="osso osso--linha"></span></td></tr>`).join('');
+
+function tituloClassificacao(){
+  if(vistaAtual === 'classificacao')
+    document.title = `Classificação da ${provaTabela === 'champions' ? 'Champions' : 'Liga'} · Sporting ao Minuto`;
 }
 
 function pintarTabela(){
   const naChampions = provaTabela === 'champions';
   const dados = naChampions ? TABELA_CL : TABELA;
+  const estado = ESTADO_TABELA[provaTabela];
+  /* "ainda não começou" só quando a fonte o diz: a tabela veio e ninguém jogou */
   const comecou = dados.some(t => t.j > 0);
+  const jornada = Math.max(0, ...dados.map(t => t.j || 0));
 
-  $('#tabela-nota').textContent = naChampions
-    ? `Liga dos Campeões ${CONFIG.epoca} · fase de liga`
-    : (comecou ? 'Liga Portugal Betclic ' + CONFIG.epoca
-               : 'ordem alfabética — a época ainda não começou');
+  $('#tabela-nota').textContent = !dados.length
+    ? `${NOME_PROVA[provaTabela]} ${CONFIG.epoca}`
+    : naChampions
+      ? `Liga dos Campeões ${CONFIG.epoca} · fase de liga${comecou ? ` · ${jornada}.ª jornada` : ' · ainda não começou'}`
+      : `Liga Portugal Betclic ${CONFIG.epoca} · ${comecou ? `jornada ${jornada}` : 'a época ainda não começou'}`;
+  const fonte = $('#tabela-fonte');
+  if(fonte) fonte.textContent = dados.length ? fonteDaTabela(provaTabela) : estado === 'erro' ? '' : 'a carregar…';
+  const aviso = $('#tabela-estado');
+  if(aviso) aviso.textContent = !dados.length && estado !== 'erro' ? `A carregar a classificação ${naChampions ? 'da Champions' : 'da Liga'}…` : '';
+  tituloClassificacao();
 
   pintarTabelaCasa();
 
@@ -1853,10 +1893,22 @@ function pintarTabela(){
       <td>${t.j}</td><td>${t.gm - t.gs}</td><td class="pts">${t.p}</td>
     </tr>`).join('');
 
-  $('#tabela-total tbody').innerHTML = dados.map(t => `
+  const tabela = $('#tabela-total');
+  tabela.setAttribute('aria-busy', String(!dados.length && estado !== 'erro'));
+  if(!dados.length){
+    tabela.tBodies[0].innerHTML = estado === 'erro'
+      ? `<tr><td colspan="10">${falhaTabela(provaTabela)}</td></tr>`
+      : linhasOsso(naChampions ? 12 : 10, 10);
+    $('#tabela-legenda').innerHTML = '';
+    pintarChampions(false);
+    pintarResumoLiga(false);
+    return;
+  }
+
+  tabela.tBodies[0].innerHTML = ordenarLinhas(dados).map(t => `
     <tr class="${eSporting(t.equipa)?'eu':''} ${naChampions ? zonaChampions(t.pos) : ''}">
       <td class="np">${t.pos}</td>
-      <td><span class="eq"><img src="${emblemaEquipa(t.equipa)}" alt="" loading="lazy">${t.equipa}</span></td>
+      <th scope="row" class="eq-celula"><span class="eq"><img src="${emblemaEquipa(t.equipa)}" alt="" loading="lazy">${t.equipa}</span></th>
       <td>${t.j}</td><td>${t.v}</td><td>${t.e}</td><td>${t.d}</td>
       <td>${t.gm}</td><td>${t.gs}</td><td>${t.gm - t.gs}</td><td class="pts">${t.p}</td>
     </tr>`).join('');
@@ -1869,6 +1921,19 @@ function pintarTabela(){
 
   pintarChampions(naChampions);
   pintarResumoLiga(!naChampions && comecou);
+}
+
+/* ordem das linhas: a da fonte, salvo se se escolher outra no cabeçalho */
+let ordemTabela = null;          // { coluna, sentido } ou null
+function ordenarLinhas(dados){
+  if(!ordemTabela) return dados;
+  const { coluna, sentido } = ordemTabela;
+  const valor = t => coluna === 'equipa' ? t.equipa : coluna === 'dg' ? t.gm - t.gs : t[coluna];
+  return [...dados].sort((a, b) => {
+    const x = valor(a), y = valor(b);
+    const r = typeof x === 'string' ? x.localeCompare(y, 'pt') : x - y;
+    return (r || a.pos - b.pos) * sentido;
+  });
 }
 
 /* o Sporting na Liga, num relance: posição, pontos, distância, forma */
@@ -1936,16 +2001,51 @@ function pintarChampions(mostrar){
     </li>`).join('');
 }
 
+/* o separador manda em tudo (tabela, títulos, resumos) e fica no endereço:
+   /classificacao?comp=champions pode ser partilhado */
+const provaDoUrl = () => {
+  const c = new URLSearchParams(location.search).get('comp');
+  return c === 'champions' || c === 'liga' ? c : null;
+};
+function escolherProva(prova, { url = true, foco = false } = {}){
+  provaTabela = prova === 'champions' ? 'champions' : 'liga';
+  $$('.troca-prova__b').forEach(o => {
+    const ativo = o.dataset.prova === provaTabela;
+    o.classList.toggle('is-on', ativo);
+    o.setAttribute('aria-selected', String(ativo));
+    o.tabIndex = ativo ? 0 : -1;
+    if(ativo && foco) o.focus();
+  });
+  $('#classif-painel')?.setAttribute('aria-labelledby', 'prova-' + provaTabela);
+  if(url && vistaAtual === 'classificacao')
+    history.replaceState(history.state, '', `${ROTAS.classificacao}?comp=${provaTabela}`);
+  pintarTabela();
+}
 function ligarTrocaProva(){
-  $$('.troca-prova__b').forEach(b => b.addEventListener('click', () => {
-    provaTabela = b.dataset.prova;
-    $$('.troca-prova__b').forEach(o => {
-      const activo = o === b;
-      o.classList.toggle('is-on', activo);
-      o.setAttribute('aria-selected', activo);
+  const ordem = ['liga', 'champions'];
+  $$('.troca-prova__b').forEach(b => {
+    b.addEventListener('click', () => escolherProva(b.dataset.prova));
+    /* setas, Home e End mudam de separador, como manda o padrão de separadores */
+    b.addEventListener('keydown', e => {
+      if(!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(e.key)) return;
+      e.preventDefault();
+      const i = ordem.indexOf(provaTabela);
+      const j = e.key === 'Home' ? 0 : e.key === 'End' ? ordem.length - 1
+              : (i + (e.key === 'ArrowRight' ? 1 : -1) + ordem.length) % ordem.length;
+      escolherProva(ordem[j], { foco: true });
     });
-    pintarTabela();
-  }));
+  });
+  /* "Tentar outra vez" nas tabelas e na carreira */
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-tentar]');
+    if(!b) return;
+    if(b.dataset.tentar === 'tabela'){ b.disabled = true; carregarClassificacao(); }
+    if(b.dataset.tentar === 'carreira'){
+      try{ sessionStorage.removeItem(CHAVE_SEM_API); }catch(err){}
+      const p = PLANTEL.find(x => x.nome === escolhido);
+      if(p){ carreiraCache.delete(p.apiId); $('#carreira-corpo').innerHTML = '<div class="esperar">a carregar…</div>'; carregarCarreira(p); }
+    }
+  });
 }
 
 /* =========================================================================
@@ -2034,7 +2134,8 @@ function pintarCarreira(linhas){
   if(!alvo) return;
 
   if(linhas === null){
-    alvo.innerHTML = `<div class="esperar">A carreira não está disponível de momento: a fonte de dados (API-Football) não responde.</div>`;
+    alvo.innerHTML = `<div class="estado-falha" role="alert"><p>A carreira não está disponível de momento: a fonte de dados (API-Football) não responde.</p>
+      <button type="button" class="botao-tentar" data-tentar="carreira">Tentar outra vez</button></div>`;
     return;
   }
   if(!linhas.length){
@@ -2200,13 +2301,20 @@ function mostrarFicha(p){
   desenharRadar(perfil);
   setTimeout(() => $$('#barras .cheia').forEach(b => b.style.width = b.dataset.w + '%'), 60);
 
-  if(p.apiId){
-    buscarCarreira(p.apiId).then(linhas => {
-      if(escolhido === p.nome) pintarCarreira(linhas);   // só se ainda for este
-    });
-  }else{
-    pintarCarreira([]);
-  }
+  carregarCarreira(p);
+}
+
+/* A carreira vem da API-Football e só se pede com o plantel à vista: antes
+   disto, a ficha do jogador em destaque pedia-a no arranque, em qualquer
+   página (era o 503 da consola quando a chave não está configurada). */
+let carreiraPorCarregar = null;
+function carregarCarreira(p){
+  if(!p.apiId){ pintarCarreira([]); return; }
+  if(vistaAtual !== 'equipa'){ carreiraPorCarregar = p; return; }
+  carreiraPorCarregar = null;
+  buscarCarreira(p.apiId).then(linhas => {
+    if(escolhido === p.nome) pintarCarreira(linhas);   // só se ainda for este
+  });
 }
 
 /* 30 → "30 M€" · 7.25 → "7,25 M€" · 0 → "livre" */
@@ -3787,25 +3895,43 @@ function pintarClube(){
    ========================================================================= */
 const chaveJogo = j => chaveNome(j.casa) + '|' + chaveNome(j.fora);
 
+/* As duas tabelas ao mesmo tempo. Havendo token, a Liga vem do
+   football-data (atualiza logo a seguir aos jogos); senão do Wikipédia.
+   A Champions é uma página à parte: se falhar, a Liga segue na mesma.
+   Se a fonte falhar e já houver tabela, fica a que havia (com a hora em
+   que chegou); se não houver nenhuma, a página diz que falhou. */
+async function carregarClassificacao(){
+  if(!TABELA.length) ESTADO_TABELA.liga = 'a-carregar';
+  if(!TABELA_CL.length) ESTADO_TABELA.champions = 'a-carregar';
+  pintarTabela();
+  const liga = (async () => {
+    const doFD = await FD.classificacao();
+    const t = doFD || await Wiki.classificacao();
+    if(!t?.length) throw new Error('classificação vazia');
+    TABELA = t;
+    FONTE_TABELA = doFD ? 'football-data.org' : 'Wikipédia';
+  })();
+  const champions = Wiki.classificacaoChampions().then(t => {
+    if(!t?.length) throw new Error('classificação vazia');
+    TABELA_CL = t;
+  });
+  const [rl, rc] = await Promise.allSettled([liga, champions]);
+  const agora = new Date();
+  if(rl.status === 'fulfilled'){ ESTADO_TABELA.liga = 'pronto'; HORA_TABELA.liga = agora; }
+  else ESTADO_TABELA.liga = TABELA.length ? 'pronto' : 'erro';
+  if(rc.status === 'fulfilled'){ ESTADO_TABELA.champions = 'pronto'; HORA_TABELA.champions = agora; }
+  else ESTADO_TABELA.champions = TABELA_CL.length ? 'pronto' : 'erro';
+  pintarTabela();
+  return rl.status === 'fulfilled';
+}
+
 async function sincronizar(){
   const marca = $('#estado-dados');
   marca.textContent = 'a sincronizar…';
   marca.className = 'menu__estado';
   const falhas = [];
 
-  try{
-    /* Havendo token, a classificação vem do football-data, que atualiza
-       logo a seguir aos jogos; senão vai ao Wikipédia como sempre foi. */
-    const doFD = await FD.classificacao();
-    TABELA = doFD || (await Wiki.classificacao());
-    FONTE_TABELA = doFD ? 'football-data.org' : 'Wikipédia';
-    /* a Champions é uma página à parte: se falhar, fica o retrato guardado
-       e a Liga não deixa de atualizar por causa disso */
-    try{
-      TABELA_CL = await Wiki.classificacaoChampions();
-    }catch(e){ /* segue com TABLE_CL */ }
-    pintarTabela();
-  }catch(e){ falhas.push('classificação'); }
+  if(!(await carregarClassificacao())) falhas.push('classificação');
 
   try{
     const { plantel, stats, provas, jogos } = await Wiki.sincronizarSporting();
@@ -4138,6 +4264,7 @@ function irPara(vista, opcoes = {}){
   if(!$('#vista-' + vista)) vista = 'inicio';
   vistaAtual = vista;
   document.body.dataset.vista = vista;
+  if(vista === 'equipa' && carreiraPorCarregar) carregarCarreira(carreiraPorCarregar);
   if(vista === 'chat') pintarChat();
   if(vista === 'formacao') window.Fantasy?.abrir();
   if(vista === 'estatisticas') window.Arquivo?.abrir();
@@ -4163,8 +4290,10 @@ function irPara(vista, opcoes = {}){
   document.title = vista === 'inicio' ? TITULOS.inicio : `${TITULOS[vista]} · Sporting ao Minuto`;
   metaDaVista(vista);
   if(historico && location.pathname !== ROTAS[vista]){
-    history.pushState({ vista }, '', ROTAS[vista] + (vista === 'modalidades' ? location.hash : ''));
+    history.pushState({ vista }, '', ROTAS[vista]
+      + (vista === 'modalidades' ? location.hash : vista === 'classificacao' ? `?comp=${provaTabela}` : ''));
   }
+  tituloClassificacao();
   if(rolar) scrollTo({ top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
 }
 
@@ -4336,7 +4465,11 @@ function pintarModalidades(){
 addEventListener('hashchange', () => { if(vistaAtual === 'modalidades') pintarModalidades(); });
 
 /* voltar e avançar do browser */
-addEventListener('popstate', () => irPara(vistaDaRota(location.pathname), { historico:false }));
+addEventListener('popstate', () => {
+  const vista = vistaDaRota(location.pathname);
+  if(vista === 'classificacao' && provaDoUrl() && provaDoUrl() !== provaTabela) escolherProva(provaDoUrl(), { url: false });
+  irPara(vista, { historico:false });
+});
 
 /* ---------------------------------------------------------------------
    SUBMENUS (ecrãs largos). Abrem com clique ou com o rato por cima,
@@ -4553,6 +4686,7 @@ async function arranque(){
     /* /privacidade e /termos ficam com o seu endereço (o texto abre por cima do início) */
     if(!/^\/(privacidade|termos)\/?$/.test(location.pathname))
       history.replaceState({ vista: inicial }, '', ROTAS[inicial] + location.search + location.hash);
+    if(inicial === 'classificacao' && provaDoUrl()) escolherProva(provaDoUrl(), { url: false });
     if(inicial !== 'inicio') irPara(inicial, { historico:false, rolar:false });
     else metaDaVista('inicio');
     dadosEstruturados();
