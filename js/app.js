@@ -107,15 +107,19 @@ async function pintarComunidade(){
   const eu = Nuvem.perfil;
 
   /* ---- Fantasy ---- */
-  let jornada = null, minha = null, total = null;
+  let jornada = null, minha = null, total = null, falhou = !db;
   if(db){
+    /* o Supabase não lança exceção quando falha: devolve error, e sem isto
+       uma falha aparecia como "não há nenhuma jornada aberta" */
     try{
-      const { data } = await db.from('fantasy_jornadas').select('numero, fecho')
+      const { data, error } = await db.from('fantasy_jornadas').select('numero, fecho')
         .gt('fecho', new Date().toISOString()).order('fecho').limit(1);
+      if(error) throw error;
       jornada = data?.[0] || null;
-    }catch(e){}
+    }catch(e){ falhou = true; }
     try{
-      const { count } = await db.from('fantasy_perfis').select('perfil_id', { count: 'exact', head: true });
+      const { count, error } = await db.from('fantasy_perfis').select('perfil_id', { count: 'exact', head: true });
+      if(error) throw error;
       total = Number.isFinite(count) ? count : null;
     }catch(e){}
     if(eu){
@@ -128,7 +132,9 @@ async function pintarComunidade(){
   const fecho = jornada ? new Date(jornada.fecho) : null;
   corpoF.innerHTML = `
     ${jornada ? `<p class="comu__linha"><b>Jornada ${jornada.numero}</b> · fecha ${rotuloDia(fecho).toLowerCase()} às ${fecho.toLocaleTimeString('pt-PT', { hour:'2-digit', minute:'2-digit' })}</p>`
-              : `<p class="comu__linha">${db ? 'Não há nenhuma jornada aberta neste momento.' : 'Sem ligação ao servidor da Fantasy.'}</p>`}
+              : falhou ? `<div class="estado-falha estado-falha--curto" role="alert"><p>Não foi possível ler a Fantasy do servidor.</p>
+                  <button type="button" class="botao-tentar" data-tentar="comunidade">Tentar outra vez</button></div>`
+              : `<p class="comu__linha">Não há nenhuma jornada aberta neste momento.</p>`}
     <div class="comu__numeros">
       ${minha ? `<span class="comu__numero"><b>${minha.total ?? 0}</b><span>os teus pontos</span></span>
                  ${minha.posicao ? `<span class="comu__numero"><b>${minha.posicao}.º</b><span>na geral</span></span>` : ''}` : ''}
@@ -142,9 +148,12 @@ async function pintarComunidade(){
 
   /* ---- chat ---- */
   if(eu && Nuvem.ligado){
-    let msgs = [];
-    try{ msgs = (await Nuvem.lerMensagens(3)).slice(-2).reverse(); }catch(e){}
-    corpoC.innerHTML = `
+    let msgs = [], falhouChat = false;
+    try{ msgs = (await Nuvem.lerMensagens(3)).slice(-2).reverse(); }catch(e){ falhouChat = true; }
+    corpoC.innerHTML = falhouChat
+      ? `<div class="estado-falha estado-falha--curto" role="alert"><p>Não foi possível ler o chat do servidor.</p>
+           <button type="button" class="botao-tentar" data-tentar="comunidade">Tentar outra vez</button></div>`
+      : `
       ${msgs.length ? `<ul class="comu__msgs">${msgs.map(m => {
           const nome = m.perfis?.nome_mostrado || m.perfis?.utilizador || m.autor || 'alguém';
           return `<li><b>@${seguro(nome)}</b> ${seguro((m.texto || '📷 fotografia').slice(0, 140))}
@@ -1248,6 +1257,17 @@ function mostrarDestaque(i){
 /* ---------------- ao minuto ---------------- */
 /* até a primeira sincronização acabar, os jogos podem ser os guardados no código */
 let jogosSincronizados = false;
+/* a fonte dos jogos falhou e nunca chegou nada: diz-se, com nova tentativa
+   (antes mostrava-se o retrato guardado no código, de julho, como se fosse atual) */
+let jogosFalharam = false;
+/* jogos e golos de cada jogador vêm do Wikipédia; com o plantel de recurso
+   (retrato do zerozero) não os há, e não se mostram zeros no lugar deles */
+let estatisticasPlantel = false;
+const falhaDados = (titulo, texto = 'A fonte não respondeu. Verifica a ligação à internet e tenta outra vez.') =>
+  `<div class="estado-falha" role="alert"><p><b>${titulo}</b></p><p>${texto}</p>
+     <button type="button" class="botao-tentar" data-tentar="dados">Tentar outra vez</button></div>`;
+const ossos = (n, classe = '') => Array.from({ length: n }, () =>
+  `<li class="${classe}" aria-hidden="true"><div class="osso"></div></li>`).join('');
 /* Uma atualização do ao minuto. Na homepage é compacta (hora, título,
    etiqueta e fonte); na vista completa leva também o resumo e, só nas
    importantes, a imagem. O marcador da linha do tempo é a sigla do
@@ -1452,6 +1472,11 @@ function pintarProximoJogo(){
   const alvo = $('#proximo-jogo');
   const estado = $('#proximo-estado');
   if(!alvo) return;
+  if(!lista.length && jogosFalharam){
+    alvo.innerHTML = falhaDados('Não foi possível carregar o calendário.');
+    if(estado) estado.textContent = '';
+    return;
+  }
   if(!lista.length){
     alvo.innerHTML = jogosSincronizados
       ? `<div class="estado"><p class="estado__titulo">Sem jogos marcados</p>
@@ -1580,6 +1605,7 @@ function pintarCalendario(){
   const prox = porJogar().slice(0, 5);
   alvo.innerHTML = prox.length
     ? agendaPorDia(prox)
+    : jogosFalharam ? `<li>${falhaDados('Não foi possível carregar os próximos jogos.')}</li>`
     : jogosSincronizados
       ? `<li class="estado"><p class="estado__texto">Sem jogos marcados para já.</p></li>`
       : Array.from({ length: 4 }, () => `<li class="ag ag--osso" aria-hidden="true"><div class="osso"></div></li>`).join('');
@@ -1590,10 +1616,10 @@ function pintarResultados(){
   const alvo = $('#resultados');
   if(!alvo) return;
   const feitos = JOGOS.filter(jogado).slice(-4).reverse();      // 2 × 2 ao lado do próximo jogo
+  if(jogosFalharam){ alvo.innerHTML = `<li>${falhaDados('Não foi possível carregar os resultados.')}</li>`; return; }
+  if(!jogosSincronizados){ alvo.innerHTML = ossos(4, 'rcartao rcartao--osso'); return; }
   if(!feitos.length){
-    alvo.innerHTML = JOGOS.length
-      ? `<li class="estado"><p class="estado__texto">Ainda não há resultados esta época.</p></li>`
-      : Array.from({ length: 4 }, () => `<li class="rcartao rcartao--osso" aria-hidden="true"><div class="osso"></div></li>`).join('');
+    alvo.innerHTML = `<li class="estado"><p class="estado__texto">Ainda não há resultados esta época.</p></li>`;
     return;
   }
   const NOME = { V:'Vitória', E:'Empate', D:'Derrota' };
@@ -1686,6 +1712,14 @@ const NOME_RES = { V:'Vitória', E:'Empate', D:'Derrota' };
 let filtroProva = 'TODOS';
 
 function pintarJogosTodos(){
+  if(jogosFalharam || !jogosSincronizados){
+    $('#jogos-resumo').textContent = jogosFalharam ? '' : 'a carregar…';
+    $('#jogos-filtro').innerHTML = '';
+    $('#jogos-lista').innerHTML = jogosFalharam
+      ? `<li>${falhaDados('Não foi possível carregar os jogos da época.')}</li>`
+      : ossos(6, 'jl-osso');
+    return;
+  }
   const feitos = JOGOS.filter(jogado);
   const r = feitos.map(resultadoSCP);
   $('#jogos-resumo').textContent =
@@ -2040,6 +2074,14 @@ function ligarTrocaProva(){
     const b = e.target.closest('[data-tentar]');
     if(!b) return;
     if(b.dataset.tentar === 'tabela'){ b.disabled = true; carregarClassificacao(); }
+    if(b.dataset.tentar === 'comunidade'){ b.disabled = true; pintarComunidade(); }
+    if(b.dataset.tentar === 'chat'){ b.disabled = true; pintarChat(); }
+    if(b.dataset.tentar === 'dados'){
+      $$('[data-tentar="dados"]').forEach(x => { x.disabled = true; x.textContent = 'A tentar…'; });
+      jogosFalharam = false; plantelFalhou = false;
+      pintarResultados(); pintarProximoJogo(); pintarCalendario(); pintarJogosTodos(); pintarEstatisticas(); pintarPlantel();
+      sincronizar();
+    }
     if(b.dataset.tentar === 'carreira'){
       try{ sessionStorage.removeItem(CHAVE_SEM_API); }catch(err){}
       const p = PLANTEL.find(x => x.nome === escolhido);
@@ -2199,13 +2241,28 @@ function cartaoJogador(p){
       <span class="jog__txt">
         <b>${ALCUNHAS[p.nome] || p.nome}</b>
         <span>${p.pos} · ${semBandeira(p.nac)}</span>
-        <span class="jog__mini"><span>${p.stats.jogos} jogos</span><span>${p.stats.golos} golos</span></span>
+        <span class="jog__mini">${estatisticasPlantel
+          ? `<span>${p.stats.jogos} jogos</span><span>${p.stats.golos} golos</span>`
+          : '<span>números da época indisponíveis</span>'}</span>
       </span>
     </button>`;
 }
 
 function pintarPlantel(){
   const porNumero = (a,b) => (a.n ?? 999) - (b.n ?? 999);
+
+  /* enquanto o plantel a sério não chega há só nomes, sem posições: não se
+     mostram contagens (eram "Médios 31, Guarda-redes 0") */
+  if(!plantelReal){
+    $$('#pos-filtro .pilula').forEach(b => { b.dataset.rotulo ||= b.textContent.trim(); b.textContent = b.dataset.rotulo; });
+    $('#plantel').innerHTML = plantelFalhou
+      ? falhaDados('Não foi possível carregar o plantel.')
+      : Array.from({ length: 8 }, () => '<div class="jog jog--osso" aria-hidden="true"><div class="osso"></div></div>').join('')
+        + '<p class="so-leitor" role="status">A carregar o plantel…</p>';
+    const ficha = $('#ficha');
+    if(ficha && !ficha.children.length) ficha.innerHTML = plantelFalhou ? '' : '<div class="osso ficha__osso" aria-hidden="true"></div>';
+    return;
+  }
 
   /* contagem em cada pílula, para se saber o que há antes de carregar */
   $$('#pos-filtro .pilula').forEach(b => {
@@ -2250,11 +2307,13 @@ function mostrarFicha(p){
   escolhido = p.nome;
   const perfil = PERFIS[p.nome] || PERFIL_BASE[p.posGrupo];
   const s = p.stats;
+  /* sem os números da época (fonte em baixo) aparece "—", não zero */
+  const num = v => estatisticasPlantel ? v : '—';
   const kpis = [
-    ['JOGOS', s.jogos], ['GOLOS', s.golos],
+    ['JOGOS', num(s.jogos)], ['GOLOS', num(s.golos)],
     /* golos por jogo não diz nada de um guarda-redes */
     ...(p.posGrupo === 'GR' ? [] :
-      [['GOLOS/JOGO', s.jogos ? (s.golos/s.jogos).toFixed(2).replace('.',',') : '0,00']]),
+      [['GOLOS/JOGO', !estatisticasPlantel ? '—' : s.jogos ? (s.golos/s.jogos).toFixed(2).replace('.',',') : '0,00']]),
     ['IDADE', p.idade ?? '—'], ['Nº', p.n ?? '–']
   ];
   const rotulos = {fin:'FINALIZAÇÃO',passe:'PASSE',drible:'DRIBLE',defesa:'DEFESA',fisico:'FÍSICO',vel:'VELOCIDADE'};
@@ -2528,11 +2587,15 @@ function desenharRanking(lista, origem){
 function pintarEstatisticas(){
   const marcadores = PLANTEL.filter(p => p.stats.golos > 0)
                             .sort((a,b) => b.stats.golos - a.stats.golos).slice(0,5);
-  $('#marcadores').innerHTML = marcadores.length
-    ? marcadores.map(p => `<li>
-        <img src="${p.foto}" alt="" onerror="this.onerror=null;this.src='${avatarJogador(p)}'">
-        <span>${ALCUNHAS[p.nome] || p.nome}</span><b>${p.stats.golos}</b></li>`).join('')
-    : `<li class="vazio">Sem golos registados — a época começa a 8 de agosto.</li>`;
+  $('#marcadores').innerHTML = !plantelReal
+    ? (plantelFalhou ? `<li>${falhaDados('Não foi possível carregar os marcadores.')}</li>` : ossos(5, 'marcador--osso'))
+    : !estatisticasPlantel
+      ? `<li>${falhaDados('Os golos da época não estão disponíveis.', 'Vêm da Wikipédia, que não respondeu. Tenta outra vez daqui a pouco.')}</li>`
+    : marcadores.length
+      ? marcadores.map(p => `<li>
+          <img src="${p.foto}" alt="" onerror="this.onerror=null;this.src='${avatarJogador(p)}'">
+          <span>${ALCUNHAS[p.nome] || p.nome}</span><b>${p.stats.golos}</b></li>`).join('')
+      : `<li class="vazio">Ainda não há golos registados nesta época.</li>`;
 
   /* caixas da equipa a partir de um conjunto de jogos */
   const caixasDe = jogos => {
@@ -2553,9 +2616,13 @@ function pintarEstatisticas(){
 
   /* página inicial: os jogos oficiais já jogados (os particulares ficam de fora) */
   const todosFeitos = JOGOS.filter(jogado).filter(j => provaDoJogo(j) !== 'Pré-época');
-  $('#caixas-equipa').innerHTML = todosFeitos.length
-    ? caixasDe(todosFeitos)
-    : `<div class="vazio" style="grid-column:1/-1">Ainda não há jogos.</div>`;
+  const caixasOsso = Array.from({ length: 5 }, () => '<div class="caixa caixa--osso" aria-hidden="true"><div class="osso"></div></div>').join('');
+  $('#caixas-equipa').innerHTML = jogosFalharam
+    ? `<div style="grid-column:1/-1">${falhaDados('Não foi possível carregar os números da época.')}</div>`
+    : !jogosSincronizados ? caixasOsso
+    : todosFeitos.length
+      ? caixasDe(todosFeitos)
+      : `<div class="vazio" style="grid-column:1/-1">Ainda não há jogos oficiais com resultado nesta época.</div>`;
 
   /* ---- filtro por competição ---- */
   const temPreEpoca = JOGOS.some(j => jogado(j) && provaDoJogo(j) === 'Pré-época');
@@ -2582,7 +2649,10 @@ function pintarEstatisticas(){
   });
 
   pintarEstatisticasEpoca();
-  $('#caixas-equipa-total').innerHTML = jogosDaProva.length
+  $('#caixas-equipa-total').innerHTML = jogosFalharam
+    ? `<div style="grid-column:1/-1">${falhaDados('Não foi possível carregar os jogos da época.')}</div>`
+    : !jogosSincronizados ? caixasOsso
+    : jogosDaProva.length
     ? caixasDe(jogosDaProva)
     : `<div class="vazio" style="grid-column:1/-1">
          Ainda não há jogos ${provaAtiva === 'Total' ? 'oficiais' : 'nesta prova'} —
@@ -2606,6 +2676,12 @@ function pintarEstatisticas(){
     ? { jogos: p.stats.jogos, golos: p.stats.golos }
     : (p.stats.provas[provaAtiva] || { jogos:0, golos:0 });
 
+  if(!estatisticasPlantel){
+    $('#tabela-jogadores tbody').innerHTML = `<tr><td colspan="6">${plantelReal || plantelFalhou
+      ? falhaDados('Os números de cada jogador não estão disponíveis.', 'Vêm da Wikipédia, que não respondeu. Tenta outra vez daqui a pouco.')
+      : '<div class="osso" style="height:180px" aria-hidden="true"></div>'}</td></tr>`;
+    return;
+  }
   const linhas = PLANTEL.map(p => ({ p, s: daProva(p) }))
     .sort((a,b) => b.s.golos - a.s.golos || b.s.jogos - a.s.jogos);
 
@@ -2654,8 +2730,18 @@ function pintarEstatisticasEpoca(){
     .sort((a, b) => new Date(a.data) - new Date(b.data));
   const forma = $('#est-forma');
   if(!forma) return;
+  if(jogosFalharam){
+    forma.innerHTML = `<li>${falhaDados('Não foi possível carregar os jogos da época.')}</li>`;
+    $('#est-casa-fora').innerHTML = $('#est-provas').innerHTML = '';
+    return;
+  }
+  if(!jogosSincronizados){
+    forma.innerHTML = ossos(5, 'forma--osso') + '<li class="so-leitor" role="status">A ler o calendário…</li>';
+    $('#est-casa-fora').innerHTML = $('#est-provas').innerHTML = '<div class="osso" style="height:120px" aria-hidden="true"></div>';
+    return;
+  }
   if(!oficiais.length){
-    const msg = jogosSincronizados ? 'Ainda não há jogos oficiais com resultado nesta época.' : 'A ler o calendário…';
+    const msg = 'Ainda não há jogos oficiais com resultado nesta época.';
     forma.innerHTML = `<li class="vazio">${msg}</li>`;
     $('#est-casa-fora').innerHTML = $('#est-provas').innerHTML = `<p class="vazio">${msg}</p>`;
     return;
@@ -3502,7 +3588,13 @@ async function pintarChat(){
   }
   estadoChat('ligado como @' + eu.utilizador, 'ok');
 
-  const mensagens = await Nuvem.lerMensagens(60);
+  let mensagens;
+  try{ mensagens = await Nuvem.lerMensagens(60); }
+  catch(e){
+    estadoChat('sem ligação ao servidor', 'erro');
+    lista.innerHTML = `<li>${falhaDados('Não foi possível carregar as mensagens.', 'O servidor do chat não respondeu. Tenta outra vez daqui a pouco.').replace('data-tentar="dados"', 'data-tentar="chat"')}</li>`;
+    return;
+  }
   if(!mensagens.length){
     lista.innerHTML = Componentes.vazio('Ainda ninguém falou',
       'Sê o primeiro a comentar o jogo.', tacaSVG('liga', 'var(--texto-3)'));
@@ -3943,11 +4035,12 @@ async function sincronizar(){
         const chave = Object.keys(stats).find(k => chaveNome(k) === chaveNome(p.nome));
         return {...p, stats: stats[chave] || {jogos:0, golos:0, provas:{}}, idade: p.idade ?? null};
       });
+      estatisticasPlantel = true;
       ligarFotos();
       detetarMovimentos();
-      pintarPlantel();
-      /* só agora há plantel a sério para pôr no campo */
+      /* só agora há plantel a sério para pôr no campo (e para as contagens) */
       plantelChegou();
+      pintarPlantel();
       /* estes dois usam as fotos do plantel, por isso repintam-se agora */
       pintarMercado();
       pintarClube();
@@ -3975,7 +4068,8 @@ async function sincronizar(){
   if(!plantelReal){
     if(PLANTEL_ZZ?.jogadores?.length){
       PLANTEL = juntarComZerozero([]).map(p => ({ ...p, stats: { jogos: 0, golos: 0, provas: {} } }));
-      ligarFotos(); pintarPlantel(); plantelChegou(); pintarMercado(); pintarClube();
+      ligarFotos(); plantelChegou(); pintarPlantel(); pintarMercado(); pintarClube();
+      mostrarFicha(PLANTEL.find(p => p.nome === escolhido) || PLANTEL[0]);
     }else{
       plantelFalhou = true;
       pintarFormacao();
@@ -3988,7 +4082,10 @@ async function sincronizar(){
   if(noRodape) noRodape.textContent = falhas.length
     ? 'dados parciais · ' + hora
     : 'dados atualizados às ' + hora;
-  jogosSincronizados = true; pintarProximoJogo(); pintarCalendario(); pintarPreviaEntrada();
+  if(!falhas.includes('plantel/jogos')){ jogosSincronizados = true; jogosFalharam = false; }
+  else if(!jogosSincronizados) jogosFalharam = true;
+  pintarProximoJogo(); pintarCalendario(); pintarResultados(); pintarJogosTodos();
+  pintarEstatisticas(); pintarPlantel(); pintarPreviaEntrada();
   if(!falhas.length){ marca.textContent = `dados reais · ${hora}`; marca.className = 'menu__estado ok'; }
   else if(falhas.length === 1){ marca.textContent = `parcial: falhou ${falhas[0]}`; marca.className = 'menu__estado aviso'; }
   else { marca.textContent = 'offline · dados locais'; marca.className = 'menu__estado erro'; }

@@ -317,10 +317,12 @@ const Nuvem = (() => {
      --------------------------------------------------------------------- */
   async function lerMensagens(quantas = 60){
     if(!ligado) return [];
-    const { data } = await cliente.from('chat_mensagens')
+    const { data, error } = await cliente.from('chat_mensagens')
       .select('id, texto, foto_url, jogo, criado_em, perfil_id, autor, perfis(utilizador, nome_mostrado)')
       .order('criado_em', { ascending: false })
       .limit(quantas);
+    /* uma falha não é "ninguém escreveu": quem chama decide o que dizer */
+    if(error) throw error;
     return (data || []).reverse();
   }
 

@@ -300,3 +300,12 @@
   #vista-formacao .posicao{ min-height: 44px; min-width: 44px; justify-content: center; }
   #vista-formacao .convocados .onze li{ height: auto; min-height: 44px; }
 }
+
+/* esqueletos das secções que esperam pela fonte */
+.jog--osso .osso{ height: 210px; border-radius: 14px; }
+.ficha__osso{ height: 260px; border-radius: 18px; }
+.caixa--osso .osso{ height: 64px; }
+.marcador--osso .osso, .forma--osso .osso{ height: 34px; }
+.jl-osso .osso{ height: 56px; margin-bottom: 6px; }
+.marcadores li.marcador--osso, #est-forma li.forma--osso{ display: block; }
+.estado-falha--curto{ padding: 10px 0; justify-items: start; text-align: left; }
