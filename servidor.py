@@ -28,6 +28,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "api"))
 import _jogo  # noqa: E402  (centro de jogo, partilhado com o Vercel)
 import _noticias  # noqa: E402  (notícias agregadas, partilhado com o Vercel)
+import _calendario  # noqa: E402  (calendário .ics, partilhado com o Vercel)
 
 PORTA = int(sys.argv[1]) if len(sys.argv) > 1 else 8123
 RAIZ = os.path.dirname(os.path.abspath(__file__))
@@ -95,6 +96,14 @@ class Manipulador(SimpleHTTPRequestHandler):
             self.servir_artigo()
         elif self.path.startswith("/api/noticias"):
             self.servir_noticias()
+        elif self.path.startswith("/api/calendario") or self.path.startswith("/calendario.ics"):
+            codigo, cab, corpo = _calendario.resposta()
+            self.send_response(codigo)
+            for k, v in cab.items():
+                self.send_header(k, v)
+            self.send_header("Content-Length", str(len(corpo)))
+            self.end_headers()
+            self.wfile.write(corpo)
         elif self.path.startswith("/api/jogo"):
             self.servir_jogo()
         elif self.path.startswith("/api/fd"):

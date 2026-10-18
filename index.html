@@ -134,17 +134,17 @@
 <!-- fontes alojadas no próprio site (css/fontes.css): a visita não vai à Google -->
 <link rel="preload" href="/fontes/manrope-400-800-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fontes/barlow-condensed-700-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="css/fontes.css?v=140">
-<link rel="stylesheet" href="css/base.css?v=140">
-<link rel="stylesheet" href="css/componentes.css?v=140">
-<link rel="stylesheet" href="css/style.css?v=140">
-<link rel="stylesheet" href="css/portal.css?v=140">
-<link rel="stylesheet" href="css/inicio.css?v=140">
-<link rel="stylesheet" href="css/app.css?v=140">
-<link rel="stylesheet" href="css/editorial.css?v=140">
-<link rel="stylesheet" href="css/entrada.css?v=140">
-<link rel="stylesheet" href="css/centro.css?v=140">
-<link rel="stylesheet" href="css/casa.css?v=140">
+<link rel="stylesheet" href="css/fontes.css?v=141">
+<link rel="stylesheet" href="css/base.css?v=141">
+<link rel="stylesheet" href="css/componentes.css?v=141">
+<link rel="stylesheet" href="css/style.css?v=141">
+<link rel="stylesheet" href="css/portal.css?v=141">
+<link rel="stylesheet" href="css/inicio.css?v=141">
+<link rel="stylesheet" href="css/app.css?v=141">
+<link rel="stylesheet" href="css/editorial.css?v=141">
+<link rel="stylesheet" href="css/entrada.css?v=141">
+<link rel="stylesheet" href="css/centro.css?v=141">
+<link rel="stylesheet" href="css/casa.css?v=141">
 </head>
 <body class="trancado">
 <!-- ============================ ECRÃ DE CARREGAMENTO (modo aplicação) ============================ -->
@@ -788,6 +788,16 @@
     <h1 class="vista__titulo" id="tit-agenda">Agenda</h1>
     <p class="vista__sub" id="agenda-resumo">Hoje, amanhã e os dias seguintes, por hora de início.</p>
   </header>
+  <!-- calendário para subscrever no telemóvel (api/calendario.py) -->
+  <section class="cal-subscrever" aria-labelledby="cal-tit">
+    <h2 id="cal-tit" class="cal-subscrever__tit">Os jogos no teu calendário</h2>
+    <p class="cal-subscrever__txt">Subscreve uma vez e os jogos de futebol da equipa principal (Liga, Liga dos Campeões e Taças) aparecem no calendário do telemóvel. As mudanças de hora chegam sozinhas: o iPhone e o Outlook procuram-nas de 6 em 6 horas e o Google Calendar pode demorar até um dia.</p>
+    <div class="cal-subscrever__acoes">
+      <a class="botao-tentar" id="cal-webcal" href="webcal://sporting-fan-ao-minuto.vercel.app/calendario.ics">Subscrever (iPhone, Outlook)</a>
+      <a class="botao-tentar" id="cal-google" href="https://calendar.google.com/calendar/r?cid=webcal%3A%2F%2Fsporting-fan-ao-minuto.vercel.app%2Fcalendario.ics" target="_blank" rel="noopener">Google Calendar</a>
+      <a class="cal-subscrever__ficheiro" href="/calendario.ics" download="jogos-sporting.ics">Descarregar o ficheiro .ics</a>
+    </div>
+  </section>
   <div class="separadores" id="agenda-filtro" role="group" aria-label="Filtrar agenda">
     <button type="button" class="separador is-on" data-filtro="todos" aria-pressed="true">Todos</button>
     <button type="button" class="separador" data-filtro="futebol" aria-pressed="false">Futebol</button>
@@ -1194,18 +1204,18 @@
   <button class="barra-inferior__item" id="barra-mais" aria-controls="menu" aria-expanded="false"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Mais</span></button>
 </nav>
 
-<script src="js/nuvem.js?v=140" defer></script>
-<script src="js/fd.js?v=140" defer></script>
-<script src="js/componentes.js?v=140" defer></script>
-<script src="js/contas.js?v=140" defer></script>
-<script src="js/arte.js?v=140" defer></script>
-<script src="js/data.js?v=140" defer></script>
-<script src="js/wiki.js?v=140" defer></script>
-<script src="js/tema.js?v=140" defer></script>
-<script src="js/notificacoes.js?v=140" defer></script>
-<script src="js/pwa.js?v=140" defer></script>
-<script src="js/entrada.js?v=140" defer></script>
-<script src="js/centro.js?v=140" defer></script>
-<script src="js/app.js?v=140" defer></script>
+<script src="js/nuvem.js?v=141" defer></script>
+<script src="js/fd.js?v=141" defer></script>
+<script src="js/componentes.js?v=141" defer></script>
+<script src="js/contas.js?v=141" defer></script>
+<script src="js/arte.js?v=141" defer></script>
+<script src="js/data.js?v=141" defer></script>
+<script src="js/wiki.js?v=141" defer></script>
+<script src="js/tema.js?v=141" defer></script>
+<script src="js/notificacoes.js?v=141" defer></script>
+<script src="js/pwa.js?v=141" defer></script>
+<script src="js/entrada.js?v=141" defer></script>
+<script src="js/centro.js?v=141" defer></script>
+<script src="js/app.js?v=141" defer></script>
 </body>
 </html>

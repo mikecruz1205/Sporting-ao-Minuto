@@ -5024,6 +5024,13 @@ async function arranque(){
     const b = e.target.closest('#quiz [data-ir], #desafio [data-ir]');
     if(b) irPara(b.dataset.ir);
   });
+  /* subscrever o calendário: com o endereço deste site (também no local e nas pré-visualizações) */
+  {
+    const ics = `webcal://${location.host}/calendario.ics`;
+    const w = $('#cal-webcal'), g = $('#cal-google');
+    if(w) w.href = ics;
+    if(g) g.href = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(ics)}`;
+  }
   pintarCartoesJogos();
 
   $$('[data-segmentos-minuto] .segmento').forEach(b => b.addEventListener('click', () => {

@@ -389,3 +389,11 @@ th[aria-sort="ascending"], th[aria-sort="descending"]{ color: var(--verde-claro)
 .prog__votos b{ text-align: right; font-family: var(--f-num); }
 .prog--centro{ margin-top: 20px; padding: 16px 18px; border-radius: 16px; background: var(--cartao); border: 1px solid var(--linha); }
 .prog__h{ font: 700 20px/1 var(--f-tit); text-transform: uppercase; }
+
+/* subscrever o calendário (Agenda) */
+.cal-subscrever{ display: grid; gap: 8px; margin: 0 0 20px; padding: 16px 18px; border-radius: 16px; background: var(--cartao); border: 1px solid var(--linha); }
+.cal-subscrever__tit{ font-size: 16px; font-weight: 800; }
+.cal-subscrever__txt{ font-size: 14px; color: var(--texto-2); }
+.cal-subscrever__acoes{ display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.cal-subscrever__acoes .botao-tentar{ display: inline-flex; align-items: center; text-decoration: none; }
+.cal-subscrever__ficheiro{ font-size: 13.5px; color: var(--verde-claro); min-height: 44px; display: inline-flex; align-items: center; }

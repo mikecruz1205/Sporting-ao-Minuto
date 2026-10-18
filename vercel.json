@@ -3,6 +3,10 @@
   "cleanUrls": false,
   "rewrites": [
     {
+      "source": "/calendario.ics",
+      "destination": "/api/calendario"
+    },
+    {
       "source": "/(noticias|ao-minuto|mercado|jogos|agenda|classificacao|ao-vivo|plantel|estatisticas|modalidades|chat|fantasy|quiz|desafio|clube|privacidade|termos)",
       "destination": "/index.html"
     }
