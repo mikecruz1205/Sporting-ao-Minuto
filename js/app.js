@@ -98,8 +98,57 @@ function contaMudou(nome){
   pintarCartoesJogos();
 }
 
+/* ---------------------------------------------------------------------
+   MÓDULOS DE UMA VISTA SÓ — descarregam-se quando a vista abre
+   (antes vinham em todas as páginas: Fantasy, museu, quiz e arquivo)
+   --------------------------------------------------------------------- */
+const MODULOS = {
+  fantasy: { js: 'js/fantasy.js', css: 'css/fantasy.css' },
+  museu:   { js: 'js/museu.js',   css: 'css/museu.css' },
+  quiz:    { js: 'js/quiz.js',    css: 'css/quiz.css' },
+  arquivo: { js: 'js/arquivo.js' }
+};
+const VERSAO_ATIVOS = (document.querySelector('script[src*="js/app.js"]')?.src.match(/v=(\d+)/) || [])[1] || '1';
+const modulosPedidos = {};
+function carregarModulo(nome){
+  if(modulosPedidos[nome]) return modulosPedidos[nome];
+  const m = MODULOS[nome];
+  const carregar = (el, atributo, url) => new Promise((ok, falha) => {
+    el[atributo] = `${url}?v=${VERSAO_ATIVOS}`;
+    el.onload = () => ok(true);
+    el.onerror = () => falha(new Error(url));
+  });
+  const pedidos = [];
+  if(m.css){
+    const l = document.createElement('link');
+    l.rel = 'stylesheet';
+    pedidos.push(carregar(l, 'href', m.css));
+    document.head.appendChild(l);
+  }
+  const s = document.createElement('script');
+  pedidos.push(carregar(s, 'src', m.js));
+  document.body.appendChild(s);
+  modulosPedidos[nome] = Promise.all(pedidos).catch(e => { delete modulosPedidos[nome]; throw e; });
+  return modulosPedidos[nome];
+}
+/* abre uma vista que precisa de um módulo; se ele não vier, diz e deixa tentar outra vez */
+function abrirComModulo(nome, alvo, abrir){
+  carregarModulo(nome).then(abrir).catch(() => {
+    const el = $(alvo);
+    if(el) el.innerHTML = `<div class="estado-falha" role="alert"><p><b>Não foi possível abrir esta página.</b></p>
+      <p>Verifica a ligação à internet e tenta outra vez.</p>
+      <button type="button" class="botao-tentar" data-tentar-vista="${vistaAtual}">Tentar outra vez</button></div>`;
+  });
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-tentar-vista]');
+  if(b) irPara(b.dataset.tentarVista, { historico: false, rolar: false });
+});
+
 /* cartões do Quiz e do Desafio do Dia na página inicial */
 async function pintarCartoesJogos(){
+  if(!comunidadeVista) return;                         // só quando o bloco aparece no ecrã
+  try{ await carregarModulo('quiz'); }catch(e){ return; }
   window.Desafio?.pintarCartao();
   const linha = $('#comu-quiz-recorde');
   if(!linha || !window.QuizDados) return;
@@ -112,7 +161,23 @@ async function pintarCartoesJogos(){
 /* =========================================================================
    FANTASY E COMUNIDADE na página inicial — números reais do Supabase
    ========================================================================= */
+/* o bloco "Jogar e conversar" fica no fim da página inicial: o supabase-js e
+   o quiz só se descarregam quando ele está quase à vista */
+let comunidadeVista = false;
+function observarComunidade(){
+  const bloco = $('.seccao--comunidade');
+  if(!bloco) return;
+  const ver = () => { comunidadeVista = true; pintarComunidade(); pintarCartoesJogos(); };
+  if(!('IntersectionObserver' in window)) return ver();
+  const io = new IntersectionObserver(entradas => {
+    if(entradas.some(x => x.isIntersecting)){ io.disconnect(); ver(); }
+  }, { rootMargin: '600px 0px' });
+  io.observe(bloco);
+}
+
 async function pintarComunidade(){
+  if(!comunidadeVista) return;
+  await Nuvem.garantir();
   const corpoF = $('#comu-fantasy-corpo'), corpoC = $('#comu-chat-corpo');
   if(!corpoF || !corpoC) return;
   const seguro = Componentes.seguro;
@@ -208,6 +273,7 @@ async function previaFantasy(){
   if(!window.Entrada || $('#acesso')?.hidden) return;
   let j = null;
   try{
+    await Nuvem.garantir();
     const db = Nuvem.cliente;
     if(db){
       const { data } = await db.from('fantasy_jornadas').select('numero, fecho')
@@ -2875,7 +2941,8 @@ function pintarEstatisticasEpoca(){
   $('#est-provas').innerHTML = `<table class="tabela est-tabela"><caption class="so-leitor">Por competição</caption>${CABECA_BALANCO}<tbody>
     ${provas.map(p => linhaBalanco(Componentes.seguro(p), balancoDe(oficiais.filter(j => provaDoJogo(j) === p)))).join('')}</tbody></table>`;
 
-  pintarIndividuais(oficiais.length);
+  /* as estatísticas individuais vêm do servidor: só com a página Estatísticas aberta */
+  if(vistaAtual === 'estatisticas') pintarIndividuais(oficiais.length);
 }
 
 /* estatísticas individuais por jogo: só as que estão na base de dados
@@ -2884,6 +2951,7 @@ let individuaisLidos = null;
 async function pintarIndividuais(jogosOficiais){
   const alvo = $('#est-individuais');
   if(!alvo) return;
+  await Nuvem.garantir();
   const db = Nuvem.cliente;
   if(!db){ alvo.innerHTML = '<p class="vazio">Sem ligação à base de dados.</p>'; return; }
   if(!individuaisLidos){
@@ -3672,6 +3740,7 @@ function estadoChat(texto, tipo){
 async function pintarChat(){
   const lista = $('#chat-lista');
   if(!lista) return;
+  await Nuvem.garantir();
 
   if(!Nuvem.ligado){
     lista.innerHTML = Componentes.vazio('Chat offline',
@@ -4473,11 +4542,12 @@ function irPara(vista, opcoes = {}){
   document.body.dataset.vista = vista;
   if(vista === 'equipa' && carreiraPorCarregar) carregarCarreira(carreiraPorCarregar);
   if(vista === 'chat') pintarChat();
-  if(vista === 'formacao') window.Fantasy?.abrir();
-  if(vista === 'quiz') window.Quiz?.abrir();
-  if(vista === 'desafio') window.Desafio?.abrir();
+  if(vista === 'formacao') abrirComModulo('fantasy', '#fantasy', async () => { await Nuvem.garantir(); window.Fantasy?.abrir(); });
+  if(vista === 'quiz') abrirComModulo('quiz', '#quiz', () => window.Quiz?.abrir());
+  if(vista === 'desafio') abrirComModulo('quiz', '#desafio', () => window.Desafio?.abrir());
   if(vista === 'inicio') pintarCartoesJogos();
-  if(vista === 'estatisticas') window.Arquivo?.abrir();
+  if(vista === 'estatisticas'){ abrirComModulo('arquivo', '#arquivo-corpo', () => window.Arquivo?.abrir()); pintarEstatisticasEpoca(); }
+  if(vista === 'clube') abrirComModulo('museu', '#museu', () => pintarClube());
   if(vista === 'aovivo'){
     /* sem jogo escolhido, o Centro segue o jogo em foco (e muda com ele) */
     if(!opcoes.manterJogo) jogoVisto = opcoes.jogo || null;
@@ -4854,7 +4924,7 @@ async function arranque(){
   ligarChat();
 
   previaFantasy();
-  pintarComunidade();
+  observarComunidade();
   setInterval(pintarComunidade, 5 * 60000);
 
   /* skeletons já visíveis enquanto os feeds não respondem */

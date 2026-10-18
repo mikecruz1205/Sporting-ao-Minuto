@@ -51,7 +51,43 @@ const Nuvem = (() => {
      Arranque
      --------------------------------------------------------------------- */
   const ouvintes = new Set();
+
+  /* O supabase-js (~150 KB) já não vem em todas as páginas: com uma sessão
+     guardada liga-se logo (é preciso saber quem é); um visitante só o
+     descarrega quando uma funcionalidade precisar (Fantasy, chat, entrar,
+     comunidade, estatísticas individuais). Quem precisa chama garantir(). */
+  const SDK_URL = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.min.js';
+  let aCarregarSDK = null, aLigar = null;
+  function carregarSDK(){
+    if(window.supabase?.createClient) return Promise.resolve(true);
+    aCarregarSDK ||= new Promise(res => {
+      const s = document.createElement('script');
+      s.src = SDK_URL;
+      s.async = true;
+      s.onload = () => res(!!window.supabase?.createClient);
+      s.onerror = () => { aCarregarSDK = null; res(false); };
+      document.head.appendChild(s);
+    });
+    return aCarregarSDK;
+  }
+  const temSessaoGuardada = () => {
+    try{ return [localStorage, sessionStorage].some(a => Object.keys(a).some(k => /^sb-.+-auth-token$/.test(k))); }
+    catch(e){ return true; }
+  };
+  function garantir(){
+    if(ligado) return Promise.resolve(true);
+    aLigar ||= (async () => {
+      const ok = (await carregarSDK()) && (await ligar());
+      if(!ok) aLigar = null;
+      return ok;
+    })();
+    return aLigar;
+  }
   async function iniciar(){
+    return temSessaoGuardada() ? garantir() : false;
+  }
+
+  async function ligar(){
     if(!window.supabase?.createClient){ ligado = false; return false; }
     try{
       cliente = window.supabase.createClient(URL_PROJETO, CHAVE_PUBLICA, {
@@ -68,6 +104,7 @@ const Nuvem = (() => {
           carregarPerfil(sessao.user.id).then(p => ouvintes.forEach(f => f(p)));
         }
       });
+      document.dispatchEvent(new Event('nuvem:pronta'));
       return true;
     }catch(e){
       ligado = false;
@@ -399,7 +436,7 @@ const Nuvem = (() => {
   }
 
   return {
-    iniciar, registar, entrar, sair, validar, validarUtilizador, validarNova, nomeLivre,
+    iniciar, garantir, registar, entrar, sair, validar, validarUtilizador, validarNova, nomeLivre,
     recuperar, gerarCodigo, estadoRecuperacao, mudarPalavra, aoMudarSessao,
     MINIMO_NOVA,
     guardarSubscricaoPush, apagarSubscricaoPush,

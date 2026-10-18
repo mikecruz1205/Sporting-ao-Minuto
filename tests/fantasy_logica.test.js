@@ -76,7 +76,7 @@ function montar({ perfil = null, minhas = {} } = {}){
     setItem: (k, v) => guardados.set(k, String(v)),
     removeItem: k => guardados.delete(k)
   };
-  const Nuvem = { cliente: supabaseFalso(tabelas), perfil };
+  const Nuvem = { cliente: supabaseFalso(tabelas), perfil, garantir: async () => true };
   const sandbox = {
     window: {}, console, localStorage, Nuvem,
     document: { getElementById: () => null, querySelector: () => null, querySelectorAll: () => [] },

@@ -105,10 +105,14 @@ const Entrada = (() => {
     depoisDeEntrar = vista;
     limparErros();
     const aviso = $('#auth-offline');
-    if(!naNuvem()){
+    /* o supabase-js pode ainda não ter vindo: pede-se já, e o aviso de
+       "sem ligação" só aparece se ele não chegar */
+    Nuvem.garantir().then(ok => {
+      if(ok) return;
       aviso.hidden = false;
       aviso.textContent = 'Sem ligação ao servidor: as contas ficam só neste browser e o chat e a Fantasy não funcionam.';
-    }else if(motivo){
+    });
+    if(motivo){
       aviso.hidden = false; aviso.textContent = motivo;
     }else{
       aviso.hidden = true;
@@ -223,7 +227,8 @@ const Entrada = (() => {
     /* ---------- nome livre, enquanto se escreve ---------- */
     const novo = $('#criar-utilizador');
     const estado = $('#estado-utilizador');
-    novo.addEventListener('input', () => {
+    novo.addEventListener('input', async () => {
+      if(!naNuvem()) await Nuvem.garantir();
       const v = novo.value.trim();
       clearTimeout(novo._espera);
       if(!v){ estado.textContent = ''; estado.className = 'fcampo__estado'; return; }
@@ -255,6 +260,7 @@ const Entrada = (() => {
       if(!p.value) return erroNoCampo(p, 'Escreve a tua palavra-passe.');
       const botao = e.target.querySelector('[type=submit]');
       aCarregar(botao, true, 'A entrar…');
+      await Nuvem.garantir();
       try{
         const r = naNuvem()
           ? await Nuvem.entrar(u.value, p.value, $('#lembrar').checked)
@@ -293,6 +299,8 @@ const Entrada = (() => {
       if(ep) return erroNoCampo(p, ep);
       const botao = e.target.querySelector('[type=submit]');
       aCarregar(botao, true, 'A criar a conta…');
+      /* nunca criar por engano uma conta só neste browser por o servidor ainda não ter carregado */
+      await Nuvem.garantir();
       try{
         const r = naNuvem()
           ? await Nuvem.registar(u.value, p.value, true)
@@ -324,6 +332,7 @@ const Entrada = (() => {
       e.preventDefault();
       limparErros();
       const u = $('#rec-utilizador'), c = $('#rec-codigo'), p = $('#rec-palavra');
+      await Nuvem.garantir();
       if(!naNuvem()){ $('#erro-recuperar').textContent = 'Sem ligação ao servidor. Verifica a internet e tenta outra vez.'; return; }
       const botao = e.target.querySelector('[type=submit]');
       aCarregar(botao, true, 'A verificar…');
@@ -555,7 +564,7 @@ const Entrada = (() => {
     }
 
     /* sessão que termina ou começa noutro separador */
-    if(naNuvem()) Nuvem.aoMudarSessao(p => {
+    Nuvem.aoMudarSessao(p => {
       const novo = p ? (p.nome_mostrado || p.utilizador) : null;
       if(novo !== nome) mudouConta(novo);
     });

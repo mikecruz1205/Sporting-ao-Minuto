@@ -357,3 +357,10 @@ th[aria-sort="ascending"], th[aria-sort="descending"]{ color: var(--verde-claro)
 /* os filhos de uma grelha não encolhem abaixo do conteúdo sem isto: os títulos saíam do ecrã */
 .painel-casa > *, .noticias-curtas, .nc, .nc__ligacao{ min-width: 0; }
 .nc__titulo, .nc__excerto{ overflow-wrap: anywhere; }
+
+/* cartões do Quiz e do Desafio no bloco "Jogar e conversar" (eram do quiz.css, que agora só vem com o quiz) */
+.comu{ grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.comu__pergunta{ font-size: 16px; font-weight: 700; line-height: 1.35; color: var(--texto); }
+.comu__cartao--quiz, .comu__cartao--desafio{
+  background: radial-gradient(120% 120% at 100% 0%, color-mix(in srgb, #e8c56a 14%, transparent), transparent 60%), var(--cartao); }
+

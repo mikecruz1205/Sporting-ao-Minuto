@@ -111,12 +111,6 @@
 .dz__seq{ margin-left: auto; font-weight: 800; color: var(--qz-ouro); }
 .dz .qz-opcoes{ grid-template-columns: minmax(0, 1fr); }
 
-/* ---------- cartões na página inicial */
-.comu{ grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
-.comu__pergunta{ font-size: 16px; font-weight: 700; line-height: 1.35; color: var(--texto); }
-.comu__cartao--quiz, .comu__cartao--desafio{
-  background: radial-gradient(120% 120% at 100% 0%, color-mix(in srgb, #e8c56a 14%, transparent), transparent 60%), var(--cartao); }
-
 /* ---------- telemóvel */
 @media (max-width: 860px){
   .qz-inicio, .qz-jogo{ grid-template-columns: minmax(0, 1fr); }

@@ -70,6 +70,7 @@ const Fantasy = (() => {
      ===================================================================== */
   async function carregar(){
     estado = 'a-carregar'; pintar();
+    await Nuvem.garantir();
     db = Nuvem.cliente;
     /* mudou de conta (ou saiu): nada da conta anterior pode ficar à vista */
     if((Nuvem.perfil?.id || null) !== (eu?.id || null)){
