@@ -2507,7 +2507,7 @@ function mostrarFicha(p){
         </div>
       </div>
 
-      <div class="carreira">
+      <div class="carreira" id="carreira-bloco" hidden>
         <div class="carreira__topo">
           <h4>CARREIRA — ÉPOCAS ANTERIORES</h4>
           <span class="carreira__nota">API-Football · 2022 a 2024</span>
@@ -2526,10 +2526,27 @@ function mostrarFicha(p){
    disto, a ficha do jogador em destaque pedia-a no arranque, em qualquer
    página (era o 503 da consola quando a chave não está configurada). */
 let carreiraPorCarregar = null;
-function carregarCarreira(p){
-  if(!p.apiId){ pintarCarreira([]); return; }
+/* Enquanto o servidor não tiver a chave da API-Football, a secção nem
+   aparece (em vez de dizer sempre "fonte indisponível"). Pergunta-se uma
+   vez por sessão, sem gastar pedidos à API. */
+let fonteCarreira = null;
+async function haFonteCarreira(){
+  if(fonteCarreira != null) return fonteCarreira;
+  try{ const g = sessionStorage.getItem('scp-carreira-fonte'); if(g) return (fonteCarreira = g === '1'); }catch(e){}
+  try{
+    const r = await fetch('/api/api?estado=1', { cache: 'no-store' });
+    fonteCarreira = r.ok ? !!(await r.json()).disponivel : false;
+  }catch(e){ return false; }                    // sem rede: fica por decidir
+  try{ sessionStorage.setItem('scp-carreira-fonte', fonteCarreira ? '1' : '0'); }catch(e){}
+  return fonteCarreira;
+}
+async function carregarCarreira(p){
   if(vistaAtual !== 'equipa'){ carreiraPorCarregar = p; return; }
   carreiraPorCarregar = null;
+  if(!(await haFonteCarreira()) || escolhido !== p.nome) return;
+  const bloco = $('#carreira-bloco');
+  if(bloco) bloco.hidden = false;
+  if(!p.apiId){ pintarCarreira([]); return; }
   buscarCarreira(p.apiId).then(linhas => {
     if(escolhido === p.nome) pintarCarreira(linhas);   // só se ainda for este
   });

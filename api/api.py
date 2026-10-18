@@ -24,13 +24,18 @@ class handler(BaseHTTPRequestHandler):
         params = parse_qs(urlparse(self.path).query)
         caminho = (params.get("p") or [""])[0]
 
-        if not PERMITIDO.match(caminho or ""):
-            return self.responder(400, {"erro": "pedido nao permitido"})
-
         chave = os.environ.get("API_FOOTBALL_KEY", "").strip()
         if not chave and os.path.exists(FICHEIRO_CHAVE):
             with open(FICHEIRO_CHAVE, encoding="utf-8") as f:
                 chave = f.read().strip()
+
+        # /api/api?estado=1 — ha fonte para a carreira? (o site esconde-a se nao houver)
+        if "estado" in params:
+            return self.responder(200, {"disponivel": bool(chave)},
+                                  cache="public, s-maxage=300, stale-while-revalidate=600")
+
+        if not PERMITIDO.match(caminho or ""):
+            return self.responder(400, {"erro": "pedido nao permitido"})
         if not chave:
             return self.responder(503, {"erro": "sem chave: define API_FOOTBALL_KEY nas variaveis de ambiente do Vercel"})
 

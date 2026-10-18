@@ -225,6 +225,9 @@ class Manipulador(SimpleHTTPRequestHandler):
         """Proxy para a API-Football, com cache em disco.
         O plano gratuito da conta so da 100 pedidos por dia, por isso tudo
         o que ja foi pedido uma vez fica guardado em cache/."""
+        if self.parametro("estado"):
+            corpo = json.dumps({"disponivel": os.path.exists(FICHEIRO_CHAVE)}).encode("utf-8")
+            return self.responder(corpo, "application/json; charset=utf-8")
         caminho = self.parametro("p")
         if not caminho or not re.match(r"^[a-z/]+\?[\w=&.-]+$", caminho):
             return self.erro(400, "pedido invalido")
