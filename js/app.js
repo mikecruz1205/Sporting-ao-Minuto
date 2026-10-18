@@ -96,6 +96,8 @@ function contaMudou(nome){
   if(vistaAtual === 'formacao') window.Fantasy?.abrir();
   if(vistaAtual === 'quiz') window.Quiz?.abrir();
   pintarCartoesJogos();
+  pintarPrognosticos();
+  if(vistaAtual === 'aovivo') prognosticoNoCentro(jogoVisto || jogoEmFoco);
 }
 
 /* ---------------------------------------------------------------------
@@ -106,7 +108,8 @@ const MODULOS = {
   fantasy: { js: 'js/fantasy.js', css: 'css/fantasy.css' },
   museu:   { js: 'js/museu.js',   css: 'css/museu.css' },
   quiz:    { js: 'js/quiz.js',    css: 'css/quiz.css' },
-  arquivo: { js: 'js/arquivo.js' }
+  arquivo: { js: 'js/arquivo.js' },
+  prognosticos: { js: 'js/prognosticos.js' }
 };
 const VERSAO_ATIVOS = (document.querySelector('script[src*="js/app.js"]')?.src.match(/v=(\d+)/) || [])[1] || '1';
 const modulosPedidos = {};
@@ -132,6 +135,7 @@ function carregarModulo(nome){
   return modulosPedidos[nome];
 }
 /* abre uma vista que precisa de um módulo; se ele não vier, diz e deixa tentar outra vez */
+window.carregarModulo = carregarModulo;          // a Fantasy também precisa (prognósticos nas ligas)
 function abrirComModulo(nome, alvo, abrir){
   carregarModulo(nome).then(abrir).catch(() => {
     const el = $(alvo);
@@ -144,6 +148,16 @@ document.addEventListener('click', e => {
   const b = e.target.closest('[data-tentar-vista]');
   if(b) irPara(b.dataset.tentarVista, { historico: false, rolar: false });
 });
+
+/* prognósticos: no bloco "Jogar e conversar" e no Centro de jogo */
+function pintarPrognosticos(){
+  if(!comunidadeVista) return;
+  carregarModulo('prognosticos').then(() => window.Prognosticos?.pintarCartao()).catch(() => {});
+}
+function prognosticoNoCentro(j){
+  if(!j) return;
+  carregarModulo('prognosticos').then(() => window.Prognosticos?.pintarNoCentro(j)).catch(() => {});
+}
 
 /* cartões do Quiz e do Desafio do Dia na página inicial */
 async function pintarCartoesJogos(){
@@ -167,7 +181,7 @@ let comunidadeVista = false;
 function observarComunidade(){
   const bloco = $('.seccao--comunidade');
   if(!bloco) return;
-  const ver = () => { comunidadeVista = true; pintarComunidade(); pintarCartoesJogos(); };
+  const ver = () => { comunidadeVista = true; pintarComunidade(); pintarCartoesJogos(); pintarPrognosticos(); };
   if(!('IntersectionObserver' in window)) return ver();
   const io = new IntersectionObserver(entradas => {
     if(entradas.some(x => x.isIntersecting)){ io.disconnect(); ver(); }
@@ -3616,7 +3630,7 @@ function seguirJogoEmFoco(){
   largarFoco?.();
   jogoEmFoco = j; situacaoFoco = null; largarFoco = null;
   if(!j){ pintarFaixa(null); pintarJogoAgora(null); return; }
-  if(vistaAtual === 'aovivo' && !jogoVisto) CentroJogo.abrir(j);
+  if(vistaAtual === 'aovivo' && !jogoVisto){ CentroJogo.abrir(j); prognosticoNoCentro(j); }
   largarFoco = CentroJogo.observar(j, sit => {
     situacaoFoco = sit;
     pintarFaixa(sit);
@@ -4570,7 +4584,9 @@ function irPara(vista, opcoes = {}){
   if(vista === 'aovivo'){
     /* sem jogo escolhido, o Centro segue o jogo em foco (e muda com ele) */
     if(!opcoes.manterJogo) jogoVisto = opcoes.jogo || null;
-    CentroJogo.abrir(jogoVisto || jogoEmFoco || porJogar()[0] || JOGOS.filter(jogado).slice(-1)[0]);
+    const emCentro = jogoVisto || jogoEmFoco || porJogar()[0] || JOGOS.filter(jogado).slice(-1)[0];
+    CentroJogo.abrir(emCentro);
+    prognosticoNoCentro(emCentro);
   }
   if(vista === 'agenda') pintarAgenda();
   if(vista === 'modalidades') pintarModalidades();

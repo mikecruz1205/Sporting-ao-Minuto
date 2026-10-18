@@ -798,9 +798,20 @@ const Fantasy = (() => {
     const c = ids.length ? await db.from('fantasy_classificacao').select('*').in('perfil_id', ids).order('total', { ascending: false }) : { data: [] };
     if(m.error || c.error){ alvo.innerHTML = `<div class="estado estado--erro" role="alert"><p class="estado__titulo">Não foi possível ler do servidor</p>
         <button type="button" class="botao-largo botao-largo--fantasma" data-fan="recarregar">Tentar outra vez</button></div>`; return; }
-    alvo.innerHTML = `<ol class="fan-class">${(c.data || []).map((l, i) => `<li class="${l.perfil_id === eu.id ? 'eu' : ''}">
+    /* a classificação de prognósticos da mesma liga (js/prognosticos.js) */
+    let prog = '';
+    try{
+      await window.carregarModulo?.('prognosticos');
+      const lp = await window.Prognosticos.classificacaoLiga(ligaVista);
+      prog = `<h4 class="fan-sub">Prognósticos na liga</h4>
+        <ol class="fan-class">${lp.map((l, i) => `<li class="${l.perfil_id === eu.id ? 'eu' : ''}">
+          <span class="fan-class__pos">${i + 1}</span><span class="fan-class__nome"><b>@${seguro(l.utilizador)}</b><span>${l.exatos} ${l.exatos === 1 ? 'exato' : 'exatos'} em ${l.jogos} ${l.jogos === 1 ? 'jogo' : 'jogos'}</span></span>
+          <b class="fan-class__pts">${l.pontos}</b></li>`).join('')}</ol>
+        <p class="fan-nota">3 pontos pelo resultado exato e 1 por acertar no vencedor ou no empate. Os prognósticos fazem-se na página inicial ou no Centro de jogo, até ao início de cada jogo.</p>`;
+    }catch(e){ prog = '<p class="fan-nota">Não foi possível ler a classificação de prognósticos da liga.</p>'; }
+    alvo.innerHTML = `<h4 class="fan-sub">Fantasy na liga</h4><ol class="fan-class">${(c.data || []).map((l, i) => `<li class="${l.perfil_id === eu.id ? 'eu' : ''}">
       <span class="fan-class__pos">${i + 1}</span><span class="fan-class__nome"><b>${seguro(l.nome_equipa)}</b><span>@${seguro(l.utilizador)}</span></span>
-      <b class="fan-class__pts">${l.total}</b></li>`).join('')}</ol>`;
+      <b class="fan-class__pts">${l.total}</b></li>`).join('')}</ol>${prog}`;
   }
 
   /* ---------- REGRAS — lidas da configuração do servidor */

@@ -322,3 +322,5 @@
 .fan-relatorio textarea{ width: 100%; margin-top: 8px; padding: 10px; border-radius: 10px; font: 13.5px/1.5 ui-monospace, monospace;
   color: var(--texto); background: var(--fundo-2); border: 1px solid var(--linha); }
 .fan-relatorio code{ font-size: 12px; }
+
+.fan-sub{ margin: 14px 0 8px; font-size: 14px; font-weight: 800; color: var(--texto-2); }

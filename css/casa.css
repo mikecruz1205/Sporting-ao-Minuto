@@ -364,3 +364,28 @@ th[aria-sort="ascending"], th[aria-sort="descending"]{ color: var(--verde-claro)
 .comu__cartao--quiz, .comu__cartao--desafio{
   background: radial-gradient(120% 120% at 100% 0%, color-mix(in srgb, #e8c56a 14%, transparent), transparent 60%), var(--cartao); }
 
+
+/* =========================================================================
+   PROGNÓSTICOS E HOMEM DO JOGO (js/prognosticos.js)
+   ========================================================================= */
+.prog__bloco{ display: grid; gap: 8px; padding: 12px 0; border-bottom: 1px solid var(--linha); }
+.prog__bloco:last-of-type{ border-bottom: 0; }
+.prog__titulo{ font-size: 14px; color: var(--texto-2); }
+.prog__titulo b{ color: var(--texto); }
+.prog__form{ display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.prog__form label{ display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; }
+.prog__form input{ width: 56px; min-height: 44px; text-align: center; font: 700 20px/1 var(--f-num); border-radius: 10px;
+  color: var(--texto); background: var(--fundo-2); border: 1px solid var(--linha-forte, var(--linha)); }
+.prog__form input:focus-visible, .prog__voto select:focus-visible{ outline: 2px solid var(--verde-claro); outline-offset: 2px; }
+.prog__x{ font: 700 20px/1 var(--f-num); color: var(--texto-3); }
+.prog__form .p1, .prog__voto .p1{ min-height: 44px; padding: 0 18px; border-radius: 999px; font-weight: 800; color: var(--sobre-verde); background: var(--verde); border: 1px solid var(--verde); }
+.prog__voto{ display: flex; flex-wrap: wrap; gap: 8px; }
+.prog__voto select{ flex: 1 1 200px; min-height: 44px; padding: 0 10px; border-radius: 10px; color: var(--texto); background: var(--fundo-2); border: 1px solid var(--linha-forte, var(--linha)); }
+.prog__nota, .prog__adeptos, .prog__meus{ font-size: 13px; color: var(--texto-3); }
+.prog__meus b{ color: var(--verde-claro); }
+.prog__votos{ list-style: none; display: grid; gap: 6px; }
+.prog__votos li{ display: grid; grid-template-columns: 110px minmax(0, 1fr) 42px; align-items: center; gap: 8px; font-size: 13.5px; }
+.prog__votos i{ display: block; height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--verde) var(--p), var(--linha) var(--p)); }
+.prog__votos b{ text-align: right; font-family: var(--f-num); }
+.prog--centro{ margin-top: 20px; padding: 16px 18px; border-radius: 16px; background: var(--cartao); border: 1px solid var(--linha); }
+.prog__h{ font: 700 20px/1 var(--f-tit); text-transform: uppercase; }
