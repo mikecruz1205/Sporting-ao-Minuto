@@ -134,17 +134,17 @@
 <!-- fontes alojadas no próprio site (css/fontes.css): a visita não vai à Google -->
 <link rel="preload" href="/fontes/manrope-400-800-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fontes/barlow-condensed-700-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="css/fontes.css?v=137">
-<link rel="stylesheet" href="css/base.css?v=137">
-<link rel="stylesheet" href="css/componentes.css?v=137">
-<link rel="stylesheet" href="css/style.css?v=137">
-<link rel="stylesheet" href="css/portal.css?v=137">
-<link rel="stylesheet" href="css/inicio.css?v=137">
-<link rel="stylesheet" href="css/app.css?v=137">
-<link rel="stylesheet" href="css/editorial.css?v=137">
-<link rel="stylesheet" href="css/entrada.css?v=137">
-<link rel="stylesheet" href="css/centro.css?v=137">
-<link rel="stylesheet" href="css/casa.css?v=137">
+<link rel="stylesheet" href="css/fontes.css?v=138">
+<link rel="stylesheet" href="css/base.css?v=138">
+<link rel="stylesheet" href="css/componentes.css?v=138">
+<link rel="stylesheet" href="css/style.css?v=138">
+<link rel="stylesheet" href="css/portal.css?v=138">
+<link rel="stylesheet" href="css/inicio.css?v=138">
+<link rel="stylesheet" href="css/app.css?v=138">
+<link rel="stylesheet" href="css/editorial.css?v=138">
+<link rel="stylesheet" href="css/entrada.css?v=138">
+<link rel="stylesheet" href="css/centro.css?v=138">
+<link rel="stylesheet" href="css/casa.css?v=138">
 </head>
 <body class="trancado">
 <!-- ============================ ECRÃ DE CARREGAMENTO (modo aplicação) ============================ -->
@@ -399,7 +399,7 @@
 
     <form class="perfil__bloco" id="form-mudar" novalidate aria-labelledby="perfil-mudar-tit">
       <h3 id="perfil-mudar-tit">Mudar palavra-passe</h3>
-      <input type="text" name="username" autocomplete="username" id="mudar-utilizador" hidden>
+      <input type="text" name="username" autocomplete="username" id="mudar-utilizador" aria-label="Nome de utilizador" hidden>
       <div class="fcampo">
         <label for="mudar-atual">Palavra-passe atual</label>
         <input type="password" id="mudar-atual" name="current-password" autocomplete="current-password" required>
@@ -681,7 +681,7 @@
 <main class="vista" id="vista-noticias" aria-labelledby="tit-noticias">
   <header class="vista__cabeca">
     <p class="seccao__sobre">De 12 jornais, ao minuto</p>
-    <h2 class="vista__titulo" id="tit-noticias">Notícias</h2>
+    <h1 class="vista__titulo" id="tit-noticias">Notícias</h1>
   </header>
 
   <!-- filtros numa barra só: os temas (do que fala) deslizam para o lado,
@@ -715,7 +715,7 @@
   <header class="vista__cabeca vista__cabeca--com-selo">
     <div>
       <p class="seccao__sobre">De todos os jornais, por ordem de chegada</p>
-      <h2 class="vista__titulo" id="tit-aominuto-vista">Ao minuto</h2>
+      <h1 class="vista__titulo" id="tit-aominuto-vista">Ao minuto</h1>
     </div>
     <span class="selo-vivo" data-selo-vivo role="status"></span>
   </header>
@@ -728,6 +728,7 @@
 </main>
 
 <main class="vista" id="vista-rumores">
+  <h1 class="so-leitor">Mercado e rumores</h1>
   <section class="cartao">
     <div class="cartao__topo"><h2>RUMORES E MERCADO</h2></div>
     <div class="cartao__corpo">
@@ -739,6 +740,7 @@
 </main>
 
 <main class="vista" id="vista-equipa">
+  <h1 class="so-leitor">Plantel</h1>
   <section class="cartao">
     <div class="cartao__topo">
       <h2>PLANTEL</h2>
@@ -758,6 +760,7 @@
 </main>
 
 <main class="vista" id="vista-jogos">
+  <h1 class="so-leitor">Jogos</h1>
   <section class="cartao">
     <div class="cartao__topo">
       <h2>JOGOS</h2><span class="sub-inline" id="jogos-resumo"></span>
@@ -778,7 +781,7 @@
 <main class="vista" id="vista-agenda" aria-labelledby="tit-agenda">
   <header class="vista__cabeca">
     <p class="seccao__sobre">Os próximos jogos</p>
-    <h2 class="vista__titulo" id="tit-agenda">Agenda</h2>
+    <h1 class="vista__titulo" id="tit-agenda">Agenda</h1>
     <p class="vista__sub" id="agenda-resumo">Hoje, amanhã e os dias seguintes, por hora de início.</p>
   </header>
   <div class="separadores" id="agenda-filtro" role="group" aria-label="Filtrar agenda">
@@ -795,7 +798,7 @@
 <main class="vista" id="vista-modalidades" aria-labelledby="tit-modalidades">
   <header class="vista__cabeca">
     <p class="seccao__sobre">Muito mais do que futebol</p>
-    <h2 class="vista__titulo" id="tit-modalidades">Modalidades</h2>
+    <h1 class="vista__titulo" id="tit-modalidades">Modalidades</h1>
     <p class="vista__sub">Notícias, jogos e classificações de cada equipa do clube.</p>
   </header>
   <div class="mod-separadores" id="mod-separadores" role="tablist" aria-label="Escolher modalidade"></div>
@@ -803,6 +806,7 @@
 </main>
 
 <main class="vista" id="vista-estatisticas">
+  <h1 class="so-leitor">Estatísticas</h1>
   <section class="cartao">
     <div class="cartao__topo">
       <h2>ESTA ÉPOCA · TOTAIS</h2>
@@ -866,6 +870,7 @@
 </main>
 
 <main class="vista" id="vista-classificacao">
+  <h1 class="so-leitor">Classificação</h1>
   <section class="cartao classif">
     <div class="cartao__topo classif__topo">
       <h2 id="classif-titulo">CLASSIFICAÇÃO</h2>
@@ -918,7 +923,7 @@
 <main class="vista" id="vista-formacao" aria-labelledby="tit-fantasy">
   <header class="vista__cabeca">
     <p class="seccao__sobre">Plantel, orçamento, capitão e transferências</p>
-    <h2 class="vista__titulo" id="tit-fantasy">Fantasy do Sporting</h2>
+    <h1 class="vista__titulo" id="tit-fantasy">Fantasy do Sporting</h1>
   </header>
   <!-- o jogo: tudo o que conta vive no servidor (js/fantasy.js) -->
   <section class="fan" id="fantasy"></section>
@@ -968,7 +973,7 @@
      camada no servidor, com a fonte e a hora de cada dado). Sem fonte com
      dados em direto, diz-se isso — o site não simula jogos. -->
 <main class="vista" id="vista-aovivo" aria-labelledby="cj-titulo">
-  <h2 class="so-leitor" id="cj-titulo">Centro de jogo</h2>
+  <h1 class="so-leitor" id="cj-titulo">Centro de jogo</h1>
   <div class="cj">
     <section class="cj-placar sempre-escuro" id="cj-placar" aria-live="polite" aria-atomic="false"></section>
 
@@ -997,6 +1002,7 @@
 </main>
 
 <main class="vista" id="vista-chat">
+  <h1 class="so-leitor">Chat dos adeptos</h1>
   <section class="cartao">
     <div class="cartao__topo">
       <h2>CHAT</h2>
@@ -1030,6 +1036,7 @@
 </main>
 
 <main class="vista" id="vista-quiz" aria-label="Quiz Leonino">
+  <h1 class="so-leitor">Quiz Leonino</h1>
   <!-- o jogo (js/quiz.js); as perguntas estão em dados/quiz.json, cada uma com a fonte -->
   <section class="qz" id="quiz"></section>
 </main>
@@ -1037,12 +1044,13 @@
 <main class="vista" id="vista-desafio" aria-labelledby="tit-desafio">
   <header class="vista__cabeca">
     <p class="seccao__sobre">Uma pergunta por dia, igual para todos</p>
-    <h2 class="vista__titulo" id="tit-desafio">Desafio do Dia</h2>
+    <h1 class="vista__titulo" id="tit-desafio">Desafio do Dia</h1>
   </header>
   <section class="qz" id="desafio"></section>
 </main>
 
 <main class="vista" id="vista-clube">
+  <h1 class="so-leitor">O clube</h1>
   <!-- o museu (js/museu.js): entrada, sala dos troféus e linha do tempo -->
   <div class="museu" id="museu"></div>
 
@@ -1077,7 +1085,7 @@
     </div>
     <button class="leitor__btn leitor__btn--x" id="escolha-fechar" aria-label="Fechar">✕</button>
   </div>
-  <input type="search" id="escolha-procura" placeholder="Procurar jogador…" autocomplete="off">
+  <input type="search" id="escolha-procura" aria-label="Procurar jogador" placeholder="Procurar jogador…" autocomplete="off">
   <div class="escolha__lista" id="escolha-lista"></div>
   <button class="botao-largo" id="escolha-tirar">TIRAR DESTA POSIÇÃO</button>
 </dialog>
@@ -1180,18 +1188,18 @@
   <button class="barra-inferior__item" id="barra-mais" aria-controls="menu" aria-expanded="false"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Mais</span></button>
 </nav>
 
-<script src="js/nuvem.js?v=137" defer></script>
-<script src="js/fd.js?v=137" defer></script>
-<script src="js/componentes.js?v=137" defer></script>
-<script src="js/contas.js?v=137" defer></script>
-<script src="js/arte.js?v=137" defer></script>
-<script src="js/data.js?v=137" defer></script>
-<script src="js/wiki.js?v=137" defer></script>
-<script src="js/tema.js?v=137" defer></script>
-<script src="js/notificacoes.js?v=137" defer></script>
-<script src="js/pwa.js?v=137" defer></script>
-<script src="js/entrada.js?v=137" defer></script>
-<script src="js/centro.js?v=137" defer></script>
-<script src="js/app.js?v=137" defer></script>
+<script src="js/nuvem.js?v=138" defer></script>
+<script src="js/fd.js?v=138" defer></script>
+<script src="js/componentes.js?v=138" defer></script>
+<script src="js/contas.js?v=138" defer></script>
+<script src="js/arte.js?v=138" defer></script>
+<script src="js/data.js?v=138" defer></script>
+<script src="js/wiki.js?v=138" defer></script>
+<script src="js/tema.js?v=138" defer></script>
+<script src="js/notificacoes.js?v=138" defer></script>
+<script src="js/pwa.js?v=138" defer></script>
+<script src="js/entrada.js?v=138" defer></script>
+<script src="js/centro.js?v=138" defer></script>
+<script src="js/app.js?v=138" defer></script>
 </body>
 </html>

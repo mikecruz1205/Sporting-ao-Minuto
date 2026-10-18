@@ -5043,5 +5043,24 @@ async function arranque(){
   });
 }
 
+/* As ligações para os jornais e outras fontes abrem num separador novo: quem
+   usa leitor de ecrã fica a saber antes de carregar (WCAG, técnica G201).
+   Uma só função para o site todo, também para o que é desenhado depois. */
+const AVISO_SEPARADOR = ' (abre num separador novo)';
+function marcarSeparadorNovo(raiz = document){
+  raiz.querySelectorAll?.('a[target="_blank"]:not([data-separador])').forEach(a => {
+    a.dataset.separador = '1';
+    const rotulo = a.getAttribute('aria-label');
+    if(rotulo){ if(!rotulo.includes(AVISO_SEPARADOR)) a.setAttribute('aria-label', rotulo + AVISO_SEPARADOR); }
+    else a.insertAdjacentHTML('beforeend', `<span class="so-leitor">${AVISO_SEPARADOR}</span>`);
+  });
+}
+let marcarAgendado = false;
+new MutationObserver(() => {
+  if(marcarAgendado) return;
+  marcarAgendado = true;
+  setTimeout(() => { marcarAgendado = false; marcarSeparadorNovo(); }, 60);
+}).observe(document.documentElement, { childList: true, subtree: true });
+
 document.addEventListener('DOMContentLoaded', arranque);
 })();
