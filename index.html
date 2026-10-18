@@ -134,17 +134,17 @@
 <!-- fontes alojadas no próprio site (css/fontes.css): a visita não vai à Google -->
 <link rel="preload" href="/fontes/manrope-400-800-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fontes/barlow-condensed-700-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="css/fontes.css?v=141">
-<link rel="stylesheet" href="css/base.css?v=141">
-<link rel="stylesheet" href="css/componentes.css?v=141">
-<link rel="stylesheet" href="css/style.css?v=141">
-<link rel="stylesheet" href="css/portal.css?v=141">
-<link rel="stylesheet" href="css/inicio.css?v=141">
-<link rel="stylesheet" href="css/app.css?v=141">
-<link rel="stylesheet" href="css/editorial.css?v=141">
-<link rel="stylesheet" href="css/entrada.css?v=141">
-<link rel="stylesheet" href="css/centro.css?v=141">
-<link rel="stylesheet" href="css/casa.css?v=141">
+<link rel="stylesheet" href="css/fontes.css?v=142">
+<link rel="stylesheet" href="css/base.css?v=142">
+<link rel="stylesheet" href="css/componentes.css?v=142">
+<link rel="stylesheet" href="css/style.css?v=142">
+<link rel="stylesheet" href="css/portal.css?v=142">
+<link rel="stylesheet" href="css/inicio.css?v=142">
+<link rel="stylesheet" href="css/app.css?v=142">
+<link rel="stylesheet" href="css/editorial.css?v=142">
+<link rel="stylesheet" href="css/entrada.css?v=142">
+<link rel="stylesheet" href="css/centro.css?v=142">
+<link rel="stylesheet" href="css/casa.css?v=142">
 </head>
 <body class="trancado">
 <!-- ============================ ECRÃ DE CARREGAMENTO (modo aplicação) ============================ -->
@@ -741,6 +741,13 @@
       <ul class="lista-noticias lista-noticias--grande" id="rumores-todos"></ul>
     </div>
   </section>
+  <section class="cartao rj-cartao" aria-labelledby="rj-tit" hidden>
+    <div class="cartao__topo"><h2 id="rj-tit">RUMORES POR JOGADOR</h2></div>
+    <div class="cartao__corpo">
+      <p class="rj__nota">Jogadores do plantel nomeados nas notícias de mercado que o site tem guardadas: quantos jornais falam de cada um e desde quando. Toca num nome para ver a linha do tempo.</p>
+      <ul class="rj" id="rumores-jogador"></ul>
+    </div>
+  </section>
 </main>
 
 <main class="vista" id="vista-equipa">
@@ -1204,18 +1211,19 @@
   <button class="barra-inferior__item" id="barra-mais" aria-controls="menu" aria-expanded="false"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Mais</span></button>
 </nav>
 
-<script src="js/nuvem.js?v=141" defer></script>
-<script src="js/fd.js?v=141" defer></script>
-<script src="js/componentes.js?v=141" defer></script>
-<script src="js/contas.js?v=141" defer></script>
-<script src="js/arte.js?v=141" defer></script>
-<script src="js/data.js?v=141" defer></script>
-<script src="js/wiki.js?v=141" defer></script>
-<script src="js/tema.js?v=141" defer></script>
-<script src="js/notificacoes.js?v=141" defer></script>
-<script src="js/pwa.js?v=141" defer></script>
-<script src="js/entrada.js?v=141" defer></script>
-<script src="js/centro.js?v=141" defer></script>
-<script src="js/app.js?v=141" defer></script>
+<script src="js/nuvem.js?v=142" defer></script>
+<script src="js/fd.js?v=142" defer></script>
+<script src="js/componentes.js?v=142" defer></script>
+<script src="js/historias.js?v=142" defer></script>
+<script src="js/contas.js?v=142" defer></script>
+<script src="js/arte.js?v=142" defer></script>
+<script src="js/data.js?v=142" defer></script>
+<script src="js/wiki.js?v=142" defer></script>
+<script src="js/tema.js?v=142" defer></script>
+<script src="js/notificacoes.js?v=142" defer></script>
+<script src="js/pwa.js?v=142" defer></script>
+<script src="js/entrada.js?v=142" defer></script>
+<script src="js/centro.js?v=142" defer></script>
+<script src="js/app.js?v=142" defer></script>
 </body>
 </html>

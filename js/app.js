@@ -449,7 +449,7 @@ const modalidade = id => CONFIG.modalidades.find(m => m.id === id);
 /* etiqueta curta para o ao minuto: OFICIAL, MERCADO, BASQUETEBOL… */
 function etiquetaEvento(n){
   const tema = temaDe(n);
-  if(/\boficial\b/i.test(n.titulo)) return { texto:'Oficial', classe:'oficial' };
+  if(Historias.eOficial(n)) return { texto:'Oficial', classe:'oficial' };
   if(tema === 'clube') return { texto:'Clube', classe:'clube' };
   if(tema !== 'futebol') return { texto: modalidade(tema)?.curto || tema, classe:'m-' + tema };
   if(n.categoria === 'MERCADO')  return { texto:'Mercado', classe:'mercado' };
@@ -691,13 +691,15 @@ addEventListener('online', () => { if(!NOTICIAS.length) carregarNoticias(); });
 /* mostra a lista com uma barra por dia, para se perceber o recuo no tempo */
 let mostradas = 40;
 
-/* a primeira notícia com fotografia de cada dia vai em cartão grande */
-function agruparPorDia(lista){
+/* a primeira notícia com fotografia de cada dia vai em cartão grande;
+   recebe histórias (js/historias.js): a mais recente de cada uma à frente */
+function agruparPorDia(historias){
   let saida = '', diaAtual = '', grandeNoDia = false;
   const hoje = new Date().toDateString();
   const ontem = new Date(Date.now()-86400000).toDateString();
 
-  lista.forEach(n => {
+  historias.forEach(h => {
+    const n = h.principal;
     const d = n.data.toDateString();
     if(d !== diaAtual){
       diaAtual = d;
@@ -709,7 +711,7 @@ function agruparPorDia(lista){
     }
     const grande = !grandeNoDia && !!n.imagem;
     if(grande) grandeNoDia = true;
-    saida += Componentes.itemLista(n, procuraTexto, { grande, agrupado: true });
+    saida += Componentes.itemLista(n, procuraTexto, { grande, agrupado: true, historia: h });
   });
   return saida;
 }
@@ -920,7 +922,7 @@ function pintarImportantes(){
   const noPalco = new Set(heroLista.map(n => n.link));
   const lista = NOTICIAS
     .filter(n => n.data.getTime() > limite && !noPalco.has(n.link))
-    .filter(n => n.categoria === 'DESTAQUE' || /\boficial\b/i.test(n.titulo))
+    .filter(n => n.categoria === 'DESTAQUE' || Historias.eOficial(n))
     .slice(0, 4);
   seccao.hidden = lista.length < 2;
   if(seccao.hidden) return;
@@ -1262,8 +1264,9 @@ function pintarNoticias(){
   const daFonte = noticiasFiltradas();
   pintarTemasNoticias(daFonte);
   const todas = daFonte.filter(n => noTema(n, temaNoticias, subtemaNoticias));
+  const historias = Historias.agrupar(todas);
   $('#noticias-todas').innerHTML = todas.length
-    ? agruparPorDia(todas.slice(0, mostradas))
+    ? agruparPorDia(historias.slice(0, mostradas))
     : !NOTICIAS.length ? estadoSemNoticias()
     : `<li class="estado"><p class="estado__titulo">Nada encontrado</p><p class="estado__texto">${procuraTexto
         ? 'Nenhuma notícia fala de «' + Componentes.seguro(procuraTexto) + '» com estes filtros.'
@@ -1271,17 +1274,20 @@ function pintarNoticias(){
 
   const btn = $('#mais-antigas');
   if(btn){
-    const restam = todas.length - mostradas;
+    const restam = historias.length - mostradas;
     btn.hidden = restam <= 0;
     btn.textContent = `Ver mais antigas (${restam})`;
   }
   const cont = $('#noticias-conta');
   if(cont) cont.textContent = todas.length
-    ? `${todas.length} notícias · desde ${dataCurta(todas[todas.length-1].data)}`
+    ? `${todas.length} notícias${historias.length < todas.length ? ` em ${historias.length} histórias` : ''} · desde ${dataCurta(todas[todas.length-1].data)}`
     : '';
 
   const rumores = NOTICIAS.filter(n => n.categoria === 'MERCADO');
-  $('#rumores-todos').innerHTML = rumores.length ? rumores.slice(0,40).map(itemNoticia).join('') : vazio('Sem rumores de mercado neste momento.');
+  $('#rumores-todos').innerHTML = rumores.length
+    ? Historias.agrupar(rumores).slice(0,40).map(h => Componentes.itemLista(h.principal, procuraTexto, { historia: h })).join('')
+    : vazio('Sem rumores de mercado neste momento.');
+  pintarRumoresJogador(rumores);
   if($('#rumores-curtos')) $('#rumores-curtos').innerHTML = rumores.slice(0,3).map(n => `
     <li><a href="${n.link}" target="_blank" rel="noopener">
       <img src="${n.imagem || escudoIniciais('SCP')}" alt="" loading="lazy"
@@ -1300,6 +1306,36 @@ function pintarNoticias(){
   pintarHome();
   /* as notícias do jogo, no Centro de jogo, acompanham as leituras */
   if(vistaAtual === 'aovivo') CentroJogo.repintar();
+}
+
+/* Rumores por jogador: os do plantel nomeados nas notícias de mercado
+   guardadas, com quantos jornais falam deles e desde quando. Só entram os
+   que têm pelo menos duas notícias (uma linha do tempo precisa de duas). */
+function pintarRumoresJogador(rumores){
+  const alvo = $('#rumores-jogador');
+  if(!alvo) return;
+  const lista = Historias.rumoresPorJogador(rumores, PLANTEL.map(p => p.nome));
+  alvo.closest('section').hidden = !lista.length;
+  if(!lista.length){ alvo.innerHTML = ''; return; }
+  const abertos = new Set([...alvo.querySelectorAll('details[open]')].map(d => d.dataset.nome));
+  const quando = d => `${dataCurta(d)} ${Componentes.horaCurta(d)}`;
+  const seguro = Componentes.seguro;
+  alvo.innerHTML = lista.map(r => {
+    const p = PLANTEL.find(x => x.nome === r.nome);
+    const foto = p?.foto || avatarJogador(p || { nome: r.nome });
+    return `<li><details data-nome="${seguro(r.nome)}" ${abertos.has(r.nome) ? 'open' : ''}>
+      <summary>
+        <img src="${seguro(foto)}" alt="" loading="lazy" width="40" height="40" onerror="this.onerror=null;this.src='${avatarJogador({ nome: r.nome })}'">
+        <span class="rj__nome"><b>${seguro(r.nome)}</b>
+          <span>${r.canais.length} ${r.canais.length === 1 ? 'jornal' : 'jornais'} · ${r.noticias.length} notícias · desde ${dataCurta(r.desde)}</span></span>
+      </summary>
+      <ol class="rj__linha">${r.noticias.map(n => `
+        <li><time datetime="${n.data.toISOString()}">${quando(n.data)}</time>
+          <span class="rj__fonte">${seguro(n.fonte)}</span>
+          <a href="${Componentes.ligacao(n.link)}" target="_blank" rel="noopener" data-link="${seguro(n.link)}">${seguro(n.titulo)}</a></li>`).join('')}
+      </ol>
+    </details></li>`;
+  }).join('');
 }
 
 /* A fonte é um seletor nativo dentro de um chip: ocupa o espaço de um
@@ -1458,7 +1494,7 @@ let filtroMinuto = 'todos';
 function pintarLinhaTempo(){
   const filtro = filtroMinuto;
   let l = NOTICIAS;
-  if(filtro === 'quente')  l = l.filter(n => n.categoria === 'DESTAQUE' || /\boficial\b/i.test(n.titulo));
+  if(filtro === 'quente')  l = l.filter(n => n.categoria === 'DESTAQUE' || Historias.eOficial(n));
   if(filtro === 'mercado') l = l.filter(n => n.categoria === 'MERCADO');
   $$('[data-segmentos-minuto] .segmento').forEach(x => {
     x.classList.toggle('is-on', x.dataset.valor === filtro);

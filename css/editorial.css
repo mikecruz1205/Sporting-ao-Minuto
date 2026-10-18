@@ -530,3 +530,53 @@ body{
   .arq-jogo{ grid-template-columns: 48px minmax(0, 1fr); }
   .arq-jogo small{ grid-column: 2; }
 }
+
+/* =========================================================================
+   HISTÓRIAS (js/historias.js): selo Oficial e "esta história está em N jornais"
+   ========================================================================= */
+.nl__oficial{ display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 6px;
+  font-size: var(--fs-rotulo); font-weight: 800; letter-spacing: var(--tracking-rotulo); text-transform: uppercase;
+  color: var(--verde-claro); border: 1px solid color-mix(in srgb, var(--verde-claro) 55%, transparent); }
+.nl__oficial::before{ content: "\2713"; font-weight: 900; }
+.nl__historia{ border-top: 1px solid var(--linha); font-size: 13.5px; }
+.nl__historia summary{ display: flex; align-items: center; flex-wrap: wrap; gap: 4px; min-height: 44px; padding: 8px 20px;
+  cursor: pointer; font-weight: 800; color: var(--texto); list-style: none; }
+.nl__historia summary::-webkit-details-marker{ display: none; }
+.nl__historia summary::after{ content: "+"; margin-left: auto; font-size: 18px; font-weight: 700; color: var(--texto-3); }
+.nl__historia[open] summary::after{ content: "\2212"; }
+.nl__historia summary span{ font-weight: 600; color: var(--texto-3); }
+.nl__historia summary:focus-visible{ outline: 2px solid var(--verde-claro); outline-offset: -2px; }
+.nl__historia ol{ list-style: none; display: grid; gap: 10px; margin: 0; padding: 0 20px 14px; }
+.nl__historia li{ display: grid; grid-template-columns: 96px auto minmax(0, 1fr); align-items: baseline; gap: 4px 10px; }
+.nl__historia li a{ grid-column: 1 / -1; color: var(--texto-2); text-decoration: underline; text-decoration-color: var(--linha-forte, var(--linha)); text-underline-offset: 3px; }
+.nl__historia li a:hover{ color: var(--verde-claro); }
+.nl__historia time{ font-size: 12px; font-weight: 600; color: var(--texto-3); font-variant-numeric: tabular-nums; }
+.nl__historia em{ font-style: normal; font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--verde-claro); }
+
+/* rumores por jogador (vista Mercado) */
+.rj-cartao{ margin-top: 20px; }
+.rj__nota{ font-size: 13.5px; color: var(--texto-2); margin-bottom: 12px; }
+.rj{ list-style: none; display: grid; gap: 8px; }
+.rj details{ border: 1px solid var(--linha); border-radius: 12px; background: var(--cartao); }
+.rj summary{ display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 14px; cursor: pointer; list-style: none; }
+.rj summary::-webkit-details-marker{ display: none; }
+.rj summary::after{ content: "+"; margin-left: auto; font-size: 18px; font-weight: 700; color: var(--texto-3); }
+.rj details[open] summary::after{ content: "\2212"; }
+.rj summary:focus-visible{ outline: 2px solid var(--verde-claro); outline-offset: -2px; border-radius: 12px; }
+.rj summary img{ width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: var(--cartao-alto); flex: none; }
+.rj__nome{ display: grid; gap: 2px; min-width: 0; }
+.rj__nome span{ font-size: 12.5px; color: var(--texto-3); }
+.rj__linha{ list-style: none; margin: 0; padding: 4px 14px 14px 66px; display: grid; gap: 12px; position: relative; }
+.rj__linha::before{ content: ""; position: absolute; left: 33px; top: 6px; bottom: 18px; width: 2px; background: var(--linha); }
+.rj__linha li{ display: grid; gap: 2px; font-size: 13.5px; position: relative; }
+.rj__linha li::before{ content: ""; position: absolute; left: -38px; top: 5px; width: 10px; height: 10px; border-radius: 50%; background: var(--verde); box-shadow: 0 0 0 3px var(--cartao); }
+.rj__linha time{ font-size: 12px; font-weight: 600; color: var(--texto-3); font-variant-numeric: tabular-nums; }
+.rj__fonte{ font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--texto-2); }
+.rj__linha a{ color: var(--texto); }
+.rj__linha a:hover{ color: var(--verde-claro); }
+@media (max-width: 640px){
+  .nl__historia summary, .nl__historia ol{ padding-left: 16px; padding-right: 16px; }
+  .rj__linha{ padding-left: 52px; }
+  .rj__linha::before{ left: 26px; }
+  .rj__linha li::before{ left: -31px; }
+}

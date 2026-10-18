@@ -171,7 +171,7 @@ const Componentes = (() => {
      agrupado: a lista já tem o dia no cabeçalho, chega a hora
      --------------------------------------------------------------------- */
   const RECENTE_MIN = 45;   // até quantos minutos uma notícia leva "Novo"
-  function itemLista(n, destaque = '', { grande = false, agrupado = false } = {}){
+  function itemLista(n, destaque = '', { grande = false, agrupado = false, historia = null } = {}){
     const minutos = (Date.now() - n.data.getTime()) / 60000;
     const recente = minutos >= 0 && minutos < RECENTE_MIN;
     const hoje = n.data.toDateString() === new Date().toDateString();
@@ -179,13 +179,15 @@ const Componentes = (() => {
                : (hoje || agrupado) ? horaCurta(n.data) : dataCurta(n.data);
     const comFoto = !!n.imagem;
     const resumo = resumir(n.resumo, grande ? 220 : 180);
+    const oficial = historia ? historia.oficial : !!window.Historias?.eOficial(n);
     return `
-    <li class="nl ${grande && comFoto ? 'nl--grande' : ''} ${comFoto ? '' : 'nl--sem-foto'} ${recente ? 'nl--recente' : ''}">
+    <li class="nl ${grande && comFoto ? 'nl--grande' : ''} ${comFoto ? '' : 'nl--sem-foto'} ${recente ? 'nl--recente' : ''} ${historia?.todas.length > 1 ? 'nl--historia' : ''}">
       <a class="nl__ligacao" href="${ligacao(n.link)}" target="_blank" rel="noopener" data-link="${seguro(n.link)}">
         <span class="nl__capa">${comFoto ? capa(n, { grande }) : siglaFonte(n, 'sigla--capa')}</span>
         <span class="nl__corpo">
           <span class="nl__meta">
             <span class="etiqueta etiqueta--${categoriaClasse(n.categoria)}">${seguro(n.categoria)}</span>
+            ${oficial ? SELO_OFICIAL : ''}
             ${recente ? '<span class="nl__novo">Novo</span>' : ''}
           </span>
           <span class="nl__titulo">${destacar(n.titulo, destaque)}</span>
@@ -196,7 +198,29 @@ const Componentes = (() => {
           </span>
         </span>
       </a>
+      ${historia?.todas.length > 1 ? blocoHistoria(historia) : ''}
     </li>`;
+  }
+
+  /* o jornal diz no título que é oficial — não é o site a confirmar */
+  const SELO_OFICIAL = '<span class="nl__oficial" title="O título do jornal diz que é oficial (anúncio do clube ou da entidade)">Oficial</span>';
+
+  /* "esta história está em N jornais": todas as notícias, da primeira à
+     mais recente, cada uma com ligação para o seu jornal */
+  function blocoHistoria(h){
+    const jornais = h.canais.length;
+    const rotulo = jornais > 1 ? `Esta história está em ${jornais} jornais` : `${h.todas.length} notícias desta história`;
+    return `
+      <details class="nl__historia">
+        <summary>${rotulo}<span> · desde ${dataCurta(h.todas[0].data)}, ${horaCurta(h.todas[0].data)}</span></summary>
+        <ol>${h.todas.map((x, i) => `
+          <li>
+            <time datetime="${x.data.toISOString()}">${dataCurta(x.data)} ${horaCurta(x.data)}</time>
+            ${etiquetaFonte(x)}${i === 0 && jornais > 1 ? '<em>primeiro</em>' : ''}
+            <a href="${ligacao(x.link)}" target="_blank" rel="noopener" data-link="${seguro(x.link)}">${seguro(x.titulo)}</a>
+          </li>`).join('')}
+        </ol>
+      </details>`;
   }
 
   /* manchete numa lista: hora, título e jornal — para as que não têm foto */
@@ -411,7 +435,7 @@ const Componentes = (() => {
     </div>`;
 
   return {
-    seguro, destacar, haQuanto, dataCurta, horaCurta, resumir,
+    seguro, ligacao, destacar, haQuanto, dataCurta, horaCurta, resumir,
     cartaoNoticia, cartaoEditorial, manchete, itemLista, itemCurto, capa, hero, itemCompacto, categoriaClasse, imagemGrande,
     esqueletoCartao, esqueletoEditorial, esqueletoHero, esqueletoCompacto, esqueletoLista, esqueletoMinuto, erroLeitura, vazio,
     etiquetaFonte, siglaFonte, sigla, classeFonte
