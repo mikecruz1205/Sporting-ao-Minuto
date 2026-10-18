@@ -97,3 +97,30 @@ begin
 
   raise exception 'RELATORIO passos=% falhas=% %', passos, coalesce(array_length(falhas, 1), 0), falhas;
 end $$;
+
+-- =========================================================================
+-- chat_carimbar_autor fechado à API (migração 20261018120000): o gatilho
+-- continua a carimbar o autor, mas ninguém a chama diretamente.
+-- Resultado esperado: 'RELATORIO falhas=0'.
+-- =========================================================================
+do $$
+declare
+  u uuid := gen_random_uuid();
+  falhas text[] := '{}';
+  autor_gravado text;
+begin
+  insert into auth.users (id, email) values (u, 'teste-chat@exemplo.invalid');
+  insert into perfis (id, utilizador, nome_mostrado) values (u, 'teste_chat_x', 'teste_chat_x');
+  perform set_config('request.jwt.claims', json_build_object('sub', u, 'role', 'authenticated')::text, true);
+  set local role authenticated;
+  insert into chat_mensagens (texto, perfil_id) values ('teste do gatilho', u);
+  select autor into autor_gravado from chat_mensagens where perfil_id = u order by criado_em desc limit 1;
+  if autor_gravado is distinct from 'teste_chat_x' then falhas := falhas || ('autor: ' || coalesce(autor_gravado, 'null')); end if;
+  begin
+    perform chat_carimbar_autor();
+    falhas := falhas || 'chamada direta permitida';
+  exception when others then null;
+  end;
+  reset role;
+  raise exception 'RELATORIO falhas=% %', coalesce(array_length(falhas, 1), 0), array_to_string(falhas, ' | ');
+end $$;
