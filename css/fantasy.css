@@ -304,3 +304,21 @@
   .fan-slot .fan-slot__pos{ display: none; }
 }
 @media (prefers-reduced-motion: reduce){ .fan-slot.is-novo{ animation: none; } }
+
+/* ---------- gestão: jornadas em atraso e relatório colado */
+.fan-atraso{ display: grid; gap: 10px; margin-bottom: 18px; padding: 16px; border-radius: 16px; background: var(--cartao); border: 1px solid var(--linha); }
+.fan-atraso h4{ font-size: 16px; font-weight: 800; }
+.fan-atraso h4 span{ margin-left: 6px; padding: 1px 8px; border-radius: 999px; font-size: 12px; background: var(--veu-2, rgba(127,127,127,.15)); }
+.fan-atraso__lista{ list-style: none; display: grid; gap: 6px; max-height: 280px; overflow: auto; }
+.fan-atraso__item{ display: flex; flex-wrap: wrap; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 8px 12px; border-radius: 10px;
+  text-align: left; font-size: 14px; color: var(--texto); background: var(--fundo-2); border: 1px solid var(--linha); }
+.fan-atraso__item.is-on{ border-color: var(--verde-claro); }
+.fan-estado{ margin-left: auto; padding: 2px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 800; }
+.fan-estado--ok{ color: var(--verde-claro); background: color-mix(in srgb, var(--verde-claro) 14%, transparent); }
+.fan-estado--aviso{ color: var(--amarelo, #e8c56a); background: color-mix(in srgb, #e8c56a 14%, transparent); }
+.fan-estado--erro{ color: var(--texto-3); background: var(--veu-2, rgba(127,127,127,.15)); }
+.fan-relatorio{ margin: 12px 0; padding: 12px 14px; border-radius: 12px; border: 1px dashed var(--linha-forte, var(--linha)); }
+.fan-relatorio summary{ cursor: pointer; font-weight: 800; min-height: 32px; }
+.fan-relatorio textarea{ width: 100%; margin-top: 8px; padding: 10px; border-radius: 10px; font: 13.5px/1.5 ui-monospace, monospace;
+  color: var(--texto); background: var(--fundo-2); border: 1px solid var(--linha); }
+.fan-relatorio code{ font-size: 12px; }

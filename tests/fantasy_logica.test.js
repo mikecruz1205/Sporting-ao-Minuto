@@ -234,3 +234,72 @@ test('mensagens de erro: português do servidor passa, técnicas não', async ()
   assert.match(T.mensagemErro({ message: 'permission denied for table fantasy_escolhas' }), /não respondeu como esperado/);
   assert.equal(T.mensagemErro({ message: 'Já estás no máximo de ligas.' }), 'Já estás no máximo de ligas.');
 });
+
+/* ---------- gestão: relatório colado e golos do calendário */
+const PLANTEL_TESTE = [
+  { id: 1, nome: 'Rui Silva', nome_curto: 'Rui Silva', posicao: 'GR' },
+  { id: 2, nome: 'Francisco Silva', nome_curto: 'F. Silva', posicao: 'GR' },
+  { id: 3, nome: 'Zeno Debast', nome_curto: 'Debast', posicao: 'DEF' },
+  { id: 4, nome: 'Luis Javier Suárez', nome_curto: 'Suárez', posicao: 'AVA' },
+  { id: 5, nome: 'Gonçalo Inácio', nome_curto: 'Inácio', posicao: 'DEF' }
+];
+
+test('relatório colado: formatos, sem dados em vez de zero, nomes ambíguos e desconhecidos', () => {
+  const { T } = montar();
+  const r = T.lerRelatorio(`Rui Silva; 90; 0; 0; 0; 0; 3; 1
+Debast; 90
+suarez, 78, 2, 1, 1
+Inacio 64 1
+Silva; 90
+Fulano Desconhecido; 90
+Debast sem números`, PLANTEL_TESTE);
+  const por = id => r.linhas.find(l => l.jogador_id === id);
+  assert.equal(por(1).defesas, 3);
+  assert.equal(por(1).golos_sofridos, 1);
+  assert.equal(por(3).minutos, 90);
+  assert.equal(por(3).golos, null);                     // não indicado: sem dados, não zero
+  assert.equal(por(4).golos, 2);
+  assert.equal(por(4).assistencias, 1);
+  assert.equal(por(4).amarelos, 1);
+  assert.equal(por(4).defesas, null);                   // defesas só contam para guarda-redes
+  assert.equal(por(5).minutos, 64);
+  assert.equal(por(5).golos, 1);
+  assert.deepEqual([...r.ambiguos], ['Silva']);          // Rui Silva e F. Silva
+  assert.ok(r.naoReconhecidos.includes('Fulano Desconhecido'));
+  assert.ok(r.naoReconhecidos.includes('Debast sem números'));
+  assert.equal(r.linhas.length, 4);
+});
+
+test('golos do calendário: marcadores do Sporting, sem os autogolos do adversário; autogolos nossos à parte', () => {
+  const { T } = montar();
+  const jogo = { casa: 'Lens', fora: 'Sporting CP', golosCasa: 1, golosFora: 3,
+    marcadoresCasa: [{ nome: 'Debast', minuto: '50', tipo: 'ag' }],
+    marcadoresFora: [{ nome: 'Suárez', minuto: '12', tipo: '' }, { nome: 'Suárez', minuto: '61', tipo: 'gp' }, { nome: 'Gradit', minuto: '70', tipo: 'ag' }] };
+  const g = T.golosDoCalendario(jogo, PLANTEL_TESTE);
+  assert.equal(g.golos_casa, 1);
+  assert.equal(g.golos_fora, 3);
+  assert.equal(g.golos.get(4), 2);                      // dois do Suárez (um de penálti)
+  assert.equal(g.golos.size, 1);                        // o autogolo do Gradit não é de ninguém do Sporting
+  assert.equal(g.autogolos.get(3), 1);                  // o autogolo do Debast
+  assert.equal(T.golosDoCalendario(null, PLANTEL_TESTE), null);
+});
+
+test('painel de gestão: jornadas em atraso, relatório colado e cálculo das que já têm estatísticas', async () => {
+  const ontem = new Date(Date.now() - 86400e3).toISOString();
+  const anteontem = new Date(Date.now() - 2 * 86400e3).toISOString();
+  const m = montar({ perfil: { id: 'adm', utilizador: 'admin' }, minhas: {
+    fantasy_admins: [{ perfil_id: 'adm' }],
+    fantasy_jornadas: [
+      { id: 7, numero: 1, fecho: anteontem, finalizada_em: null, calculada_em: null, jogo_id: 70, jogo: { casa: 'Sporting CP', fora: 'Moreirense', competicao: 'Liga', data: anteontem, golos_casa: 3, golos_fora: 0 } },
+      { id: 8, numero: 2, fecho: ontem, finalizada_em: null, calculada_em: ontem, jogo_id: 71, jogo: { casa: 'Lens', fora: 'Sporting CP', competicao: 'Champions', data: ontem, golos_casa: 0, golos_fora: 2 } }
+    ]
+  } });
+  await m.F.recarregar();
+  assert.equal(m.T.admin, true);
+  const html = m.T.gestao();
+  assert.match(html, /Jornadas em atraso <span>2<\/span>/);
+  assert.match(html, /sem estatísticas/);
+  assert.match(html, /provisória/);
+  assert.match(html, /Colar o relatório do jogo/);
+  assert.match(html, /Golos e resultado da Wikipédia/);
+});

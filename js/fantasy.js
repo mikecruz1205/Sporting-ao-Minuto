@@ -40,6 +40,7 @@ const Fantasy = (() => {
   let filtroPos = 'todos', ordem = 'preco', busca = '';
   let jornadaPontos = null, jornadaClass = 'geral', ligaVista = null;
   let admin = false, adminJornada = null;
+  let comEstatisticas = new Set();     // jogos com estatísticas introduzidas (para as jornadas em atraso)
   let estado = 'por-carregar';          // por-carregar · a-carregar · pronto · erro
   let erro = '';
   let relogio = null;
@@ -857,6 +858,79 @@ const Fantasy = (() => {
     </div>`;
   }
 
+  /* ---------- GESTÃO: relatório colado e golos do calendário (funções puras, testadas) */
+  /* Uma linha por jogador, copiada do relatório oficial do jogo:
+       "Nome; minutos; golos; assistências; amarelos; vermelhos; defesas; golos sofridos"
+     (separado por ; , ou tabulação) ou "Nome 90 1 0" (os números no fim).
+     O que falta fica sem dados (null), nunca zero. */
+  const ORDEM_RELATORIO = ['minutos', 'golos', 'assistencias', 'amarelos', 'vermelhos', 'defesas', 'golos_sofridos'];
+  const normNome = t => semAcento(t).replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+  function indiceNomes(lista){
+    const porNome = new Map();
+    const juntar = (k, j) => { if(!k) return; porNome.set(k, porNome.has(k) && porNome.get(k)?.id !== j.id ? null : j); };
+    lista.forEach(j => {
+      juntar(normNome(j.nome), j);
+      juntar(normNome(j.nome_curto), j);
+      juntar(normNome(j.nome_curto).split(' ').pop(), j);
+      juntar(normNome(j.nome).split(' ').pop(), j);
+    });
+    return porNome;                       // null = o nome serve a mais do que um jogador
+  }
+  function lerRelatorio(texto, lista){
+    const porNome = indiceNomes(lista);
+    const linhas = [], naoReconhecidos = [], ambiguos = [];
+    String(texto || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean).forEach(l => {
+      let nome, nums;
+      if(/[;\t]/.test(l) || /,\s*\d/.test(l)){
+        const p = l.split(/[;\t,]/).map(x => x.trim());
+        nome = p[0]; nums = p.slice(1);
+      }else{
+        const m = l.match(/^(.*?[^\d\s-])\s+([\d\s-]+)$/);
+        if(!m){ naoReconhecidos.push(l); return; }
+        nome = m[1]; nums = m[2].trim().split(/\s+/);
+      }
+      const j = porNome.get(normNome(nome));
+      if(j === undefined){ naoReconhecidos.push(nome); return; }
+      if(j === null){ ambiguos.push(nome); return; }
+      const v = {};
+      ORDEM_RELATORIO.forEach((campo, i) => {
+        const x = nums[i];
+        v[campo] = x == null || x === '' || x === '-' || isNaN(Number(x)) ? null : Number(x);
+      });
+      if(v.minutos == null){ naoReconhecidos.push(nome + ' (sem minutos)'); return; }
+      if(j.posicao !== 'GR'){ v.defesas = null; v.golos_sofridos = v.golos_sofridos ?? null; }
+      linhas.push({ jogador_id: j.id, nome: j.nome_curto, ...v });
+    });
+    return { linhas, naoReconhecidos, ambiguos };
+  }
+  /* Golos do jogo a partir do calendário (Wikipédia): os marcadores do lado do
+     Sporting contam como golos (menos os autogolos do adversário); os
+     autogolos na lista do adversário são de jogadores do Sporting. */
+  function golosDoCalendario(jogo, lista){
+    if(!jogo) return null;
+    const nosCasa = /sporting cp/i.test(jogo.casa);
+    const nossos = (nosCasa ? jogo.marcadoresCasa : jogo.marcadoresFora) || [];
+    const deles = (nosCasa ? jogo.marcadoresFora : jogo.marcadoresCasa) || [];
+    const porNome = indiceNomes(lista);
+    const golos = new Map(), autogolos = new Map(), semDono = [];
+    const contar = (mapa, nome) => {
+      const j = porNome.get(normNome(nome));
+      if(!j){ semDono.push(nome); return; }
+      mapa.set(j.id, (mapa.get(j.id) || 0) + 1);
+    };
+    nossos.filter(m => m.tipo !== 'ag').forEach(m => contar(golos, m.nome));
+    deles.filter(m => m.tipo === 'ag').forEach(m => contar(autogolos, m.nome));
+    return { golos_casa: jogo.golosCasa ?? null, golos_fora: jogo.golosFora ?? null, golos, autogolos, semDono };
+  }
+  /* o jogo do calendário que corresponde a esta jornada (mesmo dia e mesmo adversário) */
+  function jogoDoCalendario(j){
+    const lista = window.DadosSite?.jogos?.() || [];
+    const dia = new Date(j.jogo.data).toISOString().slice(0, 10);
+    const adv = normNome(/sporting cp/i.test(j.jogo.casa) ? j.jogo.fora : j.jogo.casa).split(' ').pop();
+    return lista.find(x => new Date(x.data).toISOString().slice(0, 10) === dia
+      && normNome(`${x.casa} ${x.fora}`).includes(adv)) || null;
+  }
+
   /* ---------- GESTÃO (administradores) — estatísticas de um jogo */
   const CAMPOS = [['minutos', 'Min'], ['golos', 'G'], ['assistencias', 'A'], ['amarelos', 'AM'], ['vermelhos', 'VM'],
                   ['pen_falhados', 'PF'], ['autogolos', 'AG'], ['pen_defendidos', 'PD'], ['defesas', 'Def'],
@@ -866,12 +940,36 @@ const Fantasy = (() => {
     if(!candidatas.length) return `<div class="fan-vazio"><p class="estado__titulo">Nada para gerir agora</p><p class="estado__texto">As estatísticas introduzem-se depois do fecho da jornada (início do jogo).</p></div>`;
     if(!adminJornada || !candidatas.some(j => j.id === adminJornada)) adminJornada = candidatas[0].id;
     const j = jor(adminJornada);
-    return `<form class="fan-gestao" data-fan-form="estatisticas">
+    const estadoAtraso = x => x.calculada_em ? ['provisória', 'ok'] : comEstatisticas.has(x.jogo_id) ? ['com estatísticas, por calcular', 'aviso'] : ['sem estatísticas', 'erro'];
+    const porCalcular = candidatas.filter(x => !x.calculada_em && comEstatisticas.has(x.jogo_id));
+    return `<section class="fan-atraso" aria-labelledby="fan-atraso-t">
+      <h4 id="fan-atraso-t">Jornadas em atraso <span>${candidatas.length}</span></h4>
+      <p class="fan-nota">Jornadas cujo jogo já começou e que ainda não estão finalizadas. Escolhe uma para introduzir as estatísticas.</p>
+      <ul class="fan-atraso__lista">${candidatas.map(x => { const [t, c] = estadoAtraso(x); return `
+        <li><button type="button" class="fan-atraso__item ${x.id === j.id ? 'is-on' : ''}" data-fan-atraso="${x.id}">
+          <b>J${x.numero}</b> ${seguro(x.jogo.casa)} ${x.jogo.golos_casa ?? '–'}–${x.jogo.golos_fora ?? '–'} ${seguro(x.jogo.fora)}
+          <span class="fan-estado fan-estado--${c}">${t}</span></button></li>`; }).join('')}</ul>
+      ${porCalcular.length ? `<button type="button" class="botao-cta" data-fan="calcular-atraso">Calcular ${porCalcular.length} ${porCalcular.length > 1 ? 'jornadas' : 'jornada'} que já têm estatísticas</button>` : ''}
+    </section>
+    <form class="fan-gestao" data-fan-form="estatisticas">
       <div class="fan-filtros__linha">
         <label class="chip chip--fonte"><span>J${j.numero} · ${seguro(j.jogo.casa)} x ${seguro(j.jogo.fora)}</span>
           <select id="fan-admin-jornada" aria-label="Jornada">${candidatas.map(x => `<option value="${x.id}" ${x.id === j.id ? 'selected' : ''}>J${x.numero} · ${seguro(x.jogo.casa)} x ${seguro(x.jogo.fora)}</option>`).join('')}</select></label>
       </div>
       <p class="fan-nota">Introduz os números do relatório oficial do jogo. Só quem jogou leva minutos; campos vazios ficam "sem dados" (não contam como zero). GS = golos sofridos com o jogador em campo (opcional). Rec = recuperações (só se a fonte as der).</p>
+      <details class="fan-relatorio">
+        <summary>Colar o relatório do jogo (mais rápido)</summary>
+        <p class="fan-nota">Uma linha por jogador que jogou: <code>nome; minutos; golos; assistências; amarelos; vermelhos; defesas; golos sofridos</code>.
+          Basta o nome e os minutos; o que faltar fica "sem dados". Também serve <code>Nome 90 1</code>. Exemplo:<br>
+          <code>Rui Silva; 90; 0; 0; 0; 0; 3; 1</code> · <code>Debast; 90</code> · <code>Suárez; 78; 2; 1; 1</code></p>
+        <label class="so-leitor" for="fan-relatorio">Relatório do jogo</label>
+        <textarea id="fan-relatorio" rows="7" spellcheck="false" placeholder="Rui Silva; 90; 0; 0; 0; 0; 3; 1"></textarea>
+        <div class="fan-gestao__acoes">
+          <button type="button" class="chip" data-fan="aplicar-relatorio">Passar para a tabela</button>
+          <button type="button" class="chip" data-fan="golos-calendario">Golos e resultado da Wikipédia</button>
+        </div>
+        <p class="fan-nota" id="fan-relatorio-nota" role="status"></p>
+      </details>
       <div class="fan-res"><label>${seguro(j.jogo.casa)} <input name="golos_casa" type="number" min="0" max="20" inputmode="numeric" value="${j.jogo.golos_casa ?? ''}" required></label>
         <label>${seguro(j.jogo.fora)} <input name="golos_fora" type="number" min="0" max="20" inputmode="numeric" value="${j.jogo.golos_fora ?? ''}" required></label></div>
       <div class="fan-gestao__tabela"><table class="tabela fan-tabela"><thead><tr><th>Jogador</th>${CAMPOS.map(([, r]) => `<th>${r}</th>`).join('')}</tr></thead><tbody>
@@ -892,6 +990,10 @@ const Fantasy = (() => {
     const form = raiz && $('[data-fan-form="estatisticas"]', raiz);
     const j = adminJornada && jor(adminJornada);
     if(!form || !j) return;
+    if(!comEstatisticas.lido){
+      const { data: ids, error } = await db.from('desporto_estatisticas_jogo').select('jogo_id');
+      if(!error){ comEstatisticas = new Set((ids || []).map(x => x.jogo_id)); comEstatisticas.lido = true; pintar(); return; }
+    }
     const { data } = await db.from('desporto_estatisticas_jogo').select('*').eq('jogo_id', j.jogo_id);
     (data || []).forEach(e => {
       const tr = $(`tr[data-jogador="${e.jogador_id}"]`, form);
@@ -916,6 +1018,7 @@ const Fantasy = (() => {
       jogadores: linhas } });
     if(error){ avisar('erro', mensagemErro(error)); return; }
     avisar('ok', `Jornada ${j.numero} calculada (provisória): ${data?.calculo?.jogadores ?? 0} jogadores, ${data?.calculo?.equipas ?? 0} equipas.`);
+    comEstatisticas.lido = false;
     await carregar();
   }
 
@@ -973,6 +1076,7 @@ const Fantasy = (() => {
         return;
       }
       if(d.fanLiga){ ligaVista = Number(d.fanLiga); pintar(); return; }
+      if(d.fanAtraso){ adminJornada = Number(d.fanAtraso); pintar(); return; }
       if(d.fanPartilhar){
         const texto = `Junta-te à minha liga "${d.nome}" no Fantasy do Sporting ao Minuto. Código: ${d.fanPartilhar}`;
         try{ if(navigator.share) await navigator.share({ title: 'Liga Fantasy', text: texto, url: location.origin + '/fantasy' });
@@ -996,6 +1100,47 @@ const Fantasy = (() => {
         case 'vender': remover(tocado); pintar(); break;
         case 'repor': try{ localStorage.removeItem(CHAVE_RASCUNHO()); }catch(e){} montarRascunho(); tocado = aTrocar = null; pintar(); break;
         case 'guardar': guardar(); break;
+        case 'aplicar-relatorio': {
+          const form = $('[data-fan-form="estatisticas"]', raiz);
+          const lista = [...jogadores.values()].filter(x => x.no_plantel);
+          const r = lerRelatorio($('#fan-relatorio', raiz).value, lista);
+          r.linhas.forEach(l => {
+            const tr = $(`tr[data-jogador="${l.jogador_id}"]`, form);
+            ORDEM_RELATORIO.forEach(k => { const i = tr?.querySelector(`[name="${k}"]`); if(i && !i.disabled) i.value = l[k] ?? ''; });
+          });
+          $('#fan-relatorio-nota', raiz).textContent = `${r.linhas.length} ${r.linhas.length === 1 ? 'jogador passado' : 'jogadores passados'} para a tabela.`
+            + (r.naoReconhecidos.length ? ` Não reconhecidos: ${r.naoReconhecidos.join(', ')}.` : '')
+            + (r.ambiguos.length ? ` Nomes que servem a mais do que um jogador (escreve o nome completo): ${r.ambiguos.join(', ')}.` : '');
+          break;
+        }
+        case 'golos-calendario': {
+          const form = $('[data-fan-form="estatisticas"]', raiz);
+          const j = jor(adminJornada);
+          const lista = [...jogadores.values()].filter(x => x.no_plantel);
+          const g = golosDoCalendario(jogoDoCalendario(j), lista);
+          const nota = $('#fan-relatorio-nota', raiz);
+          if(!g){ nota.textContent = 'O calendário ainda não tem este jogo (abre o site na página inicial para o ler e tenta outra vez).'; break; }
+          if(g.golos_casa != null) form.golos_casa.value = g.golos_casa;
+          if(g.golos_fora != null) form.golos_fora.value = g.golos_fora;
+          g.golos.forEach((n, id) => { const i = $(`tr[data-jogador="${id}"] [name="golos"]`, form); if(i) i.value = n; });
+          g.autogolos.forEach((n, id) => { const i = $(`tr[data-jogador="${id}"] [name="autogolos"]`, form); if(i) i.value = n; });
+          nota.textContent = `Resultado e ${[...g.golos.values()].reduce((a, b) => a + b, 0)} golos preenchidos a partir da Wikipédia — confirma com o relatório oficial.`
+            + (g.semDono.length ? ` Marcadores que não reconheci: ${g.semDono.join(', ')}.` : '');
+          break;
+        }
+        case 'calcular-atraso': {
+          const alvo = jornadas.filter(x => !x.finalizada_em && new Date(x.fecho) <= Date.now() && !x.calculada_em && comEstatisticas.has(x.jogo_id));
+          let feitas = 0, erroCalc = null;
+          for(const x of alvo){
+            const { error } = await db.rpc('fantasy_calcular_jornada', { p_jornada: x.id });
+            if(error){ erroCalc = mensagemErro(error); break; }
+            feitas++;
+          }
+          avisar(erroCalc ? 'erro' : 'ok', erroCalc ? `Calculadas ${feitas}; parou com: ${erroCalc}` : `${feitas} ${feitas === 1 ? 'jornada calculada' : 'jornadas calculadas'} (provisórias).`);
+          comEstatisticas.lido = false;
+          await carregar();
+          break;
+        }
         case 'finalizar': {
           const j = jor(adminJornada);
           const { data, error } = await db.rpc('fantasy_finalizar_jornada', { p_jornada: j.id });
@@ -1054,7 +1199,7 @@ const Fantasy = (() => {
   /* só para os testes automáticos (tests/fantasy_logica.test.js): as regras
      do rascunho, sem desenho nem servidor */
   const _teste = {
-    adicionar, remover, trocar, capitao, vice, problemas, contas, contar, guardarRascunho, mensagemErro,
+    adicionar, remover, trocar, capitao, vice, problemas, contas, contar, guardarRascunho, mensagemErro, lerRelatorio, golosDoCalendario, gestao,
     get rascunho(){ return rascunho; }, get aviso(){ return aviso; }, get minhas(){ return minhas; },
     get eu(){ return eu; }, get admin(){ return admin; }, get estado(){ return estado; }
   };

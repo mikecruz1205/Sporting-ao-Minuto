@@ -4859,6 +4859,8 @@ async function arranque(){
 
   /* skeletons já visíveis enquanto os feeds não respondem */
   pintarHome();
+  /* o calendário (Wikipédia) também serve a gestão da Fantasy */
+  window.DadosSite = { jogos: () => JOGOS };
   CentroJogo.iniciar({
     emblema: emblemaEquipa, nomeProva, irPara,
     tabela: () => TABELA, fonteTabela: () => FONTE_TABELA, jogos: () => JOGOS,
