@@ -56,7 +56,8 @@ const Nuvem = (() => {
      guardada liga-se logo (é preciso saber quem é); um visitante só o
      descarrega quando uma funcionalidade precisar (Fantasy, chat, entrar,
      comunidade, estatísticas individuais). Quem precisa chama garantir(). */
-  const SDK_URL = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/dist/umd/supabase.min.js';
+  /* alojado no próprio site (vendor/), tirado do pacote npm oficial com a integridade verificada */
+  const SDK_URL = '/vendor/supabase-js-2.47.10/supabase.js';
   let aCarregarSDK = null, aLigar = null;
   function carregarSDK(){
     if(window.supabase?.createClient) return Promise.resolve(true);

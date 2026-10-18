@@ -18,7 +18,7 @@
    são apagadas na ativação.
    ========================================================================= */
 
-const VERSAO = 'v4-2026-10-16';
+const VERSAO = 'v5-2026-10-18';
 const CACHE_CASCA   = `casca-${VERSAO}`;
 const CACHE_ESTATICO = `estatico-${VERSAO}`;
 const CACHE_DADOS   = `dados-${VERSAO}`;
@@ -93,10 +93,6 @@ self.addEventListener('fetch', evento => {
     return;
   }
 
-  /* fontes do Google e a biblioteca do Supabase (CDN) */
-  if(/fonts\.(googleapis|gstatic)\.com$/.test(url.hostname) || url.hostname === 'cdn.jsdelivr.net'){
-    evento.respondWith(guardadoEAtualiza(pedido, CACHE_ESTATICO));
-  }
   /* imagens dos jornais: não se guardam — são respostas opacas que
      ocupam muito espaço na quota e mudam a toda a hora */
 });

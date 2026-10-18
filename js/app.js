@@ -4363,15 +4363,17 @@ const TEXTOS_LEGAIS = {
   privacidade: ['Política de Privacidade', `
     <h4>Sem conta</h4>
     <p>Quem só lê (modo visitante) não deixa nada no servidor. No teu browser
-    ficam apenas preferências (tema, filtros) e o arquivo das notícias já
-    lidas, para abrir mais depressa.</p>
+    ficam apenas preferências (tema, filtros), o arquivo das notícias já
+    lidas, para abrir mais depressa, e o teu recorde do Quiz Leonino.</p>
+    <p>As letras e as bibliotecas do site são servidas pelo próprio site: a tua
+    visita não é enviada à Google nem a outros serviços de alojamento de ficheiros.</p>
     <h4>Com conta</h4>
     <p>As contas, o chat e a Fantasy vivem no <b>Supabase</b> (UE, Irlanda). Guarda-se:</p>
     <ul>
       <li>o nome de utilizador e um resumo criptográfico (bcrypt) da palavra-passe —
           a palavra-passe em si nunca é guardada;</li>
       <li>o resumo do código de recuperação, se o gerares (o código só aparece uma vez);</li>
-      <li>as mensagens e fotografias que publicas no chat e a tua equipa Fantasy;</li>
+      <li>as mensagens e fotografias que publicas no chat, a tua equipa Fantasy e o teu recorde do Quiz Leonino;</li>
       <li>nas tentativas de recuperação de palavra-passe, o endereço IP e a hora,
           durante 30 dias, só para travar tentativas repetidas.</li>
     </ul>
