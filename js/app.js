@@ -414,6 +414,11 @@ async function lerFeed(f){
   .filter(n => CONFIG.filtroSporting.test(n.titulo))
   .filter(n => !CONFIG.excluir.some(rx => rx.test(n.titulo)));
 
+  return juntarNoticias(novos);
+}
+
+/* junta notícias novas às que já há (arquivo incluído), sem repetidos */
+function juntarNoticias(novos){
   if(!novos.length) return 0;
 
   novos.forEach(n => n.categoria = classificar(n));
@@ -443,10 +448,37 @@ let novasDesdeVista = 0;
 /* até a primeira volta pelos jornais acabar, uma lista vazia é "a carregar";
    depois disso, sem nenhuma notícia, é erro (e há botão para tentar outra vez) */
 let primeiraLeituraFeita = false;
+/* Primeiro pelo servidor (/api/noticias): um só pedido, comprimido, com as
+   notícias do Sporting já filtradas, e um 304 sem corpo quando nada mudou.
+   Só se o servidor falhar é que se volta a ler jornal a jornal. */
+let etagNoticias = null;
+async function lerAgregadas(){
+  try{
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), CONFIG.timeoutFeed * 2);
+    const r = await fetch('/api/noticias', { cache: 'no-cache', signal: ctrl.signal });
+    clearTimeout(t);
+    if(!r.ok) return null;
+    const etag = r.headers.get('ETag');
+    ultimaLeituraOk = Date.now();
+    if(etag && etag === etagNoticias) return 0;            // nada mudou desde a última leitura
+    const d = await r.json();
+    etagNoticias = etag;
+    const novos = (d.noticias || []).map(n => ({ ...n, data: new Date(n.data) }))
+      .filter(n => !isNaN(n.data) && n.link?.startsWith('http'));
+    return juntarNoticias(novos);
+  }catch(e){ return null; }
+}
+
 async function carregarNoticias(){
-  let novas = 0;
-  for(const f of CONFIG.feeds){
-    novas += await lerFeed(f);
+  let novas = await lerAgregadas();
+  if(novas == null){
+    novas = 0;
+    for(const f of CONFIG.feeds){
+      novas += await lerFeed(f);
+      pintarNoticias();
+    }
+  }else{
     pintarNoticias();
   }
 

@@ -69,5 +69,10 @@
         }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/noticias.py": {
+      "maxDuration": 20
+    }
+  }
 }
