@@ -538,7 +538,174 @@ const Desafio = (() => {
   return { abrir, pintarCartao };
 })();
 
+/* ---------------------------------------------------------------- DESAFIO DA SEMANA
+   Perguntas feitas pelo servidor com os dados da época (resultados,
+   vitórias, marcadores, próximo jogo), iguais para todos de segunda a
+   domingo. As respostas certas só chegam depois de responder; responde-se
+   uma vez por semana, com conta, e há classificação geral e por liga.
+   Servidor: supabase/migrations/20261019150000_quiz_semanal.sql. */
+const QuizSemanal = (() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const seguro = t => Componentes.seguro(t);
+  const LETRAS = ['A', 'B', 'C', 'D'];
+  let raiz = null, ligado = false;
+  let dados = null, estado = 'por-ler', aEnviar = false, aviso = '';
+  let ligas = [], liga = '', classif = null;
+
+  /* com sessão usa o cliente da conta; sem sessão, um pedido simples (sem o supabase-js) */
+  async function chamar(nome, args = {}){
+    const c = window.Nuvem?.cliente;
+    if(c){
+      const { data, error } = await c.rpc(nome, args);
+      if(error) throw error;
+      return data;
+    }
+    const p = Nuvem.PROJETO;
+    const r = await fetch(`${p.url}/rest/v1/rpc/${nome}`, {
+      method: 'POST', headers: { apikey: p.chave, 'Content-Type': 'application/json' }, body: JSON.stringify(args)
+    });
+    if(!r.ok) throw new Error(`${nome}: ${r.status}`);
+    return r.json();
+  }
+
+  async function ler(){
+    estado = 'a-ler'; pintar();
+    try{
+      await Nuvem.iniciar?.();                       // só carrega o supabase-js se houver sessão guardada
+      dados = await chamar('quiz_semanal');
+      estado = 'pronto';
+      if(Nuvem.cliente && Nuvem.perfil){
+        const { data } = await Nuvem.cliente.from('fantasy_liga_membros').select('liga:fantasy_ligas(id, nome)').eq('perfil_id', Nuvem.perfil.id);
+        ligas = (data || []).map(x => x.liga).filter(Boolean);
+      }else ligas = [];
+    }catch(e){ estado = 'erro'; }
+    pintar();
+    if(estado === 'pronto') lerClassificacao();
+  }
+
+  async function lerClassificacao(){
+    try{ classif = await chamar('quiz_semanal_classificacao', liga ? { p_liga: Number(liga) } : {}); }
+    catch(e){ classif = { erro: true }; }
+    pintarClassificacao();
+  }
+
+  const dia = iso => new Date(iso).toLocaleDateString('pt-PT', { timeZone: 'Europe/Lisbon', weekday: 'long', day: 'numeric', month: 'long' });
+
+  function pintar(){
+    if(!raiz) return;
+    if(estado === 'a-ler' || estado === 'por-ler'){
+      raiz.innerHTML = '<div class="qs__cartao"><span class="osso osso--titulo"></span><span class="osso osso--linha"></span><span class="osso osso--linha osso--curto"></span></div>';
+      return;
+    }
+    if(estado === 'erro'){
+      raiz.innerHTML = `<div class="qs__cartao estado-falha estado-falha--curto" role="alert"><p>Não foi possível ler o desafio da semana.</p>
+        <button type="button" class="botao-tentar" data-qs="ler">Tentar outra vez</button></div>`;
+      return;
+    }
+    const ps = dados.perguntas || [];
+    const cabeca = `<header class="qs__cabeca">
+        <p class="qz-sobre">Desafio da semana · ${seguro(dados.semana)}</p>
+        <h2 class="qs__titulo" id="qs-tit">${ps.length} perguntas sobre a época</h2>
+        <p class="qs__nota">Iguais para todos até ${seguro(dia(new Date(new Date(dados.fim) - 1)))}. Cada pergunta diz de que jogo ou de que data fala e tem a fonte. Respondes uma vez; as respostas certas aparecem depois.</p>
+      </header>`;
+    if(!ps.length){
+      raiz.innerHTML = `<div class="qs__cartao">${cabeca}<p class="qs__nota">Esta semana não há dados suficientes para fazer perguntas.</p></div>`;
+      return;
+    }
+    if(dados.respondido){
+      raiz.innerHTML = `<div class="qs__cartao">${cabeca}
+        <p class="qs__resultado" role="status">Acertaste <b>${dados.certas}</b> de ${ps.length}.</p>
+        <ol class="qs__lista">${ps.map((p, i) => {
+          const minha = dados.respostas?.[i], certa = p.correta;
+          return `<li class="qs__p ${minha === certa ? 'is-certa' : 'is-errada'}">
+            <p class="qs__pergunta">${seguro(p.pergunta)}</p>
+            <p class="qs__resp">${minha === certa ? '✓ Acertaste' : `✗ Respondeste ${seguro(p.opcoes[minha] ?? '—')}`} · certa: <b>${seguro(p.opcoes[certa])}</b></p>
+            ${p.explicacao ? `<p class="qs__expl">${seguro(p.explicacao)}</p>` : ''}
+            <p class="qs__fonte">Fonte: ${seguro(p.fonte?.nome || '—')}</p>
+          </li>`;
+        }).join('')}</ol>
+        <section class="qs__class" aria-labelledby="qs-class-tit">
+          <div class="qs__class-topo"><h3 id="qs-class-tit">Classificação da semana</h3>
+            ${ligas.length ? `<label class="chip chip--fonte"><span>${liga ? seguro(ligas.find(l => String(l.id) === liga)?.nome || 'Liga') : 'Geral'}</span>
+              <select id="qs-liga" aria-label="Classificação"><option value="">Geral</option>${ligas.map(l => `<option value="${l.id}" ${String(l.id) === liga ? 'selected' : ''}>${seguro(l.nome)}</option>`).join('')}</select></label>` : ''}
+          </div>
+          <div id="qs-class"></div>
+        </section></div>`;
+      pintarClassificacao();
+      return;
+    }
+    const eu = window.Nuvem?.perfil;
+    raiz.innerHTML = `<form class="qs__cartao" data-qs-form>${cabeca}
+      <ol class="qs__lista">${ps.map((p, i) => `
+        <li class="qs__p"><fieldset>
+          <legend class="qs__pergunta">${seguro(p.pergunta)}</legend>
+          <div class="qs__opcoes">${p.opcoes.map((o, k) => `
+            <label class="qs__opcao"><input type="radio" name="p${i}" value="${k}" required><span><b>${LETRAS[k]}</b>${seguro(o)}</span></label>`).join('')}
+          </div>
+          <p class="qs__fonte">Fonte: ${seguro(p.fonte?.nome || '—')}</p>
+        </fieldset></li>`).join('')}</ol>
+      <p class="qs__aviso" role="status" aria-live="polite">${seguro(aviso)}</p>
+      ${eu ? `<button type="submit" class="botao-cta" ${aEnviar ? 'disabled' : ''}>${aEnviar ? 'A enviar…' : 'Entregar respostas'}</button>`
+           : `<button type="button" class="botao-cta" data-qs="entrar">Entrar para responder</button>
+              <p class="qs__nota">Precisas de conta para entregar e entrar na classificação. As perguntas podes ver já.</p>`}
+      </form>`;
+    pintarClassificacao();
+  }
+
+  function pintarClassificacao(){
+    const alvo = raiz && $('#qs-class', raiz);
+    if(!alvo) return;
+    if(!classif){ alvo.innerHTML = '<span class="osso osso--linha"></span>'; return; }
+    if(classif.erro){ alvo.innerHTML = '<p class="qs__nota">Não foi possível ler a classificação.</p>'; return; }
+    alvo.innerHTML = classif.length
+      ? `<ol class="qs__tabela">${classif.map(l => `<li class="${l.eu ? 'eu' : ''}"><span>${l.posicao}</span><b>@${seguro(l.utilizador)}</b><span>${l.certas}/${l.total}</span></li>`).join('')}</ol>
+         <p class="qs__nota">Desempate: quem respondeu primeiro.</p>`
+      : '<p class="qs__nota">Ainda ninguém respondeu esta semana.</p>';
+  }
+
+  function ligar(){
+    raiz.addEventListener('click', ev => {
+      const b = ev.target.closest('[data-qs]');
+      if(!b) return;
+      if(b.dataset.qs === 'ler') ler();
+      if(b.dataset.qs === 'entrar') window.Entrada?.exigirConta('Entra ou cria uma conta para responderes ao desafio da semana.', 'quiz');
+    });
+    raiz.addEventListener('change', ev => {
+      if(ev.target.id === 'qs-liga'){ liga = ev.target.value; classif = null; pintar(); lerClassificacao(); }
+    });
+    raiz.addEventListener('submit', async ev => {
+      const f = ev.target.closest('[data-qs-form]');
+      if(!f) return;
+      ev.preventDefault();
+      if(aEnviar) return;
+      const n = dados.perguntas.length;
+      const respostas = Array.from({ length: n }, (_, i) => Number(new FormData(f).get('p' + i)));
+      if(respostas.some(x => Number.isNaN(x))){ aviso = 'Responde a todas as perguntas.'; pintar(); return; }
+      aEnviar = true; aviso = ''; pintar();
+      try{
+        const r = await chamar('quiz_semanal_responder', { p_respostas: respostas });
+        if(r?.ok){ dados = r; classif = null; }
+        else aviso = r?.erro || 'Não foi possível entregar.';
+      }catch(e){ aviso = 'Sem ligação ao servidor. Tenta outra vez.'; }
+      aEnviar = false;
+      pintar();
+      if(dados.respondido){ lerClassificacao(); raiz.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
+    });
+  }
+
+  function abrir(){
+    raiz = raiz || document.getElementById('quiz-semanal');
+    if(!raiz) return;
+    if(!ligado){ ligado = true; ligar(); }
+    /* a conta pode ter mudado: lê-se sempre que se abre */
+    ler();
+  }
+
+  return { abrir };
+})();
+
 window.QuizMotor = QuizMotor;
 window.QuizDados = QuizDados;
 window.Quiz = Quiz;
 window.Desafio = Desafio;
+window.QuizSemanal = QuizSemanal;

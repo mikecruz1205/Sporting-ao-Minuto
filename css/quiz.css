@@ -133,3 +133,42 @@
   .qz-opcao.is-certa, .qz-opcao.is-errada, .qz-retorno{ animation: none; }
   .qz-opcao:hover:not([disabled]), .qz-botao:hover{ transform: none; }
 }
+
+/* =========================================================================
+   DESAFIO DA SEMANA (QuizSemanal)
+   ========================================================================= */
+.qs{ margin-top: 28px; }
+.qs__cartao{ display: grid; gap: 16px; padding: 22px; border-radius: 20px; background: var(--cartao); border: 1px solid var(--linha); }
+.qs__titulo{ margin-top: 6px; font: 700 clamp(26px, 4vw, 34px)/1 var(--f-tit); text-transform: uppercase; }
+.qs__nota{ font-size: 13.5px; line-height: 1.5; color: var(--texto-2); }
+.qs__lista{ list-style: none; display: grid; gap: 14px; counter-reset: qs; }
+.qs__p{ counter-increment: qs; padding: 14px; border-radius: 14px; background: var(--fundo-2, var(--cartao-alto)); border: 1px solid var(--linha); }
+.qs__p fieldset{ border: 0; margin: 0; padding: 0; display: grid; gap: 10px; }
+.qs__pergunta{ font-weight: 800; font-size: 15.5px; line-height: 1.4; }
+.qs__pergunta::before{ content: counter(qs) ". "; color: var(--qz-ouro); }
+.qs__opcoes{ display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
+.qs__opcao{ position: relative; display: block; cursor: pointer; }
+.qs__opcao input{ position: absolute; opacity: 0; inset: 0; }
+.qs__opcao span{ display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 8px 12px; border-radius: 12px;
+  font-size: 14.5px; border: 1px solid var(--linha-forte, var(--linha)); background: var(--cartao); }
+.qs__opcao span b{ display: grid; place-items: center; flex: none; width: 26px; height: 26px; border-radius: 50%; font-size: 12px; background: var(--veu-2, var(--linha)); }
+.qs__opcao input:checked + span{ border-color: var(--qz-ouro); box-shadow: inset 0 0 0 1px var(--qz-ouro); }
+.qs__opcao input:checked + span b{ background: var(--qz-ouro); color: #1a1405; }
+.qs__opcao input:focus-visible + span{ outline: 2px solid var(--verde-claro); outline-offset: 2px; }
+.qs__fonte{ font-size: 12px; color: var(--texto-3); }
+.qs__aviso{ font-size: 14px; font-weight: 700; color: var(--qz-errado); min-height: 1em; }
+.qs__resultado{ font-size: 18px; }
+.qs__resultado b{ font: 800 28px/1 var(--f-num); color: var(--qz-ouro); }
+.qs__p.is-certa{ border-color: color-mix(in srgb, var(--qz-certo) 55%, transparent); }
+.qs__p.is-errada{ border-color: color-mix(in srgb, var(--qz-errado) 45%, transparent); }
+.qs__resp{ margin-top: 6px; font-size: 14px; }
+.qs__expl{ margin-top: 4px; font-size: 13.5px; color: var(--texto-2); }
+.qs__class{ display: grid; gap: 10px; }
+.qs__class-topo{ display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.qs__class h3{ font-size: 16px; font-weight: 800; }
+.qs__tabela{ list-style: none; display: grid; gap: 4px; }
+.qs__tabela li{ display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; align-items: center; gap: 8px; min-height: 40px; padding: 0 10px; border-radius: 10px; }
+.qs__tabela li:nth-child(odd){ background: var(--veu-2, transparent); }
+.qs__tabela li.eu{ box-shadow: inset 0 0 0 1px var(--qz-ouro); }
+.qs__tabela li span:first-child{ font-family: var(--f-num); font-weight: 800; color: var(--texto-3); }
+.qs__tabela li span:last-child{ font-family: var(--f-num); font-weight: 800; }

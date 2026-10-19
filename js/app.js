@@ -4737,7 +4737,7 @@ function irPara(vista, opcoes = {}){
   if(vista === 'equipa' && carreiraPorCarregar) carregarCarreira(carreiraPorCarregar);
   if(vista === 'chat') pintarChat();
   if(vista === 'formacao') abrirComModulo('fantasy', '#fantasy', async () => { await Nuvem.garantir(); window.Fantasy?.abrir(); });
-  if(vista === 'quiz') abrirComModulo('quiz', '#quiz', () => window.Quiz?.abrir());
+  if(vista === 'quiz') abrirComModulo('quiz', '#quiz', () => { window.Quiz?.abrir(); window.QuizSemanal?.abrir(); });
   if(vista === 'desafio') abrirComModulo('quiz', '#desafio', () => window.Desafio?.abrir());
   if(vista === 'inicio') pintarCartoesJogos();
   if(vista === 'estatisticas'){ abrirComModulo('arquivo', '#arquivo-corpo', () => window.Arquivo?.abrir()); pintarEstatisticasEpoca(); }
