@@ -4,7 +4,11 @@
    Tudo o que conta vive no servidor (supabase/migrations/*fantasy*):
    plantel, orçamento, transferências e pontos. Aqui só se lê e se pede ao
    servidor que valide e grave — a equipa guarda-se com
-   fantasy_guardar_equipa() e os pontos nunca saem do browser.
+   fantasy_guardar_onze() e os pontos nunca saem do browser.
+
+   A equipa escolhe-se por lugares: uma formação (as de FORMACOES, em
+   js/data.js), um jogador para cada lugar do onze — só quem lá pode jogar
+   — e 3 suplentes.
 
    As contas que se mostram enquanto se monta a equipa (orçamento, saldo,
    transferências) são uma cópia das regras do servidor, só para dar
@@ -31,7 +35,9 @@ const Fantasy = (() => {
   let aberta = null;                    // a jornada em que se pode mexer
   let minhas = { equipas: [], escolhas: [], resultados: [], transferencias: [], historico: [], perfil: null, ligas: [] };
   let anterior = null;                  // equipa em vigor antes da jornada aberta
-  let rascunho = null;                  // { titulares:[], banco:[], capitao, vice }
+  let rascunho = null;                  // { formacao, onze: [11 × id|null], banco: [ids], capitao, vice }
+  let escolha = null;                   // a escolher no mercado: { tipo:'posto', i } | { tipo:'banco', sai? }
+  let antiga = false;                   // equipa guardada com as regras antigas (15, sem lugares)
   let gravado = '';                     // assinatura do que está no servidor (para saber se há alterações)
   let herdada = false;                  // a equipa em vigor veio da jornada anterior
   let separador = 'equipa';
@@ -162,19 +168,20 @@ const Fantasy = (() => {
   function montarRascunho(){
     anterior = aberta ? equipaEm(aberta.numero, true) : null;
     const base = aberta ? (equipaEm(aberta.numero) || anterior) : (minhas.equipas.length ? equipaEm(9999) : null);
+    antiga = false;
     if(base){
       const es = base.escolhas;
-      rascunho = {
-        titulares: es.filter(e => e.titular).map(e => e.jogador_id),
-        banco: es.filter(e => !e.titular).sort((a, b) => a.ordem_banco - b.ordem_banco).map(e => e.jogador_id),
-        capitao: es.find(e => e.capitao)?.jogador_id ?? null,
-        vice: es.find(e => e.vice)?.jogador_id ?? null
-      };
-      gravado = assinatura(rascunho);
+      rascunho = deEscolhas(base.formacao,
+        es.filter(e => e.titular).sort((a, b) => (a.posto ?? 99) - (b.posto ?? 99)),
+        es.filter(e => !e.titular).sort((a, b) => a.ordem_banco - b.ordem_banco).map(e => e.jogador_id));
+      rascunho.capitao = es.find(e => e.capitao)?.jogador_id ?? null;
+      rascunho.vice = es.find(e => e.vice)?.jogador_id ?? null;
+      /* a equipa antiga tem de ser arrumada por lugares: conta como alterada */
+      gravado = antiga ? '' : assinatura(rascunho);
       /* a equipa em vigor é da jornada anterior: mantém-se sozinha, não é preciso gravar */
       herdada = !!aberta && !minhas.equipas.some(e => e.jornada_id === aberta.id);
     }else{
-      rascunho = { titulares: [], banco: [], capitao: null, vice: null };
+      rascunho = rascunhoVazio();
       gravado = assinatura(rascunho);
       herdada = false;
     }
@@ -182,21 +189,21 @@ const Fantasy = (() => {
     if(guardado) rascunho = guardado;
     else if(eu){
       /* a equipa montada antes de entrar não se perde: passa para a conta */
-      const doVisitante = lerRascunho('scp-fantasy-rascunho-anonimo');
+      const doVisitante = lerRascunho('scp-fantasy-rascunho-v2-anonimo');
       if(doVisitante){
         rascunho = doVisitante;
-        try{ localStorage.removeItem('scp-fantasy-rascunho-anonimo'); }catch(e){}
+        try{ localStorage.removeItem('scp-fantasy-rascunho-v2-anonimo'); }catch(e){}
         avisar('ok', minhas.equipas.length
           ? 'Esta é a equipa que montaste antes de entrar. Guarda-a, ou toca em Desfazer para voltares à equipa que tinhas guardada.'
           : 'Recuperámos a equipa que montaste antes de entrar. Já a podes guardar.', 15000);
       }
     }
   }
-  const assinatura = r => JSON.stringify([r.titulares.slice().sort(), r.banco, r.capitao, r.vice]);
+  const assinatura = r => JSON.stringify([r.formacao, r.onze, r.banco, r.capitao, r.vice]);
 
   /* rascunho por gravar: fica neste browser até ser gravado (conveniência —
      a equipa a sério é a do servidor) */
-  const CHAVE_RASCUNHO = () => 'scp-fantasy-rascunho-' + (eu?.id || 'anonimo');
+  const CHAVE_RASCUNHO = () => 'scp-fantasy-rascunho-v2-' + (eu?.id || 'anonimo');
   function guardarRascunho(){
     try{
       if(aberta && alterado()) localStorage.setItem(CHAVE_RASCUNHO(), JSON.stringify({ jornada: aberta.id, r: rascunho }));
@@ -206,29 +213,99 @@ const Fantasy = (() => {
   function lerRascunho(chave = CHAVE_RASCUNHO()){
     try{
       const g = JSON.parse(localStorage.getItem(chave) || 'null');
-      if(!g || !aberta || g.jornada !== aberta.id || !Array.isArray(g.r?.titulares) || !Array.isArray(g.r?.banco)) return null;
-      const ids = [...g.r.titulares, ...g.r.banco];
+      const r = g?.r;
+      if(!r || !aberta || g.jornada !== aberta.id || !formacoes()[r.formacao]
+         || !Array.isArray(r.onze) || r.onze.length !== 11 || !Array.isArray(r.banco)) return null;
+      const ids = [...r.onze.filter(x => x != null), ...r.banco];
       /* jogadores que já não existem ou repetidos: o rascunho não serve */
-      if(!ids.every(id => jog(id)) || new Set(ids).size !== ids.length || ids.length > 15) return null;
-      const r = { titulares: g.r.titulares, banco: g.r.banco, capitao: g.r.capitao ?? null, vice: g.r.vice ?? null };
-      if(!r.titulares.includes(r.capitao)) r.capitao = null;
-      if(!r.titulares.includes(r.vice) || r.vice === r.capitao) r.vice = null;
-      return r;
+      if(!ids.every(id => jog(id)) || new Set(ids).size !== ids.length || r.banco.length > SUPLENTES() + 1) return null;
+      const novo = { formacao: r.formacao, onze: r.onze.map(x => x ?? null), banco: r.banco, capitao: r.capitao ?? null, vice: r.vice ?? null };
+      if(!novo.onze.includes(novo.capitao)) novo.capitao = null;
+      if(!novo.onze.includes(novo.vice) || novo.vice === novo.capitao) novo.vice = null;
+      return novo;
     }catch(e){ return null; }
   }
   const alterado = () => !!rascunho && assinatura(rascunho) !== gravado;
 
   /* =====================================================================
+     LUGARES — a formação e quem pode jogar em cada lugar
+     Os lugares e o seu sítio no campo vêm de FORMACOES (js/data.js); o
+     servidor tem a mesma lista em fantasy_config.jogo (formacoes, papeis).
+     ===================================================================== */
+  const PAPEIS_PADRAO = { GR: ['GR'], LD: ['DEF'], LE: ['DEF'], DC: ['DEF'], ALA: ['DEF', 'MED'],
+                          MDC: ['MED'], MC: ['MED'], MO: ['MED'], EXT: ['MED', 'AVA'], PL: ['AVA'] };
+  const DESENHO = typeof FORMACOES !== 'undefined' ? FORMACOES : {};
+  const FORMACAO_INICIAL = '4-3-3';
+  const formacoes = () => cfg?.jogo?.formacoes
+    || Object.fromEntries(Object.entries(DESENHO).map(([k, v]) => [k, v.map(l => l.papel)]));
+  const papeis = () => cfg?.jogo?.papeis || PAPEIS_PADRAO;
+  const SUPLENTES = () => cfg?.jogo?.suplentes || 3;
+  const papelDe = (f, i) => formacoes()[f]?.[i];
+  const podeJogar = (papel, pos) => !!papeis()[papel]?.includes(pos);
+  const ladoDe = (f, i) => { const x = DESENHO[f]?.[i]?.x ?? 50; return x < 40 ? 'e' : x > 60 ? 'd' : ''; };
+
+  /* o nome do lugar; o lado (esquerdo/direito) sai do desenho da formação */
+  function nomeLugar(f, i){
+    const lado = { e: ' esquerdo', d: ' direito', '': '' }[ladoDe(f, i)];
+    return ({ GR: 'Guarda-redes', LD: 'Defesa direito', LE: 'Defesa esquerdo', DC: 'Defesa central',
+              ALA: 'Ala' + lado, MDC: 'Médio defensivo', MC: 'Médio centro', MO: 'Médio ofensivo',
+              EXT: 'Extremo' + lado, PL: 'Ponta de lança' })[papelDe(f, i)] || papelDe(f, i) || '';
+  }
+  function siglaLugar(f, i){
+    const p = papelDe(f, i), l = ladoDe(f, i).toUpperCase();
+    if(p === 'ALA') return l ? 'A' + l : 'ALA';
+    if(p === 'EXT') return l ? 'E' + l : 'EXT';
+    return p || '';
+  }
+  const rascunhoVazio = () => ({ formacao: formacoes()[FORMACAO_INICIAL] ? FORMACAO_INICIAL : Object.keys(formacoes())[0],
+                                 onze: Array(11).fill(null), banco: [], capitao: null, vice: null });
+
+  /* o lugar livre onde o jogador cabe; primeiro os que só aceitam uma posição
+     (um médio vai para o meio-campo antes de ocupar uma ala) */
+  function lugarLivre(onze, f, id){
+    const pos = jog(id)?.posicao;
+    let melhor = -1;
+    onze.forEach((x, i) => {
+      if(x != null || !podeJogar(papelDe(f, i), pos)) return;
+      if(melhor < 0 || papeis()[papelDe(f, i)].length < papeis()[papelDe(f, melhor)].length) melhor = i;
+    });
+    return melhor;
+  }
+  function arrumar(f, ids){
+    const onze = Array(11).fill(null), fora = [];
+    ids.forEach(id => { const i = lugarLivre(onze, f, id); if(i >= 0) onze[i] = id; else fora.push(id); });
+    return { onze, fora };
+  }
+  /* a equipa do servidor; a guardada com as regras antigas (15, sem lugares)
+     vai para a formação onde cabem mais titulares, e o resto para o banco */
+  function deEscolhas(formacao, tit, banco){
+    if(formacoes()[formacao] && tit.length === 11 && tit.every(e => e.posto != null)){
+      const onze = Array(11).fill(null);
+      tit.forEach(e => { onze[e.posto] = e.jogador_id; });
+      return { formacao, onze, banco, capitao: null, vice: null };
+    }
+    antiga = tit.length > 0;
+    const ids = tit.map(e => e.jogador_id);
+    let melhor = null;
+    Object.keys(formacoes()).forEach(f => {
+      const a = arrumar(f, ids);
+      if(!melhor || a.fora.length < melhor.fora.length) melhor = { f, ...a };
+    });
+    return melhor
+      ? { formacao: melhor.f, onze: melhor.onze, banco: [...melhor.fora, ...banco], capitao: null, vice: null }
+      : rascunhoVazio();
+  }
+
+  /* =====================================================================
      CONTAS (cópia das regras do servidor, para resposta imediata)
      ===================================================================== */
-  const plantel = () => rascunho ? [...rascunho.titulares, ...rascunho.banco] : [];
+  const titulares = () => rascunho ? rascunho.onze.filter(x => x != null) : [];
+  const plantel = () => rascunho ? [...titulares(), ...rascunho.banco] : [];
   const contar = (ids) => {
     const c = { GR: 0, DEF: 0, MED: 0, AVA: 0 };
     ids.forEach(id => { const j = jog(id); if(j) c[j.posicao]++; });
     return c;
   };
-  const formacaoValida = c => cfg && c.GR + c.DEF + c.MED + c.AVA === 11 &&
-    POS.every(p => c[p] >= cfg.jogo.onze_min[p] && c[p] <= cfg.jogo.onze_max[p]);
   const precoAnterior = id => anterior?.escolhas.find(e => e.jogador_id === id)?.preco_compra;
 
   function contas(){
@@ -243,20 +320,29 @@ const Fantasy = (() => {
     const penalizacao = anterior ? Math.max(0, entradas - gratisInel - gratis) * cfg.jogo.custo_transferencia_extra : 0;
     return { orcamento, gasto, saldo: orcamento - gasto, entradas, gratis, penalizacao, primeira: !anterior };
   }
+  /* as contas como ficariam depois de uma mudança (sem a fazer) */
+  function simular(fn){
+    const copia = JSON.parse(JSON.stringify(rascunho));
+    try{ fn(); return contas(); } finally { rascunho = copia; }
+  }
 
   /* o que falta para a equipa poder ser guardada */
   function problemas(){
     if(!cfg || !rascunho) return [];
-    const p = [];
-    const c = contar(plantel());
-    POS.forEach(k => {
-      const falta = cfg.jogo.plantel[k] - c[k];
-      if(falta > 0) p.push(`Falta${falta > 1 ? 'm' : ''} ${falta} ${falta > 1 ? NOME_POS[k].toLowerCase() : NOME_POS_1[k]}`);
+    const p = [], f = rascunho.formacao, S = SUPLENTES();
+    const vazios = rascunho.onze.map((x, i) => x == null ? nomeLugar(f, i) : null).filter(Boolean);
+    if(vazios.length){
+      const conta = new Map();
+      vazios.forEach(n => conta.set(n, (conta.get(n) || 0) + 1));
+      p.push('Falta escolher: ' + [...conta].map(([n, k]) => k > 1 ? `${n.toLowerCase()} (${k})` : n.toLowerCase()).join(', '));
+    }
+    rascunho.onze.forEach((x, i) => {
+      if(x != null && !podeJogar(papelDe(f, i), jog(x)?.posicao)) p.push(`${jog(x)?.nome_curto} não joga a ${nomeLugar(f, i).toLowerCase()}`);
     });
-    if(plantel().length === 15){
-      if(rascunho.titulares.length !== 11 || !formacaoValida(contar(rascunho.titulares)))
-        p.push('O onze tem de ter 1 guarda-redes, 3 a 5 defesas, 2 a 5 médios e 1 a 3 avançados');
-      if(jog(rascunho.banco[0])?.posicao !== 'GR') p.push('O primeiro do banco tem de ser o guarda-redes suplente');
+    const nb = rascunho.banco.length;
+    if(nb < S) p.push(`Falta${S - nb > 1 ? 'm' : ''} ${S - nb} suplente${S - nb > 1 ? 's' : ''}`);
+    if(nb > S) p.push(`O banco leva ${S} suplentes: vende ${nb - S} ou põe no onze`);
+    if(!vazios.length){
       if(!rascunho.capitao) p.push('Escolhe o capitão');
       if(!rascunho.vice) p.push('Escolhe o vice-capitão');
     }
@@ -270,92 +356,140 @@ const Fantasy = (() => {
   /* =====================================================================
      MEXER NA EQUIPA (só no rascunho; gravar é outra coisa)
      ===================================================================== */
-  function podeEntrar(id){
+  /* onde entra um jogador novo: no lugar pedido, no primeiro lugar livre
+     onde pode jogar, ou no banco */
+  function lugarPara(id, alvo = null){
+    const f = rascunho.formacao, pos = jog(id)?.posicao;
+    if(alvo?.tipo === 'posto') return podeJogar(papelDe(f, alvo.i), pos) ? alvo : null;
+    if(alvo?.tipo === 'banco') return (alvo.sai != null && rascunho.banco.includes(alvo.sai)) || rascunho.banco.length < SUPLENTES() ? alvo : null;
+    const i = lugarLivre(rascunho.onze, f, id);
+    if(i >= 0) return { tipo: 'posto', i };
+    return rascunho.banco.length < SUPLENTES() ? { tipo: 'banco' } : null;
+  }
+
+  function podeEntrar(id, alvo = null){
     const j = jog(id);
     if(!j) return 'Jogador desconhecido';
     if(plantel().includes(id)) return 'Já está na tua equipa';
     if(!j.elegivel) return j.motivoInelegivel || 'Não elegível';
     if(j.preco == null) return 'Ainda sem preço Fantasy';
-    const c = contar(plantel());
-    if(c[j.posicao] >= cfg.jogo.plantel[j.posicao]) return `Já tens ${cfg.jogo.plantel[j.posicao]} ${NOME_POS[j.posicao].toLowerCase()}`;
-    if(plantel().length >= 15) return 'O plantel já tem 15';
-    const custo = Number(precoAnterior(id) ?? j.preco);
-    if(contas().saldo - custo < -0.001) return `Faltam ${fmt(custo - contas().saldo)} M€`;
+    const l = lugarPara(id, alvo);
+    if(!l) return alvo?.tipo === 'posto' ? `Não joga a ${nomeLugar(rascunho.formacao, alvo.i).toLowerCase()}`
+                : alvo?.tipo === 'banco' ? `O banco já tem ${SUPLENTES()}`
+                : `Sem lugar livre para um ${NOME_POS_1[j.posicao]} nesta formação nem no banco`;
+    const k = simular(() => colocarNovo(id, l));
+    if(k.saldo < -0.001) return `Faltam ${fmt(-k.saldo)} M€`;
     return null;
   }
 
-  function adicionar(id){
-    if(podeEntrar(id)) return;
-    const j = jog(id);
-    const c = contar(rascunho.titulares);
-    c[j.posicao]++;
-    const cabeNoOnze = rascunho.titulares.length < 11 && c[j.posicao] <= cfg.jogo.onze_max[j.posicao]
-      && (j.posicao !== 'GR' || c.GR === 1);
-    if(cabeNoOnze) rascunho.titulares.push(id); else rascunho.banco.push(id);
-    recentes.add(id);
-    equilibrar();
-    corrigirOnze();
-    arrumarBanco();
-  }
-
-  /* com o onze completo mas numa formação impossível (por exemplo sem
-     avançados), sobe do banco quem falta e desce quem está a mais */
-  function corrigirOnze(){
-    for(let volta = 0; volta < 6 && rascunho.titulares.length === 11 && !formacaoValida(contar(rascunho.titulares)); volta++){
-      const c = contar(rascunho.titulares);
-      const falta = POS.find(p => c[p] < cfg.jogo.onze_min[p]);
-      const sobra = POS.find(p => c[p] > cfg.jogo.onze_max[p])
-                 || [...POS].reverse().find(p => p !== falta && p !== 'GR' && c[p] > cfg.jogo.onze_min[p]);
-      const entra = rascunho.banco.find(x => jog(x).posicao === falta);
-      const sai = [...rascunho.titulares].reverse().find(x => jog(x).posicao === sobra);
-      if(!falta || !entra || !sai) break;
-      rascunho.titulares = rascunho.titulares.map(x => x === sai ? entra : x);
-      rascunho.banco = rascunho.banco.map(x => x === entra ? sai : x);
-      tirarBracadeira(sai);
-    }
-  }
-
-  /* banco com mais de 4: sobe ao onze o primeiro suplente que lá caiba */
-  function equilibrar(){
-    while(rascunho.banco.length > 4 && rascunho.titulares.length < 11){
-      const c = contar(rascunho.titulares);
-      const sobe = rascunho.banco.find(x => {
-        const p = jog(x).posicao;
-        return c[p] + 1 <= cfg.jogo.onze_max[p] && (p !== 'GR' || c.GR === 0);
-      });
-      if(!sobe) break;
-      rascunho.banco = rascunho.banco.filter(x => x !== sobe);
-      rascunho.titulares.push(sobe);
-    }
-  }
-
-  function remover(id){
-    rascunho.titulares = rascunho.titulares.filter(x => x !== id);
+  /* tirar da equipa, sem mexer no resto do estado */
+  function tirar(id){
+    rascunho.onze = rascunho.onze.map(x => x === id ? null : x);
     rascunho.banco = rascunho.banco.filter(x => x !== id);
     if(rascunho.capitao === id) rascunho.capitao = null;
     if(rascunho.vice === id) rascunho.vice = null;
+  }
+  /* põe um jogador novo no lugar; quem lá estava sai da equipa (é vendido) */
+  function colocarNovo(id, l){
+    if(l.tipo === 'posto'){
+      const sai = rascunho.onze[l.i];
+      if(sai != null) tirar(sai);
+      rascunho.onze[l.i] = id;
+    }else if(l.sai != null && rascunho.banco.includes(l.sai)){
+      rascunho.banco = rascunho.banco.map(x => x === l.sai ? id : x);
+    }else{
+      rascunho.banco.push(id);
+    }
+  }
+
+  function adicionar(id, alvo = null){
+    if(podeEntrar(id, alvo)) return false;
+    const sai = alvo?.tipo === 'posto' ? rascunho.onze[alvo.i] : alvo?.sai;
+    colocarNovo(id, lugarPara(id, alvo));
+    if(sai != null){ if(tocado === sai) tocado = null; if(aTrocar === sai) aTrocar = null; }
+    recentes.add(id);
+    return true;
+  }
+
+  function remover(id){
+    tirar(id);
     if(tocado === id) tocado = null;
     if(aTrocar === id) aTrocar = null;
   }
 
-  /* o guarda-redes suplente vai sempre à frente */
-  function arrumarBanco(){
-    rascunho.banco.sort((a, b) => (jog(a)?.posicao === 'GR' ? 0 : 1) - (jog(b)?.posicao === 'GR' ? 0 : 1));
+  /* outra formação: cada um vai para um lugar onde pode jogar; um lugar que
+     fique vazio recebe do banco quem lá possa jogar; quem não cabe vai para
+     o banco (se o banco passar de 3, diz-se o que falta resolver) */
+  function mudarFormacao(f){
+    if(!formacoes()[f] || !rascunho || f === rascunho.formacao) return;
+    const { onze, fora } = arrumar(f, titulares());
+    let banco = rascunho.banco.slice();
+    onze.forEach((x, i) => {
+      if(x != null) return;
+      const sobe = banco.find(b => podeJogar(papelDe(f, i), jog(b)?.posicao));
+      if(sobe != null){ onze[i] = sobe; banco = banco.filter(b => b !== sobe); }
+    });
+    rascunho.formacao = f;
+    rascunho.onze = onze;
+    rascunho.banco = [...banco, ...fora];
+    const perdeu = fora.filter(id => id === rascunho.capitao || id === rascunho.vice);
+    fora.forEach(id => { if(rascunho.capitao === id) rascunho.capitao = null; if(rascunho.vice === id) rascunho.vice = null; });
+    if(fora.length){
+      const nomes = fora.map(id => jog(id)?.nome_curto).join(', ');
+      avisar('ok', `${nomes} ${fora.length > 1 ? 'passaram' : 'passou'} para o banco: não ${fora.length > 1 ? 'cabiam' : 'cabia'} na ${f}.`
+        + (perdeu.length ? ' Escolhe outra vez o capitão e o vice.' : ''));
+    }
   }
 
-  /* troca entre um titular e um suplente, se a formação continuar válida */
+  /* troca de lugar: titular com suplente, ou dois titulares, se cada um
+     puder jogar no lugar do outro; dois suplentes trocam de ordem */
   function trocar(a, b){
-    const tA = rascunho.titulares.includes(a), tB = rascunho.titulares.includes(b);
-    if(tA === tB) return 'Escolhe um titular e um suplente';
-    const tit = tA ? a : b, sup = tA ? b : a;
-    if((jog(tit).posicao === 'GR') !== (jog(sup).posicao === 'GR')) return 'Um guarda-redes só troca com outro guarda-redes';
-    const novo = rascunho.titulares.map(x => x === tit ? sup : x);
-    if(!formacaoValida(contar(novo))) return 'Essa troca deixava a formação inválida (3–5 defesas, 2–5 médios, 1–3 avançados)';
-    rascunho.titulares = novo;
-    rascunho.banco = rascunho.banco.map(x => x === sup ? tit : x);
-    tirarBracadeira(tit);
-    arrumarBanco();
-    recentes.add(tit); recentes.add(sup);
+    if(a === b) return null;
+    const f = rascunho.formacao, pos = id => jog(id)?.posicao, nome = id => jog(id)?.nome_curto || 'O jogador';
+    const ia = rascunho.onze.indexOf(a), ib = rascunho.onze.indexOf(b);
+    if(ia < 0 && ib < 0){
+      const x = rascunho.banco.indexOf(a), y = rascunho.banco.indexOf(b);
+      if(x < 0 || y < 0) return 'Escolhe dois jogadores da equipa';
+      rascunho.banco[x] = b; rascunho.banco[y] = a;
+      return null;
+    }
+    if(ia >= 0 && ib >= 0){
+      if(!podeJogar(papelDe(f, ia), pos(b))) return `${nome(b)} não joga a ${nomeLugar(f, ia).toLowerCase()}`;
+      if(!podeJogar(papelDe(f, ib), pos(a))) return `${nome(a)} não joga a ${nomeLugar(f, ib).toLowerCase()}`;
+      rascunho.onze[ia] = b; rascunho.onze[ib] = a;
+    }else{
+      const [tit, sup, i] = ia >= 0 ? [a, b, ia] : [b, a, ib];
+      if(!rascunho.banco.includes(sup)) return 'Escolhe dois jogadores da equipa';
+      if(!podeJogar(papelDe(f, i), pos(sup))) return `${nome(sup)} não joga a ${nomeLugar(f, i).toLowerCase()}`;
+      rascunho.onze[i] = sup;
+      rascunho.banco = rascunho.banco.map(x => x === sup ? tit : x);
+      tirarBracadeira(tit);
+    }
+    recentes.add(a); recentes.add(b);
+    return null;
+  }
+
+  /* um jogador da equipa para um lugar vazio do onze */
+  function colocar(id, i){
+    const f = rascunho.formacao;
+    if(rascunho.onze[i] != null) return trocar(id, rascunho.onze[i]);
+    if(!podeJogar(papelDe(f, i), jog(id)?.posicao)) return `${jog(id)?.nome_curto || 'O jogador'} não joga a ${nomeLugar(f, i).toLowerCase()}`;
+    const de = rascunho.onze.indexOf(id);
+    if(de >= 0) rascunho.onze[de] = null;
+    else rascunho.banco = rascunho.banco.filter(x => x !== id);
+    rascunho.onze[i] = id;
+    recentes.add(id);
+    return null;
+  }
+
+  /* um titular para um lugar vazio do banco */
+  function paraBanco(id){
+    const de = rascunho.onze.indexOf(id);
+    if(de < 0) return null;
+    if(rascunho.banco.length >= SUPLENTES()) return `O banco já tem ${SUPLENTES()}: troca com um suplente`;
+    rascunho.onze[de] = null;
+    rascunho.banco.push(id);
+    tirarBracadeira(id);
     return null;
   }
 
@@ -371,17 +505,17 @@ const Fantasy = (() => {
 
   function moverBanco(id, delta){
     const i = rascunho.banco.indexOf(id), k = i + delta;
-    if(i < 1 || k < 1 || k >= rascunho.banco.length) return;
+    if(i < 0 || k < 0 || k >= rascunho.banco.length) return;
     [rascunho.banco[i], rascunho.banco[k]] = [rascunho.banco[k], rascunho.banco[i]];
   }
 
   function capitao(id){
-    if(!rascunho.titulares.includes(id)) return;
+    if(!rascunho.onze.includes(id)) return;
     if(rascunho.vice === id) rascunho.vice = rascunho.capitao;
     rascunho.capitao = id;
   }
   function vice(id){
-    if(!rascunho.titulares.includes(id)) return;
+    if(!rascunho.onze.includes(id)) return;
     if(rascunho.capitao === id) rascunho.capitao = rascunho.vice;
     rascunho.vice = id;
   }
@@ -396,8 +530,8 @@ const Fantasy = (() => {
     aGuardar = true; pintar();
     let data = null, error = null;
     try{
-      ({ data, error } = await db.rpc('fantasy_guardar_equipa', {
-        p_titulares: rascunho.titulares, p_banco: rascunho.banco,
+      ({ data, error } = await db.rpc('fantasy_guardar_onze', {
+        p_formacao: rascunho.formacao, p_onze: rascunho.onze, p_banco: rascunho.banco,
         p_capitao: rascunho.capitao, p_vice: rascunho.vice, p_nome_equipa: nome
       }));
     }catch(e){ error = e; }
@@ -495,13 +629,14 @@ const Fantasy = (() => {
   function resumo(){
     if(!cfg) return '';
     const k = contas();
-    const c = contar(plantel());
-    const lugares = POS.map(p => `<span class="${c[p] === cfg.jogo.plantel[p] ? 'cheio' : ''}">${p} ${c[p]}/${cfg.jogo.plantel[p]}</span>`).join('');
+    const S = SUPLENTES(), n = titulares().length, nb = rascunho ? rascunho.banco.length : 0;
+    const lugares = `<span class="${n === 11 ? 'cheio' : ''}">Onze ${n}/11</span><span class="${nb === S ? 'cheio' : ''}">Suplentes ${nb}/${S}</span>`
+      + (rascunho ? `<span>${rascunho.formacao}</span>` : '');
     return `<div class="fan-resumo" aria-label="Resumo da equipa">
       <div><span>Orçamento</span><b>${fmt(k.orcamento)}<i>M€</i></b></div>
       <div><span>Gasto</span><b>${fmt(k.gasto)}<i>M€</i></b></div>
       <div class="${k.saldo < -0.001 ? 'mau' : ''}"><span>Saldo</span><b>${fmt(k.saldo)}<i>M€</i></b></div>
-      <div><span>Jogadores</span><b>${plantel().length}<i>/15</i></b></div>
+      <div><span>Jogadores</span><b>${plantel().length}<i>/${11 + SUPLENTES()}</i></b></div>
       <div><span>Transferências</span><b>${k.primeira ? '∞' : `${k.entradas}<i>/${k.gratis} grátis</i>`}</b>${k.penalizacao ? `<em>−${k.penalizacao} pts</em>` : ''}</div>
       <p class="fan-resumo__lugares">${lugares}</p>
     </div>`;
@@ -529,36 +664,40 @@ const Fantasy = (() => {
     </span>`;
   }
 
-  /* ---------- EQUIPA: o campo e o banco */
+  /* ---------- EQUIPA: a formação, o campo por lugares, a braçadeira e o banco */
   function equipa(){
-    if(!rascunho || !plantel().length){
-      return `<div class="fan-vazio">
-        <p class="estado__titulo">Ainda não tens equipa</p>
-        <p class="estado__texto">Escolhe 15 jogadores do Sporting (2 guarda-redes, 5 defesas, 5 médios e 3 avançados) com ${fmt(cfg.jogo.orcamento)} M€ Fantasy.</p>
-        <button type="button" class="botao-cta" data-fan-sep="mercado">Ir ao mercado</button>
-      </div>`;
-    }
-    const linha = p => {
-      const ids = rascunho.titulares.filter(id => jog(id)?.posicao === p);
-      return `<div class="fan-linha" data-linha="${p}">${ids.map(id => slot(id)).join('')}</div>`;
-    };
-    const falta = POS.map(p => [p, cfg.jogo.plantel[p] - contar(plantel())[p]]).filter(([, n]) => n > 0);
-    const c = contar(rascunho.titulares);
+    if(!rascunho) return '';
+    const f = rascunho.formacao, S = SUPLENTES();
+    const desenho = DESENHO[f] || [];
+    const sitio = i => desenho[i] || { x: 50, y: 8 + i * 8 };
+    const tit = rascunho.onze.map((id, i) => id != null ? { id, i } : null).filter(Boolean);
+    const opcoes = atual => '<option value="">Escolher…</option>' + tit.map(({ id, i }) =>
+      `<option value="${id}" ${atual === id ? 'selected' : ''}>${seguro(jog(id)?.nome_curto)} · ${siglaLugar(f, i)}</option>`).join('');
+    const nBanco = Math.max(S, rascunho.banco.length);
     return `
-      ${herdada && !alterado() ? `<p class="fan-nota fan-nota--info">A tua equipa da jornada anterior mantém-se nesta jornada. Só precisas de guardar se mudares alguma coisa.</p>` : ''}
-      <div class="fan-campo" aria-label="O teu onze">
-        <div class="fan-campo__formacao">${c.DEF}-${c.MED}-${c.AVA}</div>
-        ${['AVA', 'MED', 'DEF', 'GR'].map(linha).join('')}
+      ${antiga ? `<p class="fan-nota fan-nota--info">A tua equipa foi guardada com as regras antigas (15 jogadores). Agora cada lugar do onze leva um jogador e há ${S} suplentes: confirma os lugares, o banco e a braçadeira, e guarda.</p>`
+        : herdada && !alterado() ? '<p class="fan-nota fan-nota--info">A tua equipa da jornada anterior mantém-se nesta jornada. Só precisas de guardar se mudares alguma coisa.</p>' : ''}
+      ${!plantel().length ? `<p class="fan-nota">Escolhe a formação e toca em cada lugar do campo para escolher o jogador. Depois, ${S} suplentes. Orçamento: ${fmt(cfg.jogo.orcamento)} M€ Fantasy.</p>` : ''}
+      <div class="fan-formacoes" role="group" aria-label="Formação">
+        <span class="fan-rotulo">Formação</span>
+        ${Object.keys(formacoes()).map(k => `<button type="button" class="chip ${k === f ? 'is-on' : ''}" aria-pressed="${k === f}" data-fan-formacao="${k}">${k}</button>`).join('')}
       </div>
-      <p class="fan-legenda" aria-hidden="true">${POS.map(p => `<span><i class="fan-slot__pos fan-pos--${p}">${p}</i>${NOME_POS[p]}</span>`).join('')}
-        <span><i class="fan-braco fan-braco--legenda">C</i>Capitão (pontos a dobrar)</span></p>
-      <div class="fan-banco" aria-label="Banco, por ordem de entrada">
-        <p class="fan-rotulo">Banco <span>— entram por esta ordem se um titular não jogar</span></p>
-        <ol class="fan-banco__lista">${rascunho.banco.map((id, i) => `<li>${slot(id, i)}</li>`).join('')}</ol>
+      <div class="fan-bracadeiras">
+        <label><span><i class="fan-braco" aria-hidden="true">C</i>Capitão <small>pontos a dobrar</small></span>
+          <select id="fan-capitao" ${tit.length ? '' : 'disabled'}>${opcoes(rascunho.capitao)}</select></label>
+        <label><span><i class="fan-braco fan-braco--v" aria-hidden="true">V</i>Vice-capitão <small>se o capitão não jogar</small></span>
+          <select id="fan-vice" ${tit.length ? '' : 'disabled'}>${opcoes(rascunho.vice)}</select></label>
       </div>
-      ${falta.length ? `<div class="fan-falta"><p class="fan-rotulo">Por preencher</p>
-        ${falta.map(([p, n]) => `<button type="button" class="chip" data-fan-faltam="${p}">+ ${n} ${n > 1 ? NOME_POS[p].toLowerCase() : NOME_POS_1[p]}</button>`).join('')}</div>` : ''}
+      <div class="fan-campo fan-campo--lugares" aria-label="O teu onze em ${f}">
+        <div class="fan-campo__formacao" aria-hidden="true">${f}</div>
+        ${rascunho.onze.map((id, i) => `<div class="fan-lugar" style="left:${sitio(i).x}%;top:${sitio(i).y}%">${id != null ? slot(id, null, i) : lugarVazio(i)}</div>`).join('')}
+      </div>
       ${painelJogador()}
+      <div class="fan-banco" aria-label="Suplentes, por ordem de entrada">
+        <p class="fan-rotulo">Suplentes <span>— entram por esta ordem no lugar de quem não jogar, se puderem jogar nesse lugar</span></p>
+        <ol class="fan-banco__lista" style="--n:${nBanco}">${Array.from({ length: nBanco }, (_, k) =>
+          `<li>${rascunho.banco[k] != null ? slot(rascunho.banco[k], k) : bancoVazio(k)}</li>`).join('')}</ol>
+      </div>
       ${eu ? `<label class="fan-nome"><span>Nome da equipa</span>
         <input id="fan-nome-equipa" type="text" maxlength="30" minlength="3" autocomplete="off"
                value="${seguro(minhas.perfil?.nome_equipa || '')}" placeholder="Equipa de ${seguro(eu.utilizador)}"></label>` : ''}
@@ -573,47 +712,75 @@ const Fantasy = (() => {
     return repetido && !/^[A-Z]\./.test(j.nome_curto) ? `${j.nome_curto.trim()[0]}. ${apelido}` : apelido;
   }
 
-  function slot(id, iBanco){
+  /* um jogador no campo (posto = o lugar) ou no banco (iBanco = a ordem) */
+  function slot(id, iBanco, posto){
     const j = jog(id);
     if(!j) return '';
+    const f = rascunho.formacao;
     const c = rascunho.capitao === id, v = rascunho.vice === id;
     const sel = tocado === id || aTrocar === id;
-    const alvo = aTrocar && aTrocar !== id && (rascunho.titulares.includes(aTrocar) !== rascunho.titulares.includes(id));
+    const alvo = aTrocar != null && aTrocar !== id && podeTrocar(aTrocar, id);
+    const lugar = posto != null ? nomeLugar(f, posto) : `suplente ${iBanco + 1}`;
     return `<button type="button" class="fan-slot ${sel ? 'is-sel' : ''} ${alvo ? 'is-alvo' : ''} ${!j.elegivel ? 'is-inelegivel' : ''} ${recentes.has(id) ? 'is-novo' : ''}" data-fan-slot="${id}"
-              aria-label="${seguro(j.nome)}, ${NOME_POS_1[j.posicao]}${c ? ', capitão' : v ? ', vice-capitão' : ''}${iBanco != null ? ', suplente ' + (iBanco + 1) : ''}${j.pontos != null ? ', ' + j.pontos + ' pontos' : ''}">
+              aria-label="${seguro(j.nome)}, ${lugar}${c ? ', capitão' : v ? ', vice-capitão' : ''}${j.pontos != null ? ', ' + j.pontos + ' pontos' : ''}">
       ${cara(j)}
       ${c ? '<i class="fan-braco" aria-hidden="true">C</i>' : v ? '<i class="fan-braco fan-braco--v" aria-hidden="true">V</i>' : ''}
-      <span class="fan-slot__nome"><i class="fan-slot__pos fan-pos--${j.posicao}" aria-hidden="true">${j.posicao}</i><span class="fan-slot__txt">${seguro(rotuloCampo(j))}</span></span>
+      <span class="fan-slot__nome"><i class="fan-slot__pos fan-pos--${j.posicao}" aria-hidden="true">${posto != null ? siglaLugar(f, posto) : j.posicao}</i><span class="fan-slot__txt">${seguro(rotuloCampo(j))}</span></span>
       <span class="fan-slot__info">${fmt(precoAnterior(id) ?? j.preco)} M€${j.pontos != null ? ` · <b>${j.pontos}</b> pts` : ''}</span>
     </button>`;
   }
 
-  /* o que se pode fazer ao jogador tocado */
+  /* com um jogador à espera de troca: pode ir para o lugar de b? */
+  function podeTrocar(a, b){
+    const f = rascunho.formacao, ia = rascunho.onze.indexOf(a), ib = rascunho.onze.indexOf(b);
+    if(ia < 0 && ib < 0) return true;
+    if(ib >= 0 && !podeJogar(papelDe(f, ib), jog(a)?.posicao)) return false;
+    if(ia >= 0 && ib >= 0 && !podeJogar(papelDe(f, ia), jog(b)?.posicao)) return false;
+    if(ia >= 0 && ib < 0 && !podeJogar(papelDe(f, ia), jog(b)?.posicao)) return false;
+    return true;
+  }
+
+  function lugarVazio(i){
+    const f = rascunho.formacao;
+    const sel = escolha?.tipo === 'posto' && escolha.i === i;
+    const alvo = aTrocar != null && podeJogar(papelDe(f, i), jog(aTrocar)?.posicao);
+    return `<button type="button" class="fan-slot fan-slot--vazio ${sel ? 'is-sel' : ''} ${alvo ? 'is-alvo' : ''}" data-fan-posto="${i}" aria-label="Escolher o ${nomeLugar(f, i).toLowerCase()}">
+      <span class="fan-cara fan-cara--vazia" aria-hidden="true">+</span>
+      <span class="fan-slot__nome"><i class="fan-slot__pos" aria-hidden="true">${siglaLugar(f, i)}</i><span class="fan-slot__txt">${seguro(nomeLugar(f, i))}</span></span>
+    </button>`;
+  }
+  function bancoVazio(k){
+    const alvo = aTrocar != null && rascunho.onze.includes(aTrocar);
+    return `<button type="button" class="fan-slot fan-slot--vazio ${escolha?.tipo === 'banco' && escolha.sai == null ? 'is-sel' : ''} ${alvo ? 'is-alvo' : ''}" data-fan-banco-vazio="${k}" aria-label="Escolher o suplente ${k + 1}">
+      <span class="fan-cara fan-cara--vazia" aria-hidden="true">+</span>
+      <span class="fan-slot__nome"><span class="fan-slot__txt">Suplente ${k + 1}</span></span>
+    </button>`;
+  }
+
+  /* o que se pode fazer ao jogador tocado — logo por baixo do campo */
   function painelJogador(){
-    const id = aTrocar || tocado;
-    const j = id && jog(id);
+    const id = aTrocar ?? tocado;
+    const j = id != null && jog(id);
     if(!j) return '';
-    if(aTrocar) return `<div class="fan-painel" role="region" aria-label="Troca">
-      <p><b>${seguro(j.nome_curto)}</b>: toca agora no ${rascunho.titulares.includes(id) ? 'suplente' : 'titular'} com quem queres trocar.</p>
+    const f = rascunho.formacao, i = rascunho.onze.indexOf(id), iBanco = rascunho.banco.indexOf(id);
+    if(aTrocar != null) return `<div class="fan-painel" role="region" aria-label="Mudar de lugar">
+      <p><b>${seguro(j.nome_curto)}</b>: toca no lugar ou no jogador com quem queres trocar${i >= 0 ? ', ou num lugar vazio do banco' : ''}. Os lugares onde pode jogar estão a piscar.</p>
       <button type="button" class="chip" data-fan="cancelar-troca">Cancelar</button></div>`;
-    const titular = rascunho.titulares.includes(id);
-    const iBanco = rascunho.banco.indexOf(id);
     const hp = historicoPrecos.get(id) || [];
     return `<div class="fan-painel" role="region" aria-label="${seguro(j.nome)}">
       <div class="fan-painel__topo">${cara(j, 'g')}
         <div><b>${seguro(j.nome)}</b>
-          <span>${NOME_POS_1[j.posicao]}${j.numero ? ' · n.º ' + j.numero : ''}${j.nacionalidade ? ' · ' + seguro(j.nacionalidade) : ''}${j.idade ? ' · ' + j.idade + ' anos' : ''}</span>
+          <span>${i >= 0 ? nomeLugar(f, i) : 'Suplente ' + (iBanco + 1)} · ${NOME_POS_1[j.posicao]}${j.numero ? ' · n.º ' + j.numero : ''}${j.nacionalidade ? ' · ' + seguro(j.nacionalidade) : ''}${j.idade ? ' · ' + j.idade + ' anos' : ''}</span>
           <span>${epocaTexto(j)}</span>
           <span>Preço ${fmt(j.preco)} M€${precoAnterior(id) != null && Number(precoAnterior(id)) !== j.preco ? ` · compraste a ${fmt(precoAnterior(id))} M€` : ''}${hp.length > 1 ? ` · ${hp.length - 1} alteraç${hp.length > 2 ? 'ões' : 'ão'} de preço` : ''}</span>
         </div>
         <button type="button" class="fan-fechar" data-fan="fechar-painel" aria-label="Fechar">×</button>
       </div>
       <div class="fan-painel__acoes">
-        ${titular ? `<button type="button" class="chip ${rascunho.capitao === id ? 'is-on' : ''}" data-fan="capitao">Capitão</button>
-                     <button type="button" class="chip ${rascunho.vice === id ? 'is-on' : ''}" data-fan="vice">Vice-capitão</button>` : ''}
-        <button type="button" class="chip" data-fan="trocar">${titular ? 'Mandar para o banco' : 'Pôr a titular'}</button>
-        ${iBanco > 1 ? `<button type="button" class="chip" data-fan="subir" aria-label="Subir na ordem do banco">↑ Subir</button>` : ''}
-        ${iBanco > 0 && iBanco < rascunho.banco.length - 1 ? `<button type="button" class="chip" data-fan="descer" aria-label="Descer na ordem do banco">↓ Descer</button>` : ''}
+        <button type="button" class="chip" data-fan="mudar">${i >= 0 ? 'Mudar de lugar ou trocar com um suplente' : 'Pôr no onze'}</button>
+        <button type="button" class="chip" data-fan="substituir">Trocar por outro jogador</button>
+        ${iBanco > 0 ? '<button type="button" class="chip" data-fan="subir" aria-label="Subir na ordem do banco">↑ Subir</button>' : ''}
+        ${iBanco >= 0 && iBanco < rascunho.banco.length - 1 ? '<button type="button" class="chip" data-fan="descer" aria-label="Descer na ordem do banco">↓ Descer</button>' : ''}
         <button type="button" class="chip chip--perigo" data-fan="vender">Vender</button>
       </div>
       ${!j.elegivel ? `<p class="fan-nota">Já não pode ser escolhido (${seguro(j.motivoInelegivel || 'não elegível')}). Trocá-lo não conta como transferência.</p>` : ''}
@@ -636,16 +803,22 @@ const Fantasy = (() => {
 
   /* ---------- MERCADO */
   function mercado(){
+    const f = rascunho?.formacao;
+    const papelAlvo = escolha?.tipo === 'posto' ? papelDe(f, escolha.i) : null;
+    const sai = escolha?.tipo === 'posto' ? rascunho.onze[escolha.i] : escolha?.sai;
     const lista = [...jogadores.values()]
       .filter(j => j.no_plantel || plantel().includes(j.id))
-      .filter(j => filtroPos === 'todos' || j.posicao === filtroPos)
+      .filter(j => papelAlvo ? podeJogar(papelAlvo, j.posicao) : (filtroPos === 'todos' || j.posicao === filtroPos))
       .filter(j => !busca || semAcento(j.nome).includes(semAcento(busca)))
       .sort((a, b) => ordem === 'nome' ? a.nome.localeCompare(b.nome, 'pt')
                     : ordem === 'pontos' ? (b.pontos ?? -999) - (a.pontos ?? -999) || (b.preco - a.preco)
                     : (b.preco ?? 0) - (a.preco ?? 0) || a.nome.localeCompare(b.nome, 'pt'));
     return `
+      ${escolha ? `<div class="fan-escolha" role="status">
+        <p>A escolher: <b>${escolha.tipo === 'posto' ? seguro(nomeLugar(f, escolha.i)) : 'suplente'}</b>${sai != null ? ` — no lugar de ${seguro(jog(sai)?.nome_curto)}, que é vendido` : ''}${papelAlvo ? ` <small>(${papeis()[papelAlvo].map(p => NOME_POS[p].toLowerCase()).join(' ou ')})</small>` : ''}</p>
+        <button type="button" class="chip" data-fan="cancelar-escolha">Cancelar</button></div>` : ''}
       <div class="fan-filtros">
-        <div class="filtro-temas" role="group" aria-label="Posição">
+        <div class="filtro-temas" role="group" aria-label="Posição" ${papelAlvo ? 'hidden' : ''}>
           ${['todos', ...POS].map(p => `<button type="button" class="chip ${filtroPos === p ? 'is-on' : ''}" aria-pressed="${filtroPos === p}" data-fan-pos="${p}">${p === 'todos' ? 'Todos' : NOME_POS[p]}</button>`).join('')}
         </div>
         <div class="fan-filtros__linha">
@@ -662,7 +835,7 @@ const Fantasy = (() => {
 
   function linhaMercado(j){
     const tenho = plantel().includes(j.id);
-    const porque = tenho ? null : podeEntrar(j.id);
+    const porque = tenho ? null : podeEntrar(j.id, escolha);
     return `<li class="fan-mj ${tenho ? 'is-meu' : ''}">
       ${cara(j)}
       <span class="fan-mj__corpo">
@@ -843,15 +1016,16 @@ const Fantasy = (() => {
         <li><b>Autogolo</b>: ${p.autogolo} para quem o marca; conta como golo sofrido pela equipa.</li>
         <li><b>Golos sofridos</b>: os sofridos com o jogador em campo, quando a fonte os dá. Se só houver o total do jogo, conta para quem jogou ${p.baliza_inviolada_minutos} minutos ou mais.</li>
         <li><b>Cartões</b>: com vermelho (direto ou por acumulação) os amarelos não descontam.</li>
-        <li><b>Quem não joga</b> não pontua. Sai automaticamente para o primeiro suplente (pela ordem do banco) que jogou e mantenha a formação válida; guarda-redes só por guarda-redes. Cada substituição aplica-se uma vez — recalcular dá sempre o mesmo resultado.</li>
+        <li><b>Quem não joga</b> não pontua. Sai automaticamente para o primeiro suplente (pela ordem do banco) que jogou e pode jogar naquele lugar; guarda-redes só por guarda-redes. Cada substituição aplica-se uma vez — recalcular dá sempre o mesmo resultado.</li>
         <li><b>Capitão</b>: pontos a dobrar. Se não jogar, o vice-capitão fica com o bónus; se nenhum jogar, não há bónus.</li>
         <li><b>Estatística em falta</b> não vale zero: não dá pontos e fica assinalada como "sem dados" no detalhe.</li>
         <li><b>Provisória → final</b>: os pontos aparecem como provisórios assim que as estatísticas são introduzidas e podem ser corrigidos. Ao fim de ${g.horas_ate_final} horas (ou quando o administrador a fecha) a jornada passa a final e não muda mais.</li>
       </ul>
       <h4>Equipa, orçamento e transferências</h4>
       <ul>
-        <li>15 jogadores: ${POS.map(k => `${g.plantel[k]} ${NOME_POS[k].toLowerCase()}`).join(', ')}. Orçamento inicial: ${fmt(g.orcamento)} M€ Fantasy.</li>
-        <li>Onze em formação válida: 1 guarda-redes, ${g.onze_min.DEF}–${g.onze_max.DEF} defesas, ${g.onze_min.MED}–${g.onze_max.MED} médios, ${g.onze_min.AVA}–${g.onze_max.AVA} avançados. Capitão e vice têm de ser titulares.</li>
+        <li>${11 + SUPLENTES()} jogadores: escolhes a formação (${Object.keys(formacoes()).join(', ')}), um jogador para cada lugar do onze e ${SUPLENTES()} suplentes. Orçamento inicial: ${fmt(g.orcamento)} M€ Fantasy.</li>
+        <li>Cada lugar só leva quem lá pode jogar: guarda-redes na baliza; defesas a defesa direito, esquerdo e central; nas alas, defesas ou médios; médios no meio-campo; nos extremos, médios ou avançados; avançados a ponta de lança. O site só sabe se um jogador é defesa, médio ou avançado — não o lado em que costuma jogar — por isso és tu quem escolhe quem joga a defesa direito ou esquerdo.</li>
+        <li>Capitão e vice escolhem-se por cima do campo e têm de ser titulares.</li>
         <li>Cada jogo oficial do Sporting é uma jornada. A equipa fecha ${g.fecho_minutos_antes ? g.fecho_minutos_antes + ' minutos antes do' : 'à hora do'} início do jogo; quem não mexer mantém a equipa anterior.</li>
         <li>A primeira equipa é livre. Depois, ${g.transferencias_gratis} transferências grátis por jornada; cada uma a mais custa ${g.custo_transferencia_extra} pontos. Trocar um jogador que saiu do plantel é grátis.</li>
         <li>Quem fica mantém o preço por que foi comprado; quem sai é vendido ao preço atual. Mudanças de preço nunca alteram jornadas já fechadas.</li>
@@ -1069,11 +1243,41 @@ const Fantasy = (() => {
       const b = ev.target.closest('button, [data-fan-slot]');
       if(!b || !raiz.contains(b)) return;
       const d = b.dataset;
-      if(d.fanSep){ separador = d.fanSep; tocado = aTrocar = null; pintar(); return; }
-      if(d.fanFaltam){ separador = 'mercado'; filtroPos = d.fanFaltam; pintar(); return; }
+      if(d.fanSep){ separador = d.fanSep; tocado = aTrocar = null; escolha = null; pintar(); return; }
       if(d.fanPos){ filtroPos = d.fanPos; pintar(); return; }
-      if(d.fanEntra){ adicionar(Number(d.fanEntra)); pintar(); return; }
+      if(d.fanFormacao){ mudarFormacao(d.fanFormacao); tocado = aTrocar = null; pintar(); return; }
+      if(d.fanEntra){
+        const tinhaEscolha = !!escolha;
+        if(adicionar(Number(d.fanEntra), escolha) && tinhaEscolha){
+          /* escolhido o jogador para o lugar: volta ao campo */
+          escolha = null; separador = 'equipa'; pintar();
+          $('.fan-campo', raiz)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          return;
+        }
+        pintar(); return;
+      }
       if(d.fanSai){ remover(Number(d.fanSai)); pintar(); return; }
+      if('fanPosto' in d){
+        const i = Number(d.fanPosto);
+        if(aTrocar != null){
+          const mau = colocar(aTrocar, i);
+          if(mau) avisar('erro', mau); else aTrocar = null;
+          pintar(); return;
+        }
+        escolha = { tipo: 'posto', i }; separador = 'mercado'; tocado = null; busca = '';
+        pintar(); $('#fan-corpo', raiz)?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        return;
+      }
+      if('fanBancoVazio' in d){
+        if(aTrocar != null){
+          const mau = paraBanco(aTrocar);
+          if(mau) avisar('erro', mau); else aTrocar = null;
+          pintar(); return;
+        }
+        escolha = { tipo: 'banco' }; separador = 'mercado'; filtroPos = 'todos'; tocado = null; busca = '';
+        pintar(); $('#fan-corpo', raiz)?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        return;
+      }
       if(d.fanSlot){
         const id = Number(d.fanSlot);
         if(aTrocar){
@@ -1103,14 +1307,20 @@ const Fantasy = (() => {
       switch(d.fan){
         case 'recarregar': carregar(); break;
         case 'fechar-painel': tocado = null; pintar(); break;
-        case 'capitao': capitao(tocado); pintar(); break;
-        case 'vice': vice(tocado); pintar(); break;
-        case 'trocar': aTrocar = tocado; tocado = null; pintar(); break;
+        case 'mudar': aTrocar = tocado; tocado = null; pintar(); break;
+        case 'substituir': {
+          const i = rascunho.onze.indexOf(tocado);
+          escolha = i >= 0 ? { tipo: 'posto', i } : { tipo: 'banco', sai: tocado };
+          separador = 'mercado'; filtroPos = 'todos'; tocado = null; busca = '';
+          pintar(); $('#fan-corpo', raiz)?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+          break;
+        }
+        case 'cancelar-escolha': escolha = null; separador = 'equipa'; pintar(); break;
         case 'cancelar-troca': aTrocar = null; pintar(); break;
         case 'subir': moverBanco(tocado, -1); pintar(); break;
         case 'descer': moverBanco(tocado, 1); pintar(); break;
         case 'vender': remover(tocado); pintar(); break;
-        case 'repor': try{ localStorage.removeItem(CHAVE_RASCUNHO()); }catch(e){} montarRascunho(); tocado = aTrocar = null; pintar(); break;
+        case 'repor': try{ localStorage.removeItem(CHAVE_RASCUNHO()); }catch(e){} montarRascunho(); tocado = aTrocar = null; escolha = null; pintar(); break;
         case 'guardar': guardar(); break;
         case 'aplicar-relatorio': {
           const form = $('[data-fan-form="estatisticas"]', raiz);
@@ -1176,6 +1386,8 @@ const Fantasy = (() => {
     raiz.addEventListener('change', ev => {
       const t = ev.target;
       if(t.id === 'fan-ordem'){ ordem = t.value; pintar(); }
+      if(t.id === 'fan-capitao' && t.value){ capitao(Number(t.value)); pintar(); }
+      if(t.id === 'fan-vice' && t.value){ vice(Number(t.value)); pintar(); }
       if(t.id === 'fan-jornada-pontos'){ jornadaPontos = Number(t.value); pintar(); }
       if(t.id === 'fan-jornada-class'){ jornadaClass = t.value === 'geral' ? 'geral' : Number(t.value); pintarClassificacao(); }
       if(t.id === 'fan-admin-jornada'){ adminJornada = Number(t.value); pintar(); }
@@ -1211,7 +1423,9 @@ const Fantasy = (() => {
   /* só para os testes automáticos (tests/fantasy_logica.test.js): as regras
      do rascunho, sem desenho nem servidor */
   const _teste = {
-    adicionar, remover, trocar, capitao, vice, problemas, contas, contar, guardarRascunho, mensagemErro, lerRelatorio, golosDoCalendario, gestao,
+    adicionar, remover, trocar, colocar, paraBanco, mudarFormacao, podeEntrar, nomeLugar, siglaLugar,
+    capitao, vice, problemas, contas, contar, guardarRascunho, mensagemErro, lerRelatorio, golosDoCalendario, gestao,
+    get escolha(){ return escolha; }, set escolha(v){ escolha = v; },
     get rascunho(){ return rascunho; }, get aviso(){ return aviso; }, get minhas(){ return minhas; },
     get eu(){ return eu; }, get admin(){ return admin; }, get estado(){ return estado; }
   };

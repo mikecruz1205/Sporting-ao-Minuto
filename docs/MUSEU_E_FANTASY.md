@@ -51,7 +51,7 @@ lá os números esperados.
 - Campo com as duas grandes áreas e largura limitada (deixou de esticar a 980 px).
 - Cada jogador mostra a posição pela cor (GR, DEF, MED, AVA), o preço e os pontos quando existem; legenda por baixo do campo.
 - Animação curta para quem entra no onze ou troca (desligada com "reduzir movimento").
-- As regras do jogo não mudaram: continuam no servidor (`fantasy_guardar_equipa`).
+- As regras do jogo estão no servidor. Desde a migração 20261019120000 a equipa escolhe-se por lugares (formação, um jogador por lugar e 3 suplentes) e grava-se com `fantasy_guardar_onze`.
 
 ## Testes
 

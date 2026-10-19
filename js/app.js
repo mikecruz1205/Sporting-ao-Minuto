@@ -232,7 +232,7 @@ async function pintarComunidade(){
                  ${minha.posicao ? `<span class="comu__numero"><b>${minha.posicao}.º</b><span>na geral</span></span>` : ''}` : ''}
       ${total != null ? `<span class="comu__numero"><b>${total}</b><span>${total === 1 ? 'equipa inscrita' : 'equipas inscritas'}</span></span>` : ''}
     </div>
-    <p class="comu__linha">Plantel de 15 jogadores do Sporting, 100 M€ de orçamento, capitão a dobrar e ligas privadas com os amigos. Os pontos são calculados no servidor.</p>
+    <p class="comu__linha">Escolhes a formação e um jogador do Sporting para cada lugar, mais 3 suplentes, com 100 M€ de orçamento, capitão a dobrar e ligas privadas com os amigos. Os pontos são calculados no servidor.</p>
     <div class="comu__acoes">
       <button type="button" class="p1" data-ir="formacao">${eu ? (minha ? 'Gerir a minha equipa' : 'Fazer a minha equipa') : 'Ver a Fantasy'}</button>
       ${eu ? '' : '<button type="button" class="p2" data-auth="criar" data-auth-vista="formacao">Criar conta para jogar</button>'}

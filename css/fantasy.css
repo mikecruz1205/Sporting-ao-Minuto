@@ -324,3 +324,41 @@
 .fan-relatorio code{ font-size: 12px; }
 
 .fan-sub{ margin: 14px 0 8px; font-size: 14px; font-weight: 800; color: var(--texto-2); }
+
+/* =========================================================================
+   EQUIPA POR LUGARES: formação, braçadeira, campo com os lugares e banco de 3
+   ========================================================================= */
+.fan-formacoes{ display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.fan-formacoes .fan-rotulo{ margin: 0 4px 0 0; }
+.fan-formacoes .chip{ font-family: var(--f-num); font-weight: 800; }
+.fan-bracadeiras{ display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.fan-bracadeiras label{ display: grid; gap: 6px; }
+.fan-bracadeiras label > span{ display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 800; }
+.fan-bracadeiras small{ font-weight: 600; color: var(--texto-3); }
+.fan-bracadeiras .fan-braco{ position: static; width: 24px; height: 24px; font-size: 12px; box-shadow: none; }
+.fan-bracadeiras select{ min-height: 44px; padding: 0 12px; border-radius: 12px; font: inherit; font-weight: 700;
+  color: var(--texto); background: var(--cartao); border: 1px solid var(--linha-forte, var(--linha)); }
+.fan-bracadeiras select:focus-visible{ outline: 2px solid var(--verde-claro); outline-offset: 2px; }
+
+.fan-campo--lugares{ display: block; min-height: 0; aspect-ratio: 3 / 4; max-height: 640px; padding: 0; }
+.fan-lugar{ position: absolute; z-index: 1; transform: translate(-50%, -50%); }
+.fan-campo--lugares .fan-slot{ width: 84px; }
+.fan-campo--lugares .fan-braco{ top: -2px; right: 8px; width: 24px; height: 24px; font-size: 12px; }
+.fan-slot--vazio .fan-slot__nome{ color: #fff; background: rgba(0,0,0,.4); }
+.fan-cara--vazia{ width: 48px; height: 48px; font-size: 24px; font-weight: 700; color: #fff;
+  background: rgba(255,255,255,.12); box-shadow: inset 0 0 0 2px rgba(255,255,255,.55); border: 0; }
+.fan-banco .fan-cara--vazia{ color: var(--texto-2); background: var(--veu-2); box-shadow: inset 0 0 0 2px var(--linha-forte, var(--linha)); }
+.fan-banco .fan-slot--vazio .fan-slot__nome{ color: var(--texto-2); background: transparent; }
+.fan-banco__lista{ grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); }
+
+.fan-escolha{ display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px;
+  padding: 12px 14px; margin-bottom: 12px; border-radius: 14px; background: var(--cartao); border: 1px solid var(--verde); }
+.fan-escolha p{ font-size: 14.5px; }
+.fan-escolha small{ color: var(--texto-3); font-weight: 600; }
+@media (max-width: 640px){
+  .fan-campo--lugares{ aspect-ratio: 5 / 7; }
+  .fan-campo--lugares .fan-slot{ width: 66px; }
+  .fan-campo--lugares .fan-cara{ width: 40px; height: 40px; }
+  .fan-campo--lugares .fan-slot__nome{ font-size: 10.5px; padding: 2px 4px; }
+  .fan-campo--lugares .fan-slot__info{ display: none; }
+}

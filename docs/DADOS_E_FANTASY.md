@@ -58,7 +58,7 @@ fantasy_config (jogo, pontuacao, precos)    fantasy_admins    vistas: fantasy_cl
 
 * Valores desconhecidos são `NULL`, nunca `0`.
 * O browser **só lê**. Escreve-se apenas por funções `SECURITY DEFINER` que
-  validam quem chama: `fantasy_guardar_equipa`, `fantasy_criar_liga`,
+  validam quem chama: `fantasy_guardar_onze` (equipa por lugares, desde a migração 20261019120000), `fantasy_criar_liga`,
   `fantasy_entrar_liga`, `fantasy_sair_liga` (utilizador); `fantasy_importar_jogo`,
   `fantasy_calcular_jornada`, `fantasy_finalizar_jornada`,
   `fantasy_importar_calendario`, `desporto_importar_jogadores`,
