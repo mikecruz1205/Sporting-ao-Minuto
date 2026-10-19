@@ -254,3 +254,16 @@ body[data-vista="aovivo"] .faixa-jogo{ display: none !important; }
 .rodape-site__atribuicao{ font-size: 12.5px; color: var(--texto-3); }
 .rodape-site__atribuicao[hidden]{ display: none; }
 .rodape-site__atribuicao a{ color: var(--verde-claro); font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+
+/* modo dia de jogo: antes do início (js/app.js pintarAntesDoJogo) */
+.ja__conta{ margin-top: 4px; font-size: 15px; color: var(--texto-2); text-align: center; }
+.ja__conta b{ font: 800 clamp(22px, 2vw + 14px, 30px)/1 var(--f-num); color: #fff; font-variant-numeric: tabular-nums; }
+.ja__onde{ display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 6px; font-size: 13.5px; color: var(--texto-2); }
+.ja__onde svg{ width: 14px; height: 14px; }
+.ja__tempo{ display: grid; gap: 4px; margin-top: 12px; padding: 10px 12px; border-radius: 12px; font-size: 14px; text-align: center;
+  color: var(--texto); background: rgba(255,255,255,.06); }
+.ja__tempo small{ font-size: 11.5px; color: var(--texto-3); }
+.ja__tempo a{ color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.ja__acoes{ display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+.ja__acoes .botao-tentar{ display: inline-flex; align-items: center; min-height: 44px; text-decoration: none; }
+.jogo-agora--antes{ border-color: color-mix(in srgb, var(--verde-claro) 45%, transparent); }

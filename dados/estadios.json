@@ -1,0 +1,115 @@
+{
+ "nota": "Coordenadas dos estádios para a previsão do tempo no dia de jogo. Cada uma com a fonte (Wikipédia ou Wikidata). Estádio sem coordenadas verificadas = sem previsão.",
+ "estadios": {
+  "City of Manchester Stadium": {
+   "lat": 53.48306,
+   "lon": -2.20028,
+   "fonte": "https://pt.wikipedia.org/wiki/City_of_Manchester_Stadium"
+  },
+  "Estádio António Coimbra da Mota": {
+   "lat": 38.71583,
+   "lon": -9.40639,
+   "fonte": "https://en.wikipedia.org/wiki/Est%C3%A1dio_Ant%C3%B3nio_Coimbra_da_Mota"
+  },
+  "Estádio Cidade de Barcelos": {
+   "lat": 41.55111,
+   "lon": -8.62278,
+   "fonte": "https://pt.wikipedia.org/wiki/Est%C3%A1dio_Cidade_de_Barcelos"
+  },
+  "Estádio D. Afonso Henriques": {
+   "lat": 41.44583,
+   "lon": -8.30097,
+   "fonte": "https://pt.wikipedia.org/wiki/Est%C3%A1dio_D._Afonso_Henriques"
+  },
+  "Estádio José Alvalade": {
+   "lat": 38.76119,
+   "lon": -9.16078,
+   "fonte": "https://www.wikidata.org/wiki/Q287359"
+  },
+  "Estádio José Gomes": {
+   "lat": 38.752,
+   "lon": -9.228,
+   "fonte": "https://pt.wikipedia.org/wiki/Est%C3%A1dio_Jos%C3%A9_Gomes"
+  },
+  "Estádio Municipal 22 de Junho": {
+   "lat": 41.40139,
+   "lon": -8.5225,
+   "fonte": "https://en.wikipedia.org/wiki/Est%C3%A1dio_Municipal_22_de_Junho"
+  },
+  "Estádio Municipal de Arouca": {
+   "lat": 40.933,
+   "lon": -8.2503,
+   "fonte": "https://en.wikipedia.org/wiki/Est%C3%A1dio_Municipal_de_Arouca"
+  },
+  "Estádio Municipal de Braga": {
+   "lat": 41.56256,
+   "lon": -8.43013,
+   "fonte": "https://pt.wikipedia.org/wiki/Est%C3%A1dio_Municipal_de_Braga"
+  },
+  "Estádio Municipal de Rio Maior": {
+   "lat": 39.34444,
+   "lon": -8.93528,
+   "fonte": "https://en.wikipedia.org/wiki/Est%C3%A1dio_Municipal_de_Rio_Maior"
+  },
+  "Estádio da Luz": {
+   "lat": 38.7528,
+   "lon": -9.18472,
+   "fonte": "https://pt.wikipedia.org/wiki/Est%C3%A1dio_da_Luz"
+  },
+  "Estádio da Madeira": {
+   "lat": 32.67063,
+   "lon": -16.88352,
+   "fonte": "https://pt.wikipedia.org/wiki/Est%C3%A1dio_da_Madeira"
+  },
+  "Estádio de São Miguel": {
+   "lat": 37.76371,
+   "lon": -25.62259,
+   "fonte": "https://www.wikidata.org/wiki/Q3514858"
+  },
+  "Estádio do Dragão": {
+   "lat": 41.16167,
+   "lon": -8.58389,
+   "fonte": "https://pt.wikipedia.org/wiki/Est%C3%A1dio_do_Drag%C3%A3o"
+  },
+  "Estádio do Fontelo": {
+   "lat": 40.65944,
+   "lon": -7.90083,
+   "fonte": "https://en.wikipedia.org/wiki/Est%C3%A1dio_do_Fontelo"
+  },
+  "Estádio do Marítimo": {
+   "lat": 32.64556,
+   "lon": -16.92833,
+   "fonte": "https://pt.wikipedia.org/wiki/Est%C3%A1dio_do_Mar%C3%ADtimo"
+  },
+  "Estádio dos Arcos": {
+   "lat": 41.36276,
+   "lon": -8.74019,
+   "fonte": "https://www.wikidata.org/wiki/Q550041"
+  },
+  "Parque Moreira de Cóngeos": {
+   "lat": 41.37806,
+   "lon": -8.35472,
+   "fonte": "https://en.wikipedia.org/wiki/Parque_de_Jogos_Comendador_Joaquim_de_Almeida_Freitas"
+  },
+  "Parque de Jogos Comendador Joaquim de Almeida Freitas": {
+   "lat": 41.37806,
+   "lon": -8.35472,
+   "fonte": "https://en.wikipedia.org/wiki/Parque_de_Jogos_Comendador_Joaquim_de_Almeida_Freitas"
+  },
+  "Stade Bollaert-Delelis": {
+   "lat": 50.43278,
+   "lon": 2.815,
+   "fonte": "https://en.wikipedia.org/wiki/Stade_Bollaert-Delelis"
+  },
+  "Stadio Olimpico": {
+   "lat": 41.93389,
+   "lon": 12.45472,
+   "fonte": "https://pt.wikipedia.org/wiki/Est%C3%A1dio_Ol%C3%ADmpico_de_Roma"
+  },
+  "Stamford Bridge": {
+   "lat": 51.48167,
+   "lon": -0.19111,
+   "fonte": "https://en.wikipedia.org/wiki/Stamford_Bridge_(stadium)"
+  }
+ }
+}

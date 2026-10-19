@@ -3737,9 +3737,87 @@ function pintarFaixa(sit){
 }
 
 /* o jogo que já começou (ou devia ter começado), no topo da página inicial */
+/* ---------------------------------------------------------------------
+   MODO DIA DE JOGO — no dia do jogo (hora de Lisboa), antes do início, a
+   página inicial abre com o jogo: contagem até à hora marcada, previsão do
+   tempo no estádio, o onze oficial quando sair numa notícia e o Centro de
+   jogo em destaque. Depois do apito, o bloco passa a ser o "jogo agora".
+   --------------------------------------------------------------------- */
+let contaDia = null;
+function pararContaDia(){ clearInterval(contaDia); contaDia = null; }
+
+function pintarAntesDoJogo(alvo, sit){
+  const j = sit.jogo, seguro = Componentes.seguro;
+  const prova = nomeProva(j.comp);
+  const eq = nome => `<span class="ja__eq ${eSporting(nome) ? 'e-nos' : ''}"><img src="${emblemaEquipa(nome)}" alt="" width="44" height="44"><b>${seguro(nome)}</b></span>`;
+  const onze = procurarOnzeOficial(j);
+  alvo.hidden = false;
+  alvo.classList.add('jogo-agora--antes');
+  alvo.innerHTML = `
+    <div class="ja__topo">
+      <span class="cj-estado">Hoje há jogo</span>
+      <span class="ja__prova">${seguro(prova.completo)}</span>
+    </div>
+    <div class="ja__jogo">${eq(j.casa)}<span class="ja__res">${horaJogo(j, new Date(j.data))}</span>${eq(j.fora)}</div>
+    <p class="ja__conta" role="timer" aria-live="off" aria-label="Tempo até à hora marcada">Começa daqui a <b id="ja-conta">—</b></p>
+    ${j.local ? `<p class="ja__onde">${ICONE_LOCAL}${seguro(j.local)}</p>` : ''}
+    <p class="ja__tempo" id="ja-tempo" hidden></p>
+    <div class="ja__base">
+      <p class="ja__fonte">Hora marcada no calendário; a contagem é só o tempo até lá.</p>
+      <div class="ja__acoes">
+        ${onze ? `<a class="botao-tentar" href="${Componentes.ligacao(onze.link)}" target="_blank" rel="noopener">${onze.oficial ? 'Onze oficial' : 'Onze provável'} · ${seguro(onze.fonte)}</a>` : ''}
+        <button type="button" class="botao-cta ja__ir" data-ir-jogo>Centro de jogo e prognóstico ${ICONE_SETA}</button>
+      </div>
+    </div>`;
+  alvo.querySelector('[data-ir-jogo]').addEventListener('click', () => verJogo(j));
+  pararContaDia();
+  const tic = () => {
+    const el = document.getElementById('ja-conta');
+    if(!el) return pararContaDia();
+    const s = Math.max(0, Math.floor((new Date(j.data) - Date.now()) / 1000));
+    const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60;
+    el.textContent = `${h ? h + ' h ' : ''}${String(m).padStart(2, '0')} min ${String(ss).padStart(2, '0')} s`;
+    if(!s) pararContaDia();
+  };
+  tic();
+  contaDia = setInterval(tic, 1000);
+  pedirTempo(j);
+}
+
+/* previsão do tempo no estádio, pela nossa API (o browser não fala com o
+   serviço de meteorologia); só para estádios com coordenadas verificadas */
+const TEMPOS = new Map();
+async function pedirTempo(j){
+  if(!j?.local) return;
+  const chave = chaveDoJogo(j);
+  if(!TEMPOS.has(chave)){
+    TEMPOS.set(chave, null);
+    let t = false;
+    try{
+      const r = await fetch(`/api/tempo?estadio=${encodeURIComponent(j.local)}&hora=${encodeURIComponent(new Date(j.data).toISOString())}`);
+      if(r.ok) t = await r.json();
+    }catch(e){}
+    TEMPOS.set(chave, t);
+  }
+  const t = TEMPOS.get(chave), el = document.getElementById('ja-tempo');
+  if(!el || !t) return;
+  const seguro = Componentes.seguro;
+  const hora = new Date(t.hora).toLocaleTimeString('pt-PT', { timeZone: 'Europe/Lisbon', hour: '2-digit', minute: '2-digit' });
+  el.hidden = false;
+  el.innerHTML = `<span>Previsão para as ${hora}: <b>${Math.round(t.temperatura)} °C</b> · ${seguro(t.descricao || '')}`
+    + `${t.chuva_prob != null ? ` · chuva ${t.chuva_prob}%` : ''}${t.vento_kmh != null ? ` · vento ${Math.round(t.vento_kmh)} km/h` : ''}</span>`
+    + `<small>Tempo: <a href="${Componentes.ligacao(t.fonte.url)}" target="_blank" rel="noopener">${seguro(t.fonte.nome)}</a> (${seguro(t.fonte.licenca)})`
+    + ` · coordenadas do estádio: <a href="${Componentes.ligacao(t.coordenadas)}" target="_blank" rel="noopener">fonte</a></small>`;
+}
+
 function pintarJogoAgora(sit){
   const alvo = $('#jogo-agora');
   if(!alvo) return;
+  const hoje = sit && sit.falta > 0 && diaLisboa(sit.jogo.data) === diaLisboa(Date.now());
+  document.body.classList.toggle('dia-de-jogo-hoje', !!hoje);
+  if(hoje) return pintarAntesDoJogo(alvo, sit);
+  pararContaDia();
+  alvo.classList.remove('jogo-agora--antes');
   if(!sit || sit.falta > 0){ alvo.hidden = true; alvo.innerHTML = ''; return; }
   const j = sit.jogo;
   const r = CentroJogo.rotulo(sit);
@@ -3757,9 +3835,11 @@ function pintarJogoAgora(sit){
     <div class="ja__jogo">${eq(j.casa)}<span class="ja__res">${res ? `${res.casa}<i>–</i>${res.fora}` : horaJogo(j, new Date(j.data))}</span>${eq(j.fora)}</div>
     ${golos.length ? `<p class="ja__golos">${golos.map(g => `${g.minuto}' ${Componentes.seguro(g.jogador || '')}`).join(' · ')}</p>` : ''}
     ${sit.tipo === 'sem_direto' ? '<p class="ja__nota">Dados em direto indisponíveis: nenhuma fonte em direto está ligada. Não mostramos minuto nem resultado estimados.</p>' : ''}
+    <p class="ja__tempo" id="ja-tempo" hidden></p>
     <div class="ja__base"><p class="ja__fonte">${CentroJogo.linhaFonte(sit)}</p>
     <button type="button" class="botao-cta ja__ir" data-ir-jogo>Centro de jogo ${ICONE_SETA}</button></div>`;
   alvo.querySelector('[data-ir-jogo]').addEventListener('click', () => verJogo(j));
+  if(sit.falta > -3 * H_MS) pedirTempo(j);
 }
 
 /* O onze sai numa notícia perto do jogo. Não se tiram nomes do texto (não
@@ -4448,6 +4528,9 @@ const TEXTOS_LEGAIS = {
           durante 30 dias, só para travar tentativas repetidas.</li>
     </ul>
     <p>As contas não têm email: nunca te pedimos nenhum.</p>
+    <h4>Tempo no dia de jogo</h4>
+    <p>A previsão do tempo no estádio é pedida pelo nosso servidor ao Open-Meteo: o teu
+    browser não fala com esse serviço e o teu endereço IP não lhe chega.</p>
     <h4>Avisos no telemóvel</h4>
     <p>Se ligares os avisos, guarda-se o endereço de envio que o teu browser cria para
     este site e os tipos de aviso que escolheste — sem nome, conta nem localização.
