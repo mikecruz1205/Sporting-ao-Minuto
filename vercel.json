@@ -7,6 +7,14 @@
       "destination": "/api/calendario"
     },
     {
+      "source": "/jogo/:s",
+      "destination": "/api/pagina?tipo=jogo&s=:s"
+    },
+    {
+      "source": "/jogador/:s",
+      "destination": "/api/pagina?tipo=jogador&s=:s"
+    },
+    {
       "source": "/(noticias|ao-minuto|mercado|jogos|agenda|classificacao|ao-vivo|plantel|estatisticas|modalidades|chat|fantasy|quiz|desafio|clube|privacidade|termos)",
       "destination": "/index.html"
     }
@@ -95,6 +103,9 @@
   "functions": {
     "api/noticias.py": {
       "maxDuration": 20
+    },
+    "api/pagina.py": {
+      "includeFiles": "index.html"
     }
   }
 }

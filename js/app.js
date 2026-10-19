@@ -2540,6 +2540,7 @@ function mostrarFicha(p){
         <b>${VALOR_MERCADO[p.nome] != null ? milhoes(VALOR_MERCADO[p.nome]) : 'n.d.'}</b>
         <span>VALOR DE MERCADO · TRANSFERMARKT</span>
       </div>
+      <button type="button" class="botao-tentar partilhar" data-partilhar-jogador>Partilhar ${p.nome}</button>
       <div class="ficha__kpis">
         ${kpis.map(([l,v]) => `<div class="caixa"><b>${v}</b><label>${l}</label></div>`).join('')}
       </div>
@@ -3228,6 +3229,7 @@ async function carregarFormacaoGuardada(){
 /* o plantel a sério chegou: os nomes guardados passam aos do plantel */
 function plantelChegou(){
   plantelReal = true;
+  abrirJogadorPedido();
   if(!formacaoCarregada) carregarFormacaoGuardada();
   else { normalizarOnze(); pintarFormacao(); }
 }
@@ -3644,6 +3646,7 @@ let jogoEmFoco = null;        // o jogo da faixa e da página inicial
 let situacaoFoco = null;      // o que o CentroJogo sabe dele
 let largarFoco = null;
 let jogoVisto = null;         // o jogo aberto no Centro de jogo
+let jogoNoCentro = null;      // o que lá está agora (escolhido ou o jogo em foco)
 const chaveDoJogo = j => j ? `${j.data}|${j.casa}|${j.fora}` : '';
 
 function escolherJogoEmFoco(){
@@ -3666,7 +3669,7 @@ function seguirJogoEmFoco(){
   largarFoco?.();
   jogoEmFoco = j; situacaoFoco = null; largarFoco = null;
   if(!j){ pintarFaixa(null); pintarJogoAgora(null); return; }
-  if(vistaAtual === 'aovivo' && !jogoVisto){ CentroJogo.abrir(j); prognosticoNoCentro(j); }
+  if(vistaAtual === 'aovivo' && !jogoVisto){ jogoNoCentro = j; CentroJogo.abrir(j); prognosticoNoCentro(j); }
   largarFoco = CentroJogo.observar(j, sit => {
     situacaoFoco = sit;
     pintarFaixa(sit);
@@ -4326,7 +4329,7 @@ async function sincronizar(){
   if(noRodape) noRodape.textContent = falhas.length
     ? 'dados parciais · ' + hora
     : 'dados atualizados às ' + hora;
-  if(!falhas.includes('plantel/jogos')){ jogosSincronizados = true; jogosFalharam = false; HORA_JOGOS = new Date(); }
+  if(!falhas.includes('plantel/jogos')){ jogosSincronizados = true; jogosFalharam = false; HORA_JOGOS = new Date(); abrirJogoPedido(); }
   else if(!jogosSincronizados) jogosFalharam = true;
   pintarProximoJogo(); pintarCalendario(); pintarResultados(); pintarJogosTodos();
   pintarEstatisticas(); pintarPlantel(); pintarPreviaEntrada();
@@ -4603,6 +4606,124 @@ function dadosEstruturados(){
   document.head.appendChild(ld);
 }
 
+/* ---------------------------------------------------------------------
+   PÁGINAS PARTILHÁVEIS — /jogo/<data>-<casa>-<fora> e /jogador/<nome>
+   O servidor (api/_pagina.py) serve o site com a pré-visualização do jogo
+   ou do jogador e com um <base href="/">; aqui abre-se o jogo ou a ficha.
+   Dentro do site os endereços continuam de um nível (/ao-vivo, /plantel):
+   sem o <base>, um endereço de dois níveis partia os caminhos relativos.
+   --------------------------------------------------------------------- */
+const slug = s => semAcentos(s).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+const FORMATO_DIA = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Lisbon', year: 'numeric', month: '2-digit', day: '2-digit' });
+const diaLisboa = d => FORMATO_DIA.format(new Date(d));
+const caminhoJogo = j => `/jogo/${diaLisboa(j.data)}-${slug(j.casa)}-${slug(j.fora)}`;
+const caminhoJogador = p => `/jogador/${slug(p.nome)}`;
+
+function rotaPartilhada(caminho = location.pathname){
+  const m = /^\/(jogo|jogador)\/([^/]+)\/?$/.exec(caminho);
+  if(!m) return null;
+  try{ return { tipo: m[1], resto: decodeURIComponent(m[2]).toLowerCase() }; }catch(e){ return null; }
+}
+
+/* o título e o endereço da partilha ficam os da página, não os da vista */
+function metaPartilhada(titulo){
+  document.title = `${titulo} · Sporting ao Minuto`;
+  const url = location.origin + location.pathname;
+  document.getElementById('canonico')?.setAttribute('href', url);
+  document.getElementById('og-url')?.setAttribute('content', url);
+  document.getElementById('og-titulo')?.setAttribute('content', document.title);
+}
+
+let jogadorPedido = null;          // a ficha a abrir quando o plantel chegar
+let jogoPedido = null;             // o jogo a trocar quando o calendário completo chegar
+
+/* o que o servidor encontrou para este endereço (api/_pagina.py) */
+function dadosPartilhados(){
+  try{ return JSON.parse(document.getElementById('pagina-partilhada')?.textContent || 'null'); }catch(e){ return null; }
+}
+/* o Sporting joga no máximo um jogo por dia: o dia chega, os nomes desempatam */
+function jogoDoEndereco(resto){
+  const doDia = JOGOS.filter(j => diaLisboa(j.data) === resto.slice(0, 10));
+  return doDia.find(x => caminhoJogo(x) === '/jogo/' + resto) || doDia[0] || null;
+}
+function abrirPartilhada(r){
+  if(r.tipo === 'jogo'){
+    let j = jogoDoEndereco(r.resto);
+    if(!j && !jogosSincronizados){
+      /* o calendário da época ainda não chegou (só há a pré-época): abre-se
+         com o que o servidor leu da base de dados e troca-se depois */
+      const d = dadosPartilhados()?.jogo;
+      if(d) j = { data: d.data, comp: [d.competicao, d.fase].filter(Boolean).join(' — ').toUpperCase(), casa: d.casa, fora: d.fora,
+                  golosCasa: d.golos_casa, golosFora: d.golos_fora, local: d.local };
+      jogoPedido = r.resto;
+    }
+    if(!j){ history.replaceState({ vista: 'jogos' }, '', ROTAS.jogos); irPara('jogos', { historico:false, rolar:false }); return; }
+    irPara('aovivo', { jogo: j, historico:false, rolar:false });
+    metaPartilhada(`${j.casa} – ${j.fora}`);
+    return;
+  }
+  jogadorPedido = r.resto;
+  irPara('equipa', { historico:false, rolar:false });
+  abrirJogadorPedido();
+}
+/* o calendário completo chegou: o jogo pedido no endereço passa a ser o da lista */
+function abrirJogoPedido(){
+  if(!jogoPedido) return;
+  const resto = jogoPedido;
+  jogoPedido = null;
+  if(rotaPartilhada()?.resto !== resto || vistaAtual !== 'aovivo') return;
+  const j = jogoDoEndereco(resto);
+  if(j){ irPara('aovivo', { jogo: j, historico:false, rolar:false }); metaPartilhada(`${j.casa} – ${j.fora}`); }
+}
+function abrirJogadorPedido(){
+  if(!jogadorPedido) return;
+  const p = PLANTEL.find(x => slug(x.nome) === jogadorPedido || (ALCUNHAS[x.nome] && slug(ALCUNHAS[x.nome]) === jogadorPedido));
+  if(!p) return;
+  mostrarFicha(p);
+  $$('.jog').forEach(b => b.classList.toggle('is-on', b.dataset.nome === p.nome));
+  if(rotaPartilhada()?.tipo === 'jogador') metaPartilhada(p.nome);
+  if(plantelReal) jogadorPedido = null;          // com o plantel completo, está encontrado
+}
+
+/* partilhar: a folha do telemóvel, ou copiar a ligação */
+async function partilhar(titulo, caminho){
+  const url = location.origin + caminho;
+  if(navigator.share){
+    try{ await navigator.share({ title: titulo, url }); return; }
+    catch(e){ if(e.name === 'AbortError') return; }
+  }
+  const aviso = $('#aviso-partilha');
+  try{
+    await navigator.clipboard.writeText(url);
+    aviso.textContent = 'Ligação copiada.';
+  }catch(e){
+    aviso.textContent = url;                     // sem acesso à área de transferência: fica à vista para copiar
+  }
+  aviso.hidden = false;
+  clearTimeout(partilhar.t);
+  partilhar.t = setTimeout(() => { aviso.hidden = true; }, 5000);
+}
+document.addEventListener('click', e => {
+  if(e.target.closest('#cj-partilhar') && jogoNoCentro)
+    partilhar(`${jogoNoCentro.casa} – ${jogoNoCentro.fora}`, caminhoJogo(jogoNoCentro));
+  if(e.target.closest('[data-partilhar-jogador]')){
+    const p = PLANTEL.find(x => x.nome === escolhido);
+    if(p) partilhar(`${p.nome} · Sporting CP`, caminhoJogador(p));
+  }
+});
+
+/* com o <base href="/"> das páginas partilháveis, um link "#secção" iria
+   para a página inicial: muda-se só o fragmento, como sem o <base> */
+addEventListener('click', e => {
+  if(e.defaultPrevented || !document.querySelector('base')) return;
+  const a = e.target.closest('a[href^="#"]');
+  if(!a) return;
+  e.preventDefault();
+  const alvo = document.getElementById(decodeURIComponent(a.getAttribute('href').slice(1)));
+  if(alvo) alvo.scrollIntoView();
+  history.replaceState(history.state, '', location.pathname + location.search + a.getAttribute('href'));
+});
+
 function vistaDaRota(caminho){
   const limpo = (caminho || '/').replace(/\/+$/, '') || '/';
   return Object.keys(ROTAS).find(v => ROTAS[v] === limpo) || 'inicio';
@@ -4625,6 +4746,7 @@ function irPara(vista, opcoes = {}){
     /* sem jogo escolhido, o Centro segue o jogo em foco (e muda com ele) */
     if(!opcoes.manterJogo) jogoVisto = opcoes.jogo || null;
     const emCentro = jogoVisto || jogoEmFoco || porJogar()[0] || JOGOS.filter(jogado).slice(-1)[0];
+    jogoNoCentro = emCentro;
     CentroJogo.abrir(emCentro);
     prognosticoNoCentro(emCentro);
   }
@@ -4821,6 +4943,8 @@ addEventListener('hashchange', () => { if(vistaAtual === 'modalidades') pintarMo
 
 /* voltar e avançar do browser */
 addEventListener('popstate', () => {
+  const partilhada = rotaPartilhada();
+  if(partilhada){ abrirPartilhada(partilhada); return; }
   const vista = vistaDaRota(location.pathname);
   if(vista === 'classificacao' && provaDoUrl() && provaDoUrl() !== provaTabela) escolherProva(provaDoUrl(), { url: false });
   irPara(vista, { historico:false });
@@ -5039,13 +5163,17 @@ async function arranque(){
     pintarAgenda();
   }));
   {
-    const inicial = vistaDaRota(location.pathname);
-    /* /privacidade e /termos ficam com o seu endereço (o texto abre por cima do início) */
-    if(!/^\/(privacidade|termos)\/?$/.test(location.pathname))
-      history.replaceState({ vista: inicial }, '', ROTAS[inicial] + location.search + location.hash);
-    if(inicial === 'classificacao' && provaDoUrl()) escolherProva(provaDoUrl(), { url: false });
-    if(inicial !== 'inicio') irPara(inicial, { historico:false, rolar:false });
-    else metaDaVista('inicio');
+    const partilhada = rotaPartilhada();
+    const inicial = partilhada ? 'inicio' : vistaDaRota(location.pathname);
+    if(partilhada) abrirPartilhada(partilhada);
+    else{
+      /* /privacidade e /termos ficam com o seu endereço (o texto abre por cima do início) */
+      if(!/^\/(privacidade|termos)\/?$/.test(location.pathname))
+        history.replaceState({ vista: inicial }, '', ROTAS[inicial] + location.search + location.hash);
+      if(inicial === 'classificacao' && provaDoUrl()) escolherProva(provaDoUrl(), { url: false });
+      if(inicial !== 'inicio') irPara(inicial, { historico:false, rolar:false });
+      else metaDaVista('inicio');
+    }
     dadosEstruturados();
     /* /noticias?q=termo abre já com a pesquisa feita (é o que a SearchAction promete) */
     const q = new URLSearchParams(location.search).get('q');

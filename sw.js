@@ -18,7 +18,7 @@
    são apagadas na ativação.
    ========================================================================= */
 
-const VERSAO = 'v6-2026-10-19';
+const VERSAO = 'v7-2026-10-19';
 const CACHE_CASCA   = `casca-${VERSAO}`;
 const CACHE_ESTATICO = `estatico-${VERSAO}`;
 const CACHE_DADOS   = `dados-${VERSAO}`;
@@ -102,17 +102,24 @@ async function pagina(evento){
     const pre = await evento.preloadResponse;
     if(pre) return pre;
     const resposta = await comLimite(fetch(evento.request), 3000);
-    /* qualquer rota (/jogos, /plantel…) é a mesma página: guarda-se como "/" */
-    if(resposta.ok){
+    /* qualquer rota (/jogos, /plantel…) é a mesma página: guarda-se como "/".
+       /jogo/… e /jogador/… não: levam a pré-visualização e um <base> próprios */
+    if(resposta.ok && !DOIS_NIVEIS.test(new URL(evento.request.url).pathname)){
       const c = await caches.open(CACHE_CASCA);
       c.put('/', resposta.clone());
     }
     return resposta;
   }catch(e){
+    /* sem rede numa página de jogo ou de jogador: a casca guardada é de um
+       nível, por isso vai-se para a vista equivalente */
+    const caminho = new URL(evento.request.url).pathname;
+    if(DOIS_NIVEIS.test(caminho))
+      return Response.redirect(caminho.startsWith('/jogador/') ? '/plantel' : '/ao-vivo', 302);
     const c = await caches.open(CACHE_CASCA);
     return (await c.match('/')) || (await c.match('/offline.html')) || Response.error();
   }
 }
+const DOIS_NIVEIS = /^\/(jogo|jogador)\/./;
 
 async function guardadoEAtualiza(pedido, nome){
   const c = await caches.open(nome);
