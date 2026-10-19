@@ -397,3 +397,16 @@ th[aria-sort="ascending"], th[aria-sort="descending"]{ color: var(--verde-claro)
 .cal-subscrever__acoes{ display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .cal-subscrever__acoes .botao-tentar{ display: inline-flex; align-items: center; text-decoration: none; }
 .cal-subscrever__ficheiro{ font-size: 13.5px; color: var(--verde-claro); min-height: 44px; display: inline-flex; align-items: center; }
+
+/* avisos no telemóvel (Agenda, js/notificacoes.js) */
+.avisos{ display: grid; gap: 8px; margin: 0 0 20px; padding: 16px 18px; border-radius: 16px; background: var(--cartao); border: 1px solid var(--linha); }
+.avisos__tipos{ border: 0; margin: 4px 0 0; padding: 0; display: grid; gap: 4px; }
+.avisos__tipo{ display: flex; align-items: flex-start; gap: 12px; min-height: 44px; padding: 8px 0; cursor: pointer; }
+.avisos__tipo input{ width: 20px; height: 20px; margin-top: 2px; flex: none; accent-color: var(--verde); }
+.avisos__tipo input:focus-visible{ outline: 2px solid var(--verde-claro); outline-offset: 2px; }
+.avisos__tipo span{ display: grid; gap: 2px; }
+.avisos__tipo b{ font-size: 14.5px; }
+.avisos__tipo small{ font-size: 13px; color: var(--texto-3); }
+.avisos__acoes{ display: flex; flex-wrap: wrap; gap: 8px; }
+.avisos__ligar{ color: var(--sobre-verde); background: var(--verde); border-color: var(--verde); }
+.avisos__estado, .avisos__nota{ font-size: 13px; color: var(--texto-2); }

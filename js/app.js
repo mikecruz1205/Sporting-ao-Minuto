@@ -4445,6 +4445,10 @@ const TEXTOS_LEGAIS = {
           durante 30 dias, só para travar tentativas repetidas.</li>
     </ul>
     <p>As contas não têm email: nunca te pedimos nenhum.</p>
+    <h4>Avisos no telemóvel</h4>
+    <p>Se ligares os avisos, guarda-se o endereço de envio que o teu browser cria para
+    este site e os tipos de aviso que escolheste — sem nome, conta nem localização.
+    Ao desligar, ou quando o browser deixa de aceitar avisos, esse registo apaga-se.</p>
     <h4>O que não se faz</h4>
     <p>Não há publicidade, registo de visitas para marketing nem partilha com terceiros.</p>
     <h4>Apagar</h4>
@@ -5060,6 +5064,8 @@ async function arranque(){
     const b = e.target.closest('#quiz [data-ir], #desafio [data-ir]');
     if(b) irPara(b.dataset.ir);
   });
+  /* avisos push: o cartão só aparece quando houver chave (js/notificacoes.js) */
+  Notificacoes.pintar($('#avisos-push'));
   /* subscrever o calendário: com o endereço deste site (também no local e nas pré-visualizações) */
   {
     const ics = `webcal://${location.host}/calendario.ics`;

@@ -18,7 +18,7 @@
    são apagadas na ativação.
    ========================================================================= */
 
-const VERSAO = 'v5-2026-10-18';
+const VERSAO = 'v6-2026-10-19';
 const CACHE_CASCA   = `casca-${VERSAO}`;
 const CACHE_ESTATICO = `estatico-${VERSAO}`;
 const CACHE_DADOS   = `dados-${VERSAO}`;
@@ -165,7 +165,9 @@ const PREDEFINICOES = {
   RESULTADO: { titulo: 'Resultado final',    tag: 'jogo',     renotify: true },
   ONZE:      { titulo: 'Onze inicial',       tag: 'onze' },
   NOTICIA:   { titulo: 'Sporting ao Minuto', tag: 'noticia' },
-  MERCADO:   { titulo: 'Mercado',            tag: 'mercado' }
+  MERCADO:   { titulo: 'Mercado',            tag: 'mercado' },
+  OFICIAL:   { titulo: 'Oficial',            tag: 'oficial' },
+  JORNADA:   { titulo: 'Fantasy',            tag: 'jornada', renotify: true }
 };
 
 self.addEventListener('push', evento => {
@@ -191,6 +193,11 @@ self.addEventListener('push', evento => {
 self.addEventListener('notificationclick', evento => {
   evento.notification.close();
   const destino = new URL(evento.notification.data?.url || '/', self.location.origin).href;
+  /* notícia oficial: abre o artigo no jornal, num separador novo */
+  if(new URL(destino).origin !== self.location.origin){
+    evento.waitUntil(self.clients.openWindow(destino));
+    return;
+  }
   evento.waitUntil((async () => {
     const janelas = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     for(const j of janelas){

@@ -134,17 +134,17 @@
 <!-- fontes alojadas no próprio site (css/fontes.css): a visita não vai à Google -->
 <link rel="preload" href="/fontes/manrope-400-800-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fontes/barlow-condensed-700-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="css/fontes.css?v=142">
-<link rel="stylesheet" href="css/base.css?v=142">
-<link rel="stylesheet" href="css/componentes.css?v=142">
-<link rel="stylesheet" href="css/style.css?v=142">
-<link rel="stylesheet" href="css/portal.css?v=142">
-<link rel="stylesheet" href="css/inicio.css?v=142">
-<link rel="stylesheet" href="css/app.css?v=142">
-<link rel="stylesheet" href="css/editorial.css?v=142">
-<link rel="stylesheet" href="css/entrada.css?v=142">
-<link rel="stylesheet" href="css/centro.css?v=142">
-<link rel="stylesheet" href="css/casa.css?v=142">
+<link rel="stylesheet" href="css/fontes.css?v=143">
+<link rel="stylesheet" href="css/base.css?v=143">
+<link rel="stylesheet" href="css/componentes.css?v=143">
+<link rel="stylesheet" href="css/style.css?v=143">
+<link rel="stylesheet" href="css/portal.css?v=143">
+<link rel="stylesheet" href="css/inicio.css?v=143">
+<link rel="stylesheet" href="css/app.css?v=143">
+<link rel="stylesheet" href="css/editorial.css?v=143">
+<link rel="stylesheet" href="css/entrada.css?v=143">
+<link rel="stylesheet" href="css/centro.css?v=143">
+<link rel="stylesheet" href="css/casa.css?v=143">
 </head>
 <body class="trancado">
 <!-- ============================ ECRÃ DE CARREGAMENTO (modo aplicação) ============================ -->
@@ -805,6 +805,12 @@
       <a class="cal-subscrever__ficheiro" href="/calendario.ics" download="jogos-sporting.ics">Descarregar o ficheiro .ics</a>
     </div>
   </section>
+  <!-- avisos push (js/notificacoes.js): escondido enquanto não houver chave VAPID -->
+  <section class="avisos" id="avisos-push" aria-labelledby="avisos-tit" hidden>
+    <h2 id="avisos-tit" class="cal-subscrever__tit">Avisos no telemóvel</h2>
+    <p class="cal-subscrever__txt">Escolhe o que queres receber. Não precisas de conta e podes desligar quando quiseres.</p>
+    <div data-push-corpo></div>
+  </section>
   <div class="separadores" id="agenda-filtro" role="group" aria-label="Filtrar agenda">
     <button type="button" class="separador is-on" data-filtro="todos" aria-pressed="true">Todos</button>
     <button type="button" class="separador" data-filtro="futebol" aria-pressed="false">Futebol</button>
@@ -1211,19 +1217,19 @@
   <button class="barra-inferior__item" id="barra-mais" aria-controls="menu" aria-expanded="false"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Mais</span></button>
 </nav>
 
-<script src="js/nuvem.js?v=142" defer></script>
-<script src="js/fd.js?v=142" defer></script>
-<script src="js/componentes.js?v=142" defer></script>
-<script src="js/historias.js?v=142" defer></script>
-<script src="js/contas.js?v=142" defer></script>
-<script src="js/arte.js?v=142" defer></script>
-<script src="js/data.js?v=142" defer></script>
-<script src="js/wiki.js?v=142" defer></script>
-<script src="js/tema.js?v=142" defer></script>
-<script src="js/notificacoes.js?v=142" defer></script>
-<script src="js/pwa.js?v=142" defer></script>
-<script src="js/entrada.js?v=142" defer></script>
-<script src="js/centro.js?v=142" defer></script>
-<script src="js/app.js?v=142" defer></script>
+<script src="js/nuvem.js?v=143" defer></script>
+<script src="js/fd.js?v=143" defer></script>
+<script src="js/componentes.js?v=143" defer></script>
+<script src="js/historias.js?v=143" defer></script>
+<script src="js/contas.js?v=143" defer></script>
+<script src="js/arte.js?v=143" defer></script>
+<script src="js/data.js?v=143" defer></script>
+<script src="js/wiki.js?v=143" defer></script>
+<script src="js/tema.js?v=143" defer></script>
+<script src="js/notificacoes.js?v=143" defer></script>
+<script src="js/pwa.js?v=143" defer></script>
+<script src="js/entrada.js?v=143" defer></script>
+<script src="js/centro.js?v=143" defer></script>
+<script src="js/app.js?v=143" defer></script>
 </body>
 </html>
