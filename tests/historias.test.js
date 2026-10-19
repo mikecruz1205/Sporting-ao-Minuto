@@ -81,3 +81,13 @@ test('rumores por jogador: nome completo, apelido só se for raro e único no pl
   assert.equal(r[1].noticias.length, 2);                                   // o "Silva" sozinho ficou de fora
   assert.equal(H.rumoresPorJogador(merc, plantel, { minimo: 1 }).length, 3);
 });
+
+test('O meu Sporting: as regras dos jogadores seguidos contam os apelidos no plantel inteiro', () => {
+  const plantel = ['Rui Silva', 'Francisco Silva', 'Luis Suárez', 'Geovany Quenda'];
+  const rx = H.regrasDosNomes(plantel, ['Luis Suárez', 'Rui Silva']);
+  const bate = titulo => rx.some(r => r.test(H.textoDe({ titulo })));
+  assert.equal(bate('Suárez bisa em Alvalade'), true);                 // apelido único e raro
+  assert.equal(bate('Rui Silva defende penálti'), true);
+  assert.equal(bate('Silva lesionado'), false);                         // que Silva?
+  assert.equal(bate('Quenda renova'), false);                           // não é seguido
+});

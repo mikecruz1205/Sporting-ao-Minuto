@@ -134,17 +134,17 @@
 <!-- fontes alojadas no próprio site (css/fontes.css): a visita não vai à Google -->
 <link rel="preload" href="/fontes/manrope-400-800-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fontes/barlow-condensed-700-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="css/fontes.css?v=147">
-<link rel="stylesheet" href="css/base.css?v=147">
-<link rel="stylesheet" href="css/componentes.css?v=147">
-<link rel="stylesheet" href="css/style.css?v=147">
-<link rel="stylesheet" href="css/portal.css?v=147">
-<link rel="stylesheet" href="css/inicio.css?v=147">
-<link rel="stylesheet" href="css/app.css?v=147">
-<link rel="stylesheet" href="css/editorial.css?v=147">
-<link rel="stylesheet" href="css/entrada.css?v=147">
-<link rel="stylesheet" href="css/centro.css?v=147">
-<link rel="stylesheet" href="css/casa.css?v=147">
+<link rel="stylesheet" href="css/fontes.css?v=148">
+<link rel="stylesheet" href="css/base.css?v=148">
+<link rel="stylesheet" href="css/componentes.css?v=148">
+<link rel="stylesheet" href="css/style.css?v=148">
+<link rel="stylesheet" href="css/portal.css?v=148">
+<link rel="stylesheet" href="css/inicio.css?v=148">
+<link rel="stylesheet" href="css/app.css?v=148">
+<link rel="stylesheet" href="css/editorial.css?v=148">
+<link rel="stylesheet" href="css/entrada.css?v=148">
+<link rel="stylesheet" href="css/centro.css?v=148">
+<link rel="stylesheet" href="css/casa.css?v=148">
 </head>
 <body class="trancado">
 <!-- ============================ ECRÃ DE CARREGAMENTO (modo aplicação) ============================ -->
@@ -495,6 +495,7 @@
   <div class="menu__grupo" data-grupo="comunidade">
     <button class="menu__pai" aria-expanded="false" aria-controls="sub-comunidade"><span class="menu__ico-caixa" aria-hidden="true"><svg class="icone menu__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2Z"/></svg></span><span class="menu__pai-nome">Comunidade</span><svg class="icone menu__seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
     <div class="menu__sub" id="sub-comunidade" role="group" aria-label="Comunidade">
+      <button class="menu__item" data-vista="meu">O meu Sporting<small>As modalidades e os jogadores que segues</small></button>
       <button class="menu__item" data-vista="chat">Chat<small>Fala com outros leões</small></button>
       <button class="menu__item" data-vista="formacao">Fantasy<small>Plantel, capitão, transferências e ligas</small></button>
       <button class="menu__item" data-vista="quiz">Quiz Leonino<small>15 perguntas sobre o Sporting</small></button>
@@ -536,6 +537,9 @@
 
   <!-- 1. JOGO AGORA — só quando o jogo do dia já devia ter começado (js/app.js pintarJogoAgora) -->
   <section class="jogo-agora sempre-escuro" id="jogo-agora" hidden aria-live="polite" aria-label="Jogo de hoje"></section>
+
+  <!-- O meu Sporting: as últimas do que se segue (só aparece a quem segue alguma coisa) -->
+  <section class="meu-faixa" id="meu-faixa" hidden aria-labelledby="meu-faixa-tit"></section>
 
   <!-- 1. JOGO: o próximo e os últimos resultados, lado a lado -->
   <div class="topo-jogos">
@@ -822,6 +826,30 @@
 </main>
 
 <!-- ============================ MODALIDADES ============================ -->
+<main class="vista" id="vista-meu" aria-labelledby="tit-meu">
+  <header class="vista__cabeca">
+    <p class="seccao__sobre">Só o que segues</p>
+    <h1 class="vista__titulo" id="tit-meu">O meu Sporting</h1>
+    <p class="vista__sub">Escolhe as modalidades e os jogadores que queres seguir. Fica guardado só neste browser: não precisas de conta e nada vai para o servidor.</p>
+  </header>
+  <section class="meu-bloco" aria-labelledby="meu-mod-tit">
+    <h2 class="meu__h" id="meu-mod-tit">Modalidades</h2>
+    <div class="meu__chips" id="meu-modalidades" role="group" aria-label="Modalidades a seguir"></div>
+    <h2 class="meu__h" id="meu-jog-tit">Jogadores do plantel</h2>
+    <div class="meu__chips meu__chips--jogadores" id="meu-jogadores" role="group" aria-label="Jogadores a seguir"></div>
+  </section>
+  <section class="meu-bloco" aria-labelledby="meu-avisos-tit">
+    <h2 class="meu__h" id="meu-avisos-tit">Avisos</h2>
+    <label class="meu__interruptor"><input type="checkbox" id="meu-sino"><span>O sino de novidades, no topo, conta só as notícias do meu Sporting</span></label>
+    <p class="meu__nota">Avisos no telemóvel (início do jogo, resultado, notícias oficiais, fecho da jornada da Fantasy): escolhem-se <button type="button" class="meu__ir" data-ir="agenda">na Agenda</button>.</p>
+  </section>
+  <section class="meu-bloco" aria-labelledby="meu-feed-tit">
+    <div class="meu__topo"><h2 class="meu__h" id="meu-feed-tit">Notícias do meu Sporting</h2><span class="meu__conta" id="meu-conta"></span></div>
+    <div class="meu__fichas" id="meu-fichas"></div>
+    <ul class="lista-noticias lista-noticias--grande" id="meu-noticias" aria-live="polite"></ul>
+  </section>
+</main>
+
 <main class="vista" id="vista-modalidades" aria-labelledby="tit-modalidades">
   <header class="vista__cabeca">
     <p class="seccao__sobre">Muito mais do que futebol</p>
@@ -1220,20 +1248,20 @@
   <button class="barra-inferior__item" id="barra-mais" aria-controls="menu" aria-expanded="false"><svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Mais</span></button>
 </nav>
 
-<script src="js/nuvem.js?v=147" defer></script>
-<script src="js/fd.js?v=147" defer></script>
-<script src="js/componentes.js?v=147" defer></script>
-<script src="js/historias.js?v=147" defer></script>
-<script src="js/contas.js?v=147" defer></script>
-<script src="js/arte.js?v=147" defer></script>
-<script src="js/data.js?v=147" defer></script>
-<script src="js/wiki.js?v=147" defer></script>
-<script src="js/tema.js?v=147" defer></script>
-<script src="js/notificacoes.js?v=147" defer></script>
-<script src="js/pwa.js?v=147" defer></script>
-<script src="js/entrada.js?v=147" defer></script>
-<script src="js/centro.js?v=147" defer></script>
-<script src="js/app.js?v=147" defer></script>
+<script src="js/nuvem.js?v=148" defer></script>
+<script src="js/fd.js?v=148" defer></script>
+<script src="js/componentes.js?v=148" defer></script>
+<script src="js/historias.js?v=148" defer></script>
+<script src="js/contas.js?v=148" defer></script>
+<script src="js/arte.js?v=148" defer></script>
+<script src="js/data.js?v=148" defer></script>
+<script src="js/wiki.js?v=148" defer></script>
+<script src="js/tema.js?v=148" defer></script>
+<script src="js/notificacoes.js?v=148" defer></script>
+<script src="js/pwa.js?v=148" defer></script>
+<script src="js/entrada.js?v=148" defer></script>
+<script src="js/centro.js?v=148" defer></script>
+<script src="js/app.js?v=148" defer></script>
 <p class="aviso-partilha" id="aviso-partilha" role="status" hidden></p>
 </body>
 </html>

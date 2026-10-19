@@ -571,9 +571,7 @@ async function carregarNoticias(){
   marcarAtualizacao(novas);
   pintarSeloVivo();
 
-  const badge = $('#badge-alertas');
-  badge.textContent = novasDesdeVista || NOTICIAS.length;
-  badge.classList.toggle('vazio', !NOTICIAS.length);
+  atualizarSino();
   return novas;
 }
 
@@ -1304,9 +1302,140 @@ function pintarNoticias(){
   pintarDestaque();
   pintarLinhaTempo();
   pintarHome();
+  pintarMeuFaixa();
+  if(vistaAtual === 'meu') pintarMeuNoticias();
   /* as notícias do jogo, no Centro de jogo, acompanham as leituras */
   if(vistaAtual === 'aovivo') CentroJogo.repintar();
 }
+
+/* =========================================================================
+   O MEU SPORTING — as modalidades e os jogadores que se seguem, guardados
+   só neste browser. Uma notícia é "do meu Sporting" se o tema for de uma
+   modalidade seguida ou se nomear um jogador seguido (o mesmo critério dos
+   rumores por jogador: nome completo, ou apelido raro e único no plantel).
+   ========================================================================= */
+const CHAVE_MEU = 'scp-meu-sporting-v1';
+const TEMAS_MEU = () => [...CONFIG.modalidades.map(m => [m.id, m.nome]), ['clube', 'Clube e direção']];
+function lerMeu(){
+  try{
+    const g = JSON.parse(localStorage.getItem(CHAVE_MEU) || 'null');
+    if(g && Array.isArray(g.temas) && Array.isArray(g.jogadores))
+      return { temas: g.temas.filter(x => typeof x === 'string'), jogadores: g.jogadores.filter(x => typeof x === 'string'), sino: !!g.sino };
+  }catch(e){}
+  return { temas: [], jogadores: [], sino: false };
+}
+let MEU = lerMeu();
+const segueAlgo = () => MEU.temas.length + MEU.jogadores.length > 0;
+function gravarMeu(){ try{ localStorage.setItem(CHAVE_MEU, JSON.stringify(MEU)); }catch(e){} }
+
+let regrasMeu = [], chaveRegras = '';
+function eDoMeu(n){
+  if(MEU.temas.includes(temaDe(n))) return true;
+  if(!MEU.jogadores.length) return false;
+  const chave = MEU.jogadores.join('|') + '#' + PLANTEL.length;
+  if(chave !== chaveRegras){
+    chaveRegras = chave;
+    regrasMeu = Historias.regrasDosNomes([...new Set([...PLANTEL.map(p => p.nome), ...MEU.jogadores])], MEU.jogadores);
+  }
+  const t = Historias.textoDe(n);
+  return regrasMeu.some(rx => rx.test(t));
+}
+
+function alternarMeu(tipo, valor){
+  const lista = MEU[tipo];
+  MEU[tipo] = lista.includes(valor) ? lista.filter(x => x !== valor) : [...lista, valor];
+  gravarMeu();
+  if(vistaAtual === 'meu') pintarMeu();
+  pintarMeuFaixa();
+  atualizarSino();
+}
+
+function pintarMeu(){
+  const alvoT = $('#meu-modalidades'), alvoJ = $('#meu-jogadores');
+  if(!alvoT || !alvoJ) return;
+  const seguro = Componentes.seguro;
+  alvoT.innerHTML = TEMAS_MEU().map(([id, nome]) =>
+    `<button type="button" class="chip ${MEU.temas.includes(id) ? 'is-on' : ''}" aria-pressed="${MEU.temas.includes(id)}" data-meu-tema="${id}">${seguro(nome)}</button>`).join('');
+  const ordem = { GR: 0, DEF: 1, MED: 2, AVA: 3 };
+  const doPlantel = PLANTEL.slice().sort((a, b) => (ordem[a.posGrupo] ?? 9) - (ordem[b.posGrupo] ?? 9) || a.nome.localeCompare(b.nome, 'pt'));
+  const fora = MEU.jogadores.filter(n => !PLANTEL.some(p => p.nome === n));
+  alvoJ.innerHTML = doPlantel.map(p => `<button type="button" class="chip chip--jogador ${MEU.jogadores.includes(p.nome) ? 'is-on' : ''}" aria-pressed="${MEU.jogadores.includes(p.nome)}" data-meu-jogador="${seguro(p.nome)}">
+      <img src="${seguro(p.foto || avatarJogador(p))}" alt="" width="24" height="24" loading="lazy" onerror="this.onerror=null;this.src='${avatarJogador(p)}'">${seguro(p.nome)}</button>`).join('')
+    + fora.map(n => `<button type="button" class="chip chip--jogador is-on" aria-pressed="true" data-meu-jogador="${seguro(n)}">${seguro(n)} <small>(já não está no plantel)</small></button>`).join('');
+  const sino = $('#meu-sino');
+  if(sino) sino.checked = MEU.sino;
+  pintarMeuNoticias();
+}
+
+function pintarMeuNoticias(){
+  const alvo = $('#meu-noticias');
+  if(!alvo) return;
+  const seguro = Componentes.seguro;
+  const fichas = $('#meu-fichas');
+  if(fichas) fichas.innerHTML = MEU.jogadores.filter(n => PLANTEL.some(p => p.nome === n)).map(n =>
+    `<button type="button" class="meu__ficha" data-meu-ficha="${seguro(n)}">Ficha de ${seguro(n)}</button>`).join('');
+  if(!segueAlgo()){
+    $('#meu-conta').textContent = '';
+    alvo.innerHTML = `<li class="estado"><p class="estado__titulo">Ainda não segues nada</p><p class="estado__texto">Escolhe uma modalidade ou um jogador lá em cima e as notícias aparecem aqui.</p></li>`;
+    return;
+  }
+  const lista = NOTICIAS.filter(eDoMeu);
+  $('#meu-conta').textContent = lista.length ? `${lista.length} ${lista.length === 1 ? 'notícia' : 'notícias'}` : '';
+  alvo.innerHTML = lista.length
+    ? Historias.agrupar(lista).slice(0, 40).map(hh => Componentes.itemLista(hh.principal, '', { historia: hh })).join('')
+    : !NOTICIAS.length ? estadoSemNoticias()
+    : '<li class="estado"><p class="estado__titulo">Nada de novo</p><p class="estado__texto">Ainda não há notícias do que segues entre as que o site tem guardadas.</p></li>';
+}
+
+function pintarMeuFaixa(){
+  const alvo = $('#meu-faixa');
+  if(!alvo) return;
+  if(!segueAlgo()){ alvo.hidden = true; alvo.innerHTML = ''; return; }
+  const lista = NOTICIAS.filter(eDoMeu).slice(0, 4);
+  alvo.hidden = false;
+  alvo.innerHTML = `<div class="meu-faixa__topo"><h2 id="meu-faixa-tit">O meu Sporting</h2>
+      <button type="button" class="meu__ir" data-ir="meu">Ver tudo e escolher</button></div>
+    ${lista.length ? `<ul class="meu-faixa__lista">${lista.map(n => Componentes.itemCurto(n)).join('')}</ul>`
+                   : '<p class="meu__nota">Ainda não há notícias do que segues entre as que o site tem guardadas.</p>'}`;
+}
+
+/* o sino: novidades desde que se tocou nele; com "só o meu Sporting", só essas */
+let conhecidasSino = null;
+function atualizarSino(){
+  const badge = $('#badge-alertas');
+  if(!badge) return;
+  if(conhecidasSino === null && NOTICIAS.length) conhecidasSino = new Set(NOTICIAS.map(n => n.link));
+  if(MEU.sino && segueAlgo()){
+    const minhas = NOTICIAS.filter(eDoMeu);
+    const novas = conhecidasSino ? minhas.filter(n => !conhecidasSino.has(n.link)).length : 0;
+    badge.textContent = novas || minhas.length;
+    badge.classList.toggle('vazio', !minhas.length);
+    $('#btn-alertas')?.setAttribute('title', 'Notícias do meu Sporting');
+  }else{
+    badge.textContent = novasDesdeVista || NOTICIAS.length;
+    badge.classList.toggle('vazio', !NOTICIAS.length);
+    $('#btn-alertas')?.removeAttribute('title');
+  }
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-meu-tema], [data-meu-jogador], [data-meu-seguir], [data-meu-ficha]');
+  if(!t) return;
+  if(t.dataset.meuTema) alternarMeu('temas', t.dataset.meuTema);
+  else if(t.dataset.meuJogador) alternarMeu('jogadores', t.dataset.meuJogador);
+  else if(t.dataset.meuFicha) abrirFichaDoNome(t.dataset.meuFicha);
+  else if(t.dataset.meuSeguir){
+    alternarMeu('jogadores', t.dataset.meuSeguir);
+    const on = MEU.jogadores.includes(t.dataset.meuSeguir);
+    t.classList.toggle('is-on', on); t.setAttribute('aria-pressed', on); t.textContent = on ? 'A seguir' : 'Seguir';
+  }
+});
+document.addEventListener('change', e => {
+  if(e.target.id !== 'meu-sino') return;
+  MEU.sino = e.target.checked;
+  gravarMeu();
+  atualizarSino();
+});
 
 /* Rumores por jogador: os do plantel nomeados nas notícias de mercado
    guardadas, com quantos jornais falam deles e desde quando. Só entram os
@@ -2540,7 +2669,10 @@ function mostrarFicha(p){
         <b>${VALOR_MERCADO[p.nome] != null ? milhoes(VALOR_MERCADO[p.nome]) : 'n.d.'}</b>
         <span>VALOR DE MERCADO · TRANSFERMARKT</span>
       </div>
-      <button type="button" class="botao-tentar partilhar" data-partilhar-jogador>Partilhar ${p.nome}</button>
+      <div class="ficha__acoes">
+        <button type="button" class="botao-tentar partilhar" data-partilhar-jogador>Partilhar ${p.nome}</button>
+        <button type="button" class="botao-tentar seguir ${MEU.jogadores.includes(p.nome) ? 'is-on' : ''}" data-meu-seguir="${Componentes.seguro(p.nome)}" aria-pressed="${MEU.jogadores.includes(p.nome)}">${MEU.jogadores.includes(p.nome) ? 'A seguir' : 'Seguir'}</button>
+      </div>
       <div class="ficha__kpis">
         ${kpis.map(([l,v]) => `<div class="caixa"><b>${v}</b><label>${l}</label></div>`).join('')}
       </div>
@@ -4513,8 +4645,8 @@ const TEXTOS_LEGAIS = {
   privacidade: ['Política de Privacidade', `
     <h4>Sem conta</h4>
     <p>Quem só lê (modo visitante) não deixa nada no servidor. No teu browser
-    ficam apenas preferências (tema, filtros), o arquivo das notícias já
-    lidas, para abrir mais depressa, e o teu recorde do Quiz Leonino.</p>
+    ficam apenas preferências (tema, filtros, o que segues em "O meu Sporting"),
+    o arquivo das notícias já lidas, para abrir mais depressa, e o teu recorde do Quiz Leonino.</p>
     <p>As letras e as bibliotecas do site são servidas pelo próprio site: a tua
     visita não é enviada à Google nem a outros serviços de alojamento de ficheiros.</p>
     <h4>Com conta</h4>
@@ -4623,14 +4755,14 @@ const ROTAS = {
   inicio:'/', noticias:'/noticias', aominuto:'/ao-minuto', rumores:'/mercado',
   jogos:'/jogos', agenda:'/agenda', classificacao:'/classificacao', aovivo:'/ao-vivo',
   equipa:'/plantel', estatisticas:'/estatisticas', modalidades:'/modalidades',
-  chat:'/chat', formacao:'/fantasy', quiz:'/quiz', desafio:'/desafio', clube:'/clube'
+  chat:'/chat', formacao:'/fantasy', quiz:'/quiz', desafio:'/desafio', clube:'/clube', meu:'/o-meu-sporting'
 };
 const TITULOS = {
   inicio:'Sporting ao Minuto — notícias, jogos e ao minuto do Sporting CP',
   noticias:'Notícias', aominuto:'Ao minuto', rumores:'Mercado', jogos:'Jogos',
   agenda:'Agenda', classificacao:'Classificação', aovivo:'Centro de jogo', equipa:'Plantel',
   estatisticas:'Estatísticas', modalidades:'Modalidades', chat:'Chat',
-  formacao:'Fantasy', quiz:'Quiz Leonino', desafio:'Desafio do Dia', clube:'O clube'
+  formacao:'Fantasy', quiz:'Quiz Leonino', desafio:'Desafio do Dia', clube:'O clube', meu:'O meu Sporting'
 };
 
 /* descrição de cada vista — vai para a meta description e para a partilha */
@@ -4643,6 +4775,7 @@ const DESCRICOES = {
   agenda:'Os próximos jogos do Sporting CP, por dia e hora.',
   classificacao:'Classificação da Liga Portugal e da Liga dos Campeões, com a forma do Sporting CP.',
   aovivo:'Centro de jogo do Sporting CP: resultado, lances, estatísticas, equipas e classificação, com a fonte de cada dado.',
+  meu:'O teu Sporting: as notícias das modalidades e dos jogadores que segues, escolhidos por ti.',
   equipa:'O plantel do Sporting CP: jogadores, números, posições, valores e estatísticas.',
   estatisticas:'Estatísticas do Sporting CP: golos, jogos e números da época, por competição.',
   modalidades:'Futsal, andebol, basquetebol, hóquei, voleibol, atletismo, feminino e formação do Sporting CP.',
@@ -4834,6 +4967,7 @@ function irPara(vista, opcoes = {}){
     prognosticoNoCentro(emCentro);
   }
   if(vista === 'agenda') pintarAgenda();
+  if(vista === 'meu') pintarMeu();
   if(vista === 'modalidades') pintarModalidades();
 
   $$('.vista').forEach(v => v.classList.toggle('is-on', v.id === 'vista-' + vista));
@@ -5272,7 +5406,7 @@ async function arranque(){
   /* botões de ir para uma vista dentro de conteúdo desenhado depois (quiz, desafio) */
   window.irParaVista = irPara;
   document.addEventListener('click', e => {
-    const b = e.target.closest('#quiz [data-ir], #desafio [data-ir]');
+    const b = e.target.closest('#quiz [data-ir], #desafio [data-ir], #meu-faixa [data-ir], #vista-meu [data-ir]');
     if(b) irPara(b.dataset.ir);
   });
   /* avisos push: o cartão só aparece quando houver chave (js/notificacoes.js) */
@@ -5315,8 +5449,9 @@ async function arranque(){
 
   $('#btn-alertas').addEventListener('click', () => {
     novasDesdeVista = 0;
-    $('#badge-alertas').textContent = NOTICIAS.length;
-    irPara('aominuto');
+    conhecidasSino = new Set(NOTICIAS.map(n => n.link));
+    atualizarSino();
+    irPara(MEU.sino && segueAlgo() ? 'meu' : 'aominuto');
   });
   addEventListener('keydown', e => {
     if(e.key === 'Escape'){ caixaProcura.classList.remove('is-aberta'); fecharSugestoes(); }

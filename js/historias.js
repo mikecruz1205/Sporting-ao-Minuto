@@ -116,5 +116,17 @@
       .sort((a, b) => b.canais.length - a.canais.length || b.ultima - a.ultima);
   }
 
-  window.Historias = { agrupar, eOficial, rumoresPorJogador, _teste: { palavras, mesmaHistoria, regraDoNome } };
+  /* as regras de alguns jogadores (os que se seguem em "O meu Sporting"),
+     com os apelidos contados no plantel inteiro; o texto vai sem acentos */
+  function regrasDosNomes(plantel, escolhidos){
+    const apelidos = new Map();
+    plantel.forEach(n => {
+      const u = semAcentos(n).replace(/[^a-z ]/g, ' ').trim().split(/\s+/).pop();
+      apelidos.set(u, (apelidos.get(u) || 0) + 1);
+    });
+    return escolhidos.map(n => regraDoNome(n, apelidos)).filter(Boolean);
+  }
+  const textoDe = n => semAcentos((n.titulo || '') + ' ' + (n.resumo || ''));
+
+  window.Historias = { agrupar, eOficial, rumoresPorJogador, regrasDosNomes, textoDe, _teste: { palavras, mesmaHistoria, regraDoNome } };
 })();

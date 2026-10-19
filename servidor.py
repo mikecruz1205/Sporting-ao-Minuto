@@ -71,7 +71,7 @@ CABECALHO_NAVEGADOR = {
 ROTAS_DO_SITE = {
     "/noticias", "/ao-minuto", "/mercado", "/jogos", "/agenda", "/classificacao",
     "/ao-vivo", "/plantel", "/estatisticas", "/modalidades", "/chat", "/fantasy", "/quiz", "/desafio", "/clube",
-    "/privacidade", "/termos",
+    "/privacidade", "/termos", "/o-meu-sporting",
 }
 
 # quanto tempo vale cada resposta da API antes de se ir buscar outra vez

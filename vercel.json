@@ -15,7 +15,7 @@
       "destination": "/api/pagina?tipo=jogador&s=:s"
     },
     {
-      "source": "/(noticias|ao-minuto|mercado|jogos|agenda|classificacao|ao-vivo|plantel|estatisticas|modalidades|chat|fantasy|quiz|desafio|clube|privacidade|termos)",
+      "source": "/(noticias|ao-minuto|mercado|jogos|agenda|classificacao|ao-vivo|plantel|estatisticas|modalidades|chat|fantasy|quiz|desafio|clube|o-meu-sporting|privacidade|termos)",
       "destination": "/index.html"
     }
   ],
