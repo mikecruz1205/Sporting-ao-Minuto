@@ -109,6 +109,19 @@
     },
     "api/tempo.py": {
       "includeFiles": "dados/estadios.json"
+    },
+    "api/sincronizar.py": {
+      "maxDuration": 30
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/sincronizar?vez=manha",
+      "schedule": "30 6 * * *"
+    },
+    {
+      "path": "/api/sincronizar?vez=noite",
+      "schedule": "50 23 * * *"
+    }
+  ]
 }

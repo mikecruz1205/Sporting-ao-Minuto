@@ -174,3 +174,28 @@ desenho; quem protege os dados é o RLS).
 * **Fecho automático "provisória → final"** às 48 h: está a cargo do administrador (pode passar a tarefa agendada com `pg_cron`).
 * **Proteção de palavras-passe vazadas** (Supabase Auth): desligada — ativar no painel.
 * Arquivo: páginas antigas do Wikipédia nem sempre dizem a competição de cada jogo; esses jogos aparecem como "competição não identificada".
+
+## Sincronização automática (desde 8/11/2026)
+
+Duas vezes por dia (06:30 e 23:50 UTC, `crons` no `vercel.json`) a Vercel chama
+`/api/sincronizar` (`api/_sincronizar.py`):
+
+1. lê da **football-data.org** (token `FOOTBALL_DATA_TOKEN`, já na Vercel) os jogos
+   do Sporting na Liga e na Liga dos Campeões — um pedido;
+2. entrega-os à função `desporto_sincronizar_fd` (migração `20261108120000`), que
+   encontra cada jogo pela prova, pela jornada e por o Sporting jogar em casa ou
+   fora, escreve o resultado dos terminados, acerta a hora dos que faltam e as
+   jornadas da Fantasy, e junta os jogos que ainda não estavam no calendário.
+
+Segurança: a Vercel manda o `CRON_SECRET` no pedido (sem ele, 403); a função do
+Supabase só aceita o `SINCRONIZAR_SEGREDO`, igual ao segredo `sincronizar_segredo`
+do cofre (vault). Nenhuma chave está no repositório. Cada execução fica registada
+em `desporto_sincronizacoes` (fonte `football-data`, tipo `resultados`).
+
+O que **não** vem por aqui (o plano gratuito não dá): as taças (Taça de Portugal e
+Taça da Liga), as estatísticas por jogador e os pontos da Fantasy. Esses continuam
+a entrar pela importação manual (`scripts/preparar_importacao_fantasy.py`) ou pelo
+painel de gestão da Fantasy.
+
+Correr à mão (precisa do `CRON_SECRET`):
+`curl -H "Authorization: Bearer <CRON_SECRET>" https://sporting-fan-ao-minuto.vercel.app/api/sincronizar`
