@@ -1731,12 +1731,14 @@ const NOMES_PROVA = {
   'EUROPA LEAGUE':'Liga Europa', 'LIGA EUROPA':'Liga Europa'
 };
 const NOMES_FASE = { QF:'Quartos de final', MF:'Meias-finais', SF:'Meias-finais', F:'Final',
-                     '1/8':'Oitavos de final', '1/16':'16 avos de final', PO:'Play-off' };
+                     '1/8':'Oitavos de final', '1/16':'16 avos de final', PO:'Play-off',
+                     OITAVOS:'Oitavos de final', 'MEIA-FINAL':'Meias-finais', FINAL:'Final' };
 function nomeProva(comp){
   const [base, resto = ''] = String(comp || '').split(/\s+—\s+/);
   const prova = NOMES_PROVA[base.trim()] || base.trim();
   const m = resto.match(/^J(\d+)$/i);
-  const fase = m ? `Jornada ${m[1]}` : (NOMES_FASE[resto.trim()] || resto.trim());
+  const fase = m ? `Jornada ${m[1]}`
+    : NOMES_FASE[resto.trim()] || (/ELIMINATÓRIA$/.test(resto.trim()) ? resto.trim().toLowerCase() : resto.trim());
   return { prova, fase, completo: fase ? `${prova} · ${fase}` : prova };
 }
 

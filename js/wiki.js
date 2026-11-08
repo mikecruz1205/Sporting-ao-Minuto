@@ -329,6 +329,11 @@ const Wiki = (() => {
     /* número solto ao lado da data = jornada da prova onde a tabela está */
     if(/^\d+$/.test(s)) return (prova || 'LIGA') + ' — J' + s;
 
+    /* eliminatórias da Taça de Portugal ("Fourth round") e oitavos */
+    const ordinal = s.match(/^(first|second|third|fourth|fifth|sixth)\s+round/i);
+    if(ordinal) return (prova || 'TAÇA DE PORTUGAL') + ' — '
+      + { first: '1.ª', second: '2.ª', third: '3.ª', fourth: '4.ª', fifth: '5.ª', sixth: '6.ª' }[ordinal[1].toLowerCase()] + ' ELIMINATÓRIA';
+    if(/round of 16|last 16/i.test(s)) return (prova || '') + ' — OITAVOS';
     if(/quarter/i.test(s)) return (prova || 'TAÇA DA LIGA') + ' — QF';
     if(/semi/i.test(s))    return (prova || '') + ' — MEIA-FINAL';
     if(/final/i.test(s))   return (prova || '') + ' — FINAL';

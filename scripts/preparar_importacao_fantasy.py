@@ -68,10 +68,25 @@ def mesmo_jogador_api(nome_api, nome):
     return a[-1] == b[-1] and a[0][0] == b[0][0] and (len(a[0]) == 1 or a[0] == b[0])
 
 
+def normalizar_wiki(w):
+    """Aceita o formato compacto (listas) e o que o site exporta hoje com
+    Wiki.sincronizarSporting() (objetos com nome, n, posGrupo; jogos com
+    golosCasa/golosFora; estatísticas com jogos/golos)."""
+    pl = w.get('plantel') or []
+    if pl and isinstance(pl[0], dict):
+        w['plantel'] = [[p['nome'], p.get('n'), p.get('posGrupo') or p.get('pos')] for p in pl]
+    w['stats'] = {n: {'j': s.get('j', s.get('jogos')), 'g': s.get('g', s.get('golos'))} for n, s in (w.get('stats') or {}).items()}
+    jg = w.get('jogos') or []
+    if jg and isinstance(jg[0], dict):
+        w['jogos'] = [[j['data'], j['comp'], j['casa'], j['fora'], j.get('golosCasa'), j.get('golosFora'), j.get('local') or None]
+                      for j in jg]
+    return w
+
+
 def main(wiki_json, saida):
     zz = json.load(open(os.path.join(RAIZ, 'dados', 'plantel_zz.json'), encoding='utf-8'))['jogadores']
     api = json.load(open(os.path.join(RAIZ, 'dados', 'plantel.json'), encoding='utf-8'))['jogadores']
-    wiki = json.load(open(wiki_json, encoding='utf-8'))
+    wiki = normalizar_wiki(json.load(open(wiki_json, encoding='utf-8')))
     fotos = set(f[:-4] for f in os.listdir(os.path.join(RAIZ, 'img', 'players')) if f.endswith('.png'))
 
     nomes_wiki = {canon(n): n for n in list(wiki['stats']) + [p[0] for p in wiki['plantel']]}
@@ -135,6 +150,9 @@ def main(wiki_json, saida):
             return 'Liga dos Campeões', 'Fase de liga · jornada ' + b.lstrip('J')
         if a == 'TAÇA DA LIGA':
             return 'Taça da Liga', {'QF': 'Quartos de final', 'MEIA-FINAL': 'Meias-finais', 'FINAL': 'Final'}.get(b, b)
+        if a == 'TAÇA DE PORTUGAL':
+            return 'Taça de Portugal', {'QF': 'Quartos de final', 'MEIA-FINAL': 'Meias-finais', 'FINAL': 'Final',
+                                        'OITAVOS': 'Oitavos de final'}.get(b, b.capitalize() if b else None)
         return a.title(), b or None
 
     agora = datetime.now(LISBOA)
