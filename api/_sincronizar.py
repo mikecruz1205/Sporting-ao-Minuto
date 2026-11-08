@@ -19,7 +19,7 @@ jogador: essas continuam a entrar pela importação manual.
 import json
 import os
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from _calendario import CHAVE_PUBLICA, URL_PROJETO
 
@@ -62,6 +62,24 @@ def fase(m):
     return None
 
 
+def _ultimo_domingo(ano, mes):
+    d = datetime(ano, mes + 1, 1, tzinfo=timezone.utc) - timedelta(days=1)
+    while d.weekday() != 6:
+        d -= timedelta(days=1)
+    return d.replace(hour=1)
+
+
+def hora_do_jogo(m):
+    """A football-data põe 00:00 UTC nos jogos que ainda só têm dia
+    ("SCHEDULED"). Nesses fica a hora provisória que o site já usa, 18:00 de
+    Lisboa, em vez de um jogo à meia-noite."""
+    d = datetime.fromisoformat(m["utcDate"].replace("Z", "+00:00"))
+    if m.get("status") != "SCHEDULED" or (d.hour, d.minute) != (0, 0):
+        return m["utcDate"]
+    verao = _ultimo_domingo(d.year, 3) <= d.replace(hour=12) < _ultimo_domingo(d.year, 10)
+    return (d.replace(hour=18) - timedelta(hours=1 if verao else 0)).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 def normalizar(resposta):
     """Resposta de /teams/498/matches → jogos para desporto_sincronizar_fd.
     Fica de fora o que não se sabe pôr no sítio certo (prova ou fase
@@ -80,7 +98,7 @@ def normalizar(resposta):
         jogos.append({
             "fd_id": m.get("id"),
             "competicao": PROVAS[codigo], "fase": f,
-            "data": m["utcDate"],
+            "data": hora_do_jogo(m),
             "casa": nome(casa), "fora": nome(fora), "sporting_casa": sporting_casa,
             "golos_casa": final.get("home") if terminado else None,
             "golos_fora": final.get("away") if terminado else None,

@@ -37,6 +37,14 @@ class TestSincronizar(unittest.TestCase):
         self.assertIsNone(j[13]['golos_casa'])                              # a decorrer: o resultado não segue
         self.assertEqual(j[14]['fase'], 'Play-off')
 
+    def test_jogos_so_com_dia_ficam_as_18_de_lisboa(self):
+        inverno = {'utcDate': '2026-12-20T00:00:00Z', 'status': 'SCHEDULED'}
+        verao = {'utcDate': '2027-04-11T00:00:00Z', 'status': 'SCHEDULED'}
+        marcado = {'utcDate': '2026-12-04T20:15:00Z', 'status': 'TIMED'}
+        self.assertEqual(S.hora_do_jogo(inverno), '2026-12-20T18:00:00Z')
+        self.assertEqual(S.hora_do_jogo(verao), '2027-04-11T17:00:00Z')      # 18:00 em Lisboa (hora de verão)
+        self.assertEqual(S.hora_do_jogo(marcado), '2026-12-04T20:15:00Z')
+
     def test_so_com_o_segredo_da_vercel(self):
         amb = {'CRON_SECRET': 'c', 'FOOTBALL_DATA_TOKEN': 't', 'SINCRONIZAR_SEGREDO': 's'}
         nunca = lambda *a: self.fail('não devia chamar')
