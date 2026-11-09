@@ -2672,7 +2672,7 @@ function mostrarFicha(p){
         <span>VALOR DE MERCADO · TRANSFERMARKT</span>
       </div>
       <div class="ficha__acoes">
-        <button type="button" class="botao-tentar partilhar" data-partilhar-jogador>Partilhar ${p.nome}</button>
+        <button type="button" class="botao-tentar btn-partilhar" data-partilhar-jogador>Partilhar ${p.nome}</button>
         <button type="button" class="botao-tentar seguir ${MEU.jogadores.includes(p.nome) ? 'is-on' : ''}" data-meu-seguir="${Componentes.seguro(p.nome)}" aria-pressed="${MEU.jogadores.includes(p.nome)}">${MEU.jogadores.includes(p.nome) ? 'A seguir' : 'Seguir'}</button>
       </div>
       <div class="ficha__kpis">

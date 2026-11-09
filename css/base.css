@@ -48,6 +48,7 @@
 
   --amarelo:      #f2c14e;
   --vermelho:     #e05252;
+  --vermelho-cheio: #c03636;   /* fundo de chips com texto branco: 5.5:1 */
   --ouro:         #e8c56a;
   --empate:       #3a4440;   /* fundo do "E" de empate */
 
@@ -103,6 +104,7 @@
 
   --amarelo:      #8f5f00;
   --vermelho:     #c43a3a;
+  --vermelho-cheio: #c43a3a;   /* 5.2:1 com texto branco */
   --ouro:         #9a7212;
   --empate:       #d7ddda;
 

@@ -154,7 +154,7 @@
 .est-jogo__r{ display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; font: 800 15px/1 var(--f-num); }
 .est-jogo--V .est-jogo__r{ background: var(--verde); color: var(--sobre-verde); }
 .est-jogo--E .est-jogo__r{ background: var(--empate); color: var(--texto); }
-.est-jogo--D .est-jogo__r{ background: var(--vermelho); color: #fff; }
+.est-jogo--D .est-jogo__r{ background: var(--vermelho-cheio); color: #fff; }
 .est-jogo__adv{ display: grid; grid-template-columns: 22px minmax(0, 1fr); column-gap: 8px; align-items: center; min-width: 0; }
 .est-jogo__adv img{ grid-row: span 2; width: 22px; height: 22px; object-fit: contain; }
 .est-jogo__adv b{ font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -240,7 +240,7 @@
 }
 .papel--GR{ background: #e9b13a; color: #2a1d00; }
 .papel--DEF{ background: #2f6bd1; }
-.papel--MED{ background: #2b9443; }
+.papel--MED{ background: #23803a; }   /* 5:1 com texto branco */
 .papel--AVA{ background: #cf3a3a; }
 
 /* listas: a escalação e o resto do plantel */
@@ -313,7 +313,7 @@
 /* =========================================================================
    TABELAS ORDENÁVEIS (computador e telemóvel)
    ========================================================================= */
-.ordenar{ display: inline-flex; align-items: center; gap: 3px; min-height: 32px; padding: 0; border: 0; background: none;
+.ordenar{ display: inline-flex; align-items: center; justify-content: center; gap: 3px; min-height: 32px; min-width: 24px; padding: 0; border: 0; background: none;
   font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; cursor: pointer; white-space: nowrap; }
 .ordenar:hover{ color: var(--texto); }
 .ordenar:focus-visible{ outline: 2px solid var(--verde-claro); outline-offset: 2px; border-radius: 4px; }
@@ -413,11 +413,11 @@ th[aria-sort="ascending"], th[aria-sort="descending"]{ color: var(--verde-claro)
 
 /* partilhar um jogo ou um jogador (/jogo/…, /jogador/…) */
 .cj-partilhar{ display: flex; justify-content: flex-end; margin-top: 16px; }
-.partilhar{ display: inline-flex; align-items: center; gap: 8px; }
-.partilhar::before{ content: ""; width: 16px; height: 16px; background: currentColor;
+.btn-partilhar{ display: inline-flex; align-items: center; gap: 8px; }
+.btn-partilhar::before{ content: ""; width: 16px; height: 16px; background: currentColor;
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='18' cy='5' r='3'/%3E%3Ccircle cx='6' cy='12' r='3'/%3E%3Ccircle cx='18' cy='19' r='3'/%3E%3Cpath d='M8.6 13.5l6.8 4M15.4 6.5l-6.8 4'/%3E%3C/svg%3E") center / contain no-repeat;
           mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='18' cy='5' r='3'/%3E%3Ccircle cx='6' cy='12' r='3'/%3E%3Ccircle cx='18' cy='19' r='3'/%3E%3Cpath d='M8.6 13.5l6.8 4M15.4 6.5l-6.8 4'/%3E%3C/svg%3E") center / contain no-repeat; }
-.ficha__dados .partilhar{ margin: 4px 0 12px; }
+.ficha__dados .btn-partilhar{ margin: 4px 0 12px; }
 .aviso-partilha{ position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 90;
   max-width: min(560px, calc(100vw - 32px)); padding: 12px 18px; border-radius: 12px; font-size: 14px; font-weight: 700;
   color: var(--texto); background: var(--cartao-alto); border: 1px solid var(--linha-forte, var(--linha)); box-shadow: var(--sombra-cartao);
@@ -447,5 +447,5 @@ th[aria-sort="ascending"], th[aria-sort="descending"]{ color: var(--verde-claro)
 .meu-faixa__topo h2{ font: 700 20px/1 var(--f-tit); text-transform: uppercase; }
 .meu-faixa__lista{ list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px; }
 .ficha__acoes{ display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 12px; }
-.ficha__acoes .partilhar{ margin: 0; }
+.ficha__acoes .btn-partilhar{ margin: 0; }
 .seguir.is-on{ color: var(--sobre-verde); background: var(--verde); border-color: var(--verde); }
