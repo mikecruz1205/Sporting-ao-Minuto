@@ -184,7 +184,8 @@
 }
 .ev__tipo{ color: var(--tx-2); }
 /* também dentro de um evento "quente", cuja regra punha o texto verde sobre este fundo claro */
-.ev__tipo--oficial, .ev--quente .ev__tipo--oficial{ color: #04150d; background: var(--tx-1); border-color: var(--tx-1); }
+/* cor do fundo da página sobre a cor do texto: contraste alto nos dois temas */
+.ev__tipo--oficial, .ev--quente .ev__tipo--oficial{ color: var(--fundo); background: var(--tx-1); border-color: var(--tx-1); }
 .ev__tipo--mercado{ color: var(--amarelo); border-color: rgba(242,193,78,.35); }
 .ev__tipo--destaque{ color: var(--verde-claro); border-color: rgba(47,217,138,.35); }
 .ev__tipo--clube{ color: var(--tx-1); }

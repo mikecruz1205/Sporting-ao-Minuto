@@ -8,27 +8,58 @@
 // Mede: contraste do texto (WCAG AA: 4.5:1, 3:1 em texto grande), alvos de
 // toque < 24 px, botões/ligações sem nome, imagens sem alt, largura da página
 // maior do que a janela e texto < 12 px (este só informativo: rótulos em
-// maiúsculas podem ir a 11 px). Texto semi-transparente ou sobre imagem/gradiente
-// fica de fora do contraste (não dá para medir assim) — ver esses à mão.
+// maiúsculas podem ir a 11 px). Texto sobre imagem, gradiente ou SVG fica de
+// fora do contraste (conta em naoMedidos) — esses veem-se à mão.
 //
-// A última expressão corre a auditoria completa; o resultado é o valor devolvido.
+// O fim do ficheiro lança a volta completa em segundo plano (ver lá em baixo).
 
 window.__auditar = function () {
-  const lum = c => {
-    const m = c && c.match(/[\d.]+/g); if (!m) return null;
-    const [r, g, b, a = 1] = m.map(Number);
-    const f = v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); };
-    return { L: .2126 * f(r) + .7152 * f(g) + .0722 * f(b), a };
+  // qualquer cor CSS (rgb, color(srgb …), oklab…) → [r, g, b, a]: o canvas normaliza
+  const tela = (window.__telaCores ||= document.createElement('canvas').getContext('2d', { willReadFrequently: true }));
+  const cache = (window.__cacheCores ||= new Map());
+  const rgba = c => {
+    if (!c) return [0, 0, 0, 0];
+    if (!cache.has(c)) {
+      tela.clearRect(0, 0, 1, 1); tela.fillStyle = '#000'; tela.fillStyle = c; tela.fillRect(0, 0, 1, 1);
+      const [r, g, b, a] = tela.getImageData(0, 0, 1, 1).data;
+      cache.set(c, [r, g, b, a / 255]);
+    }
+    return cache.get(c);
   };
-  // fundo opaco mais próximo; null se houver imagem ou gradiente pelo caminho
+  const lum = ([r, g, b]) => {
+    const f = v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); };
+    return .2126 * f(r) + .7152 * f(g) + .0722 * f(b);
+  };
+  const misturar = (cima, baixo) => [0, 1, 2].map(i => cima[i] * cima[3] + baixo[i] * (1 - cima[3])).concat(1);
+  // fundo por trás do texto, juntando as camadas semitransparentes dos pais;
+  // null se houver imagem ou gradiente pelo caminho (não dá para medir assim)
   const fundo = el => {
+    const camadas = [];
     for (let e = el; e; e = e.parentElement) {
       const s = getComputedStyle(e);
       if (s.backgroundImage !== 'none') return null;
-      const c = lum(s.backgroundColor);
-      if (c && c.a >= .95) return c;
+      const c = rgba(s.backgroundColor);
+      if (c[3] > 0) { camadas.push(c); if (c[3] >= .99) break; }
     }
-    return lum(getComputedStyle(document.body).backgroundColor);
+    return camadas.reduceRight((baixo, cima) => misturar(cima, baixo), [255, 255, 255, 1]);
+  };
+  // há alguma coisa pintada por baixo do texto que não é um pai (a relva da
+  // formação é um irmão, por exemplo)? então o fundo dos pais não é o que se vê
+  const tapadoPorBaixo = el => {
+    const y0 = scrollY;
+    el.scrollIntoView({ block: 'center', behavior: 'instant' });
+    const r = el.getBoundingClientRect();
+    const pilha = document.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    scrollTo({ top: y0, behavior: 'instant' });
+    const i = pilha.indexOf(el);
+    if (i < 0) return false;
+    for (const e of pilha.slice(i + 1)) {
+      if (e.contains(el)) { if (rgba(getComputedStyle(e).backgroundColor)[3] >= .99) return false; continue; }
+      if (e instanceof SVGElement || /^(IMG|VIDEO|CANVAS|PICTURE)$/.test(e.tagName)) return true;
+      const s = getComputedStyle(e);
+      if (s.backgroundImage !== 'none' || rgba(s.backgroundColor)[3] > 0) return true;
+    }
+    return false;
   };
   const visivel = el => {
     const r = el.getBoundingClientRect(), s = getComputedStyle(el);
@@ -40,17 +71,23 @@ window.__auditar = function () {
 
   const vista = document.querySelector('.vista.is-on') || document.body;
   const contraste = [], pequeno = [];
+  let naoMedidos = 0;
   for (const el of vista.querySelectorAll('*')) {
     if (!visivel(el)) continue;
+    const caixa = el.getBoundingClientRect();
+    if (caixa.width <= 1 || caixa.height <= 1) continue;          // texto só para leitores de ecrã
     const txt = [...el.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent.trim()).join(' ').trim();
     if (!txt) continue;
     const s = getComputedStyle(el), tam = parseFloat(s.fontSize);
     if (tam < 12) pequeno.push(id(el) + ' ' + tam + 'px «' + txt.slice(0, 30) + '»');
-    const fg = lum(s.color), bg = fundo(el);
-    if (!fg || !bg || fg.a * parseFloat(s.opacity || 1) < 1) continue;
-    const r = (Math.max(fg.L, bg.L) + .05) / (Math.min(fg.L, bg.L) + .05);
+    const bg = fundo(el);
+    if (!bg) { naoMedidos++; continue; }
+    const c = rgba(s.color), fg = misturar([c[0], c[1], c[2], c[3] * parseFloat(s.opacity || 1)], bg);
+    const r = (Math.max(lum(fg), lum(bg)) + .05) / (Math.min(lum(fg), lum(bg)) + .05);
     const grande = tam >= 24 || (tam >= 18.66 && +s.fontWeight >= 700);
-    if (r < (grande ? 3 : 4.5)) contraste.push({ el: id(el), txt: txt.slice(0, 35), r: +r.toFixed(2), cor: s.color, tam });
+    if (r >= (grande ? 3 : 4.5)) continue;
+    if (tapadoPorBaixo(el)) { naoMedidos++; continue; }
+    contraste.push({ el: id(el), txt: txt.slice(0, 35), r: +r.toFixed(2), cor: s.color, tam });
   }
 
   const alvos = [], semNome = [];
@@ -73,7 +110,7 @@ window.__auditar = function () {
 
   return {
     vista: vista.id, larguraDoc: document.documentElement.scrollWidth, janela: innerWidth,
-    nContraste: contraste.length, contraste: contraste.sort((a, b) => a.r - b.r).slice(0, 15),
+    nContraste: contraste.length, contraste: contraste.sort((a, b) => a.r - b.r).slice(0, 15), naoMedidos,
     nPequeno: pequeno.length, pequeno: pequeno.slice(0, 10),
     nAlvos: alvos.length, alvos: alvos.slice(0, 12),
     semNome: semNome.slice(0, 8), semAlt: semAlt.slice(0, 6),

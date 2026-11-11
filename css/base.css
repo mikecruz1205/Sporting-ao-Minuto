@@ -93,7 +93,7 @@
   --linha-forte:  #cbd4cf;
 
   --verde:        #0a9d5f;
-  --verde-claro:  #087a49;   /* 5.3:1 sobre branco */
+  --verde-claro:  #077345;   /* 5.9:1 sobre branco, 4.9:1 nas linhas pintadas de verde */
   --verde-escuro: #d3ecdf;
   --verde-vidro:  rgba(10,157,95,.1);
   --sobre-verde:  #04150d;
@@ -103,7 +103,7 @@
   --texto-3:      #5d6a64;   /* 5.5:1 sobre branco, 5:1 sobre o fundo */
 
   --amarelo:      #8f5f00;
-  --vermelho:     #c43a3a;
+  --vermelho:     #bc3636;   /* 4.8:1 sobre o fundo-2, o mais escuro dos claros */
   --vermelho-cheio: #c43a3a;   /* 5.2:1 com texto branco */
   --ouro:         #9a7212;
   --empate:       #d7ddda;
@@ -128,7 +128,7 @@
   --m-hoquei:      #1f6aa5;
   --m-voleibol:    #6247c9;
   --m-atletismo:   #c0392b;
-  --m-formacao:    #4a7f0f;
+  --m-formacao:    #447510;
   --m-mercado:     #1f6aa5;
   --m-destaque:    #c0392b;
 }

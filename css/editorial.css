@@ -108,7 +108,7 @@ body{
 :root[data-tema="claro"] .segmentos{ background: var(--fundo-2); }
 :root[data-tema="claro"] .segmento.is-on{ background: var(--cartao); box-shadow: 0 1px 3px rgba(16,24,20,.12); }
 :root[data-tema="claro"] .separador.is-on{ background: var(--cartao); box-shadow: 0 1px 3px rgba(16,24,20,.12); }
-:root[data-tema="claro"] .ev__novo{ color: #fff; background: var(--verde); }
+:root[data-tema="claro"] .ev__novo{ color: var(--sobre-verde); background: var(--verde); }
 :root[data-tema="claro"] .aviso-app{ box-shadow: var(--sombra-flutuante); }
 :root[data-tema="claro"] ::-webkit-scrollbar-track{ background: var(--fundo-2); }
 
@@ -179,7 +179,7 @@ body{
 .chip:hover{ color: var(--texto); border-color: var(--verde-claro); }
 .chip:focus-visible{ outline: 2px solid var(--verde-claro); outline-offset: 2px; }
 .chip.is-on{ background: var(--verde); border-color: var(--verde); color: var(--sobre-verde); }
-.chip__n{ font-weight: 600; opacity: .72; font-variant-numeric: tabular-nums; }
+.chip__n{ font-weight: 600; font-variant-numeric: tabular-nums; }
 
 /* fonte: o seletor nativo, invisível, por cima do chip inteiro */
 .chip--fonte{ padding: 0 10px 0 12px; cursor: pointer; }
