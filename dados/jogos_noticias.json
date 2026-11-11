@@ -1,0 +1,37 @@
+{
+  "versao": 1,
+  "sobre": "Factos de jogos do Sporting tirados de notícias, com a fonte de cada um. Regras (verificadas no servidor, api/_factos.py): o resultado e cada golo só contam com pelo menos dois jornais diferentes; os outros lances e as estatísticas mostram o jornal de onde vieram; nada se deduz nem se estima. Escrito pela tarefa agendada do Claude e por sessões do Claude Code.",
+  "atualizado_em": "2026-11-11T14:30:00Z",
+  "jogos": [
+    {
+      "data": "2026-11-07",
+      "casa": "Sporting CP",
+      "fora": "Moreirense",
+      "competicao": "Liga Portugal",
+      "fase": "Jornada 11",
+      "estado": "terminado",
+      "minuto": null,
+      "atualizado_em": "2026-11-11T14:30:00Z",
+      "resultado": { "casa": 1, "fora": 0, "fontes": ["rtp1", "leonino1"] },
+      "eventos": [
+        { "tipo": "ocasiao", "minuto": 8, "equipa": "casa", "jogador": "Maxi Araújo", "detalhe": "Esteve perto de marcar", "fontes": ["leonino1"] },
+        { "tipo": "lance", "minuto": null, "ordem": 46, "equipa": "casa", "jogador": "Irankunda", "detalhe": "Penálti pedido no início da 2.ª parte: o árbitro e o VAR não o assinalaram", "fontes": ["leonino1"] },
+        { "tipo": "golo", "minuto": 61, "equipa": "casa", "jogador": "Luis Suárez", "assistencia": "Issa Doumbia", "nota": "O Leonino põe o golo aos 62'; a assistência vem só do Leonino.", "fontes": ["rtp1", "leonino1"] },
+        { "tipo": "substituicao", "minuto": 63, "equipa": "casa", "entrou": "Flávio Gonçalves", "saiu": "Irankunda", "fontes": ["leonino2"] },
+        { "tipo": "golo_anulado", "minuto": null, "ordem": 98, "equipa": "casa", "jogador": "Irankunda", "detalhe": "Anulado por fora de jogo de Silas Andersen (minuto não indicado)", "fontes": ["leonino1"] },
+        { "tipo": "ocasiao", "minuto": null, "ordem": 99, "equipa": "fora", "jogador": "Manuel Mendonça", "detalhe": "Remate que obrigou Kaique a defender (minuto não indicado)", "fontes": ["leonino1"] }
+      ],
+      "estatisticas": {
+        "linhas": [],
+        "notas": [
+          { "texto": "Sporting com mais de 70% de posse de bola na 1.ª parte", "fontes": ["leonino1"] }
+        ]
+      },
+      "fontes": {
+        "rtp1": { "jornal": "RTP", "titulo": "Sporting vence com golaço de Suárez na estreia de Paulo Fonseca", "url": "https://www.rtp.pt/noticias/desporto/sporting-vence-com-golaco-de-suarez-na-estreia-de-paulo-fonseca_e1777634" },
+        "leonino1": { "jornal": "Leonino", "titulo": "Obra de arte de Luis Suárez vale vitória ao Sporting na estreia de Paulo Fonseca", "url": "https://leonino.pt/obra-de-arte-de-luis-suarez-vale-vitoria-ao-sporting-na-estreia-de-paulo-fonseca" },
+        "leonino2": { "jornal": "Leonino", "titulo": "Irankunda perde a cabeça após sair do Sporting - Moreirense e desata aos murros", "url": "https://leonino.pt/irankunda-perde-a-cabeca-apos-sair-do-sporting-moreirense-e-desata-aos-socos" }
+      }
+    }
+  ]
+}

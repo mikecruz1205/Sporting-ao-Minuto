@@ -1551,7 +1551,7 @@ let jogosSincronizados = false;
    (antes mostrava-se o retrato guardado no código, de julho, como se fosse atual) */
 let jogosFalharam = false;
 let HORA_JOGOS = null;            // quando chegaram o calendário e os resultados
-const fonteDosJogos = () => `Fonte: Wikipédia${JOGOS.some(j => j.fonteResultado) ? ' e football-data (resultados que a Wikipédia ainda não pôs)' : ''}${HORA_JOGOS ? ` · atualizada às ${HORA_JOGOS.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}` : ''}`;
+const fonteDosJogos = () => `Fonte: Wikipédia${JOGOS.some(j => j.fonteResultado) ? ' e football-data (resultados que a Wikipédia ainda não pôs)' : ''}${JOGOS.some(j => j.fonteMarcadores) ? ' · golos ainda fora da Wikipédia: notícias' : ''}${HORA_JOGOS ? ` · atualizada às ${HORA_JOGOS.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}` : ''}`;
 /* jogos e golos de cada jogador vêm do Wikipédia; com o plantel de recurso
    (retrato do zerozero) não os há, e não se mostram zeros no lugar deles */
 let estatisticasPlantel = false;
@@ -1958,7 +1958,7 @@ function textoMarcadores(lista){
   if(!lista || !lista.length) return '';
   const juntos = {};
   lista.forEach(m => (juntos[m.nome] ||= []).push(
-    m.minuto + "'" + (m.tipo === 'gp' ? ' (g.p.)' : m.tipo === 'ag' ? ' (a.g.)' : '')));
+    (m.minuto ? m.minuto + "'" : 'minuto ?') + (m.tipo === 'gp' ? ' (g.p.)' : m.tipo === 'ag' ? ' (a.g.)' : '')));
   return Object.entries(juntos)
                .map(([n,mins]) => `${n} ${mins.join(', ')}`)
                .join(' · ');
@@ -1981,7 +1981,7 @@ function detalheJogo(j){
         <div class="golos__lado"><b>${j.casa}</b><span>${mc || '—'}</span></div>
         <div class="golos__bola">${j.golosCasa} – ${j.golosFora}</div>
         <div class="golos__lado golos__lado--d"><b>${j.fora}</b><span>${mf || '—'}</span></div>
-      </div>` : `<div class="jl-vazio">
+      </div>${j.fonteMarcadores ? `<p class="jl-fonte">Golos lidos das notícias: ${j.fonteMarcadores} (a Wikipédia ainda não os tem)</p>` : ''}` : `<div class="jl-vazio">
         Sem marcadores para este jogo.<br>
         Os particulares de pré-época não têm ficha publicada — a partir da
         1.ª jornada aparecem aqui os golos, os minutos, a assistência e o árbitro.
@@ -4504,6 +4504,52 @@ async function completarComBase(){
   return mudou;
 }
 
+/* Golos que a Wikipédia ainda não pôs, lidos das notícias (/api/factos; o
+   servidor só deixa passar golos confirmados por dois jornais diferentes).
+   Entram na ficha do jogo e, nos jogos que a Wikipédia ainda não fechou
+   (os que têm fonteResultado), também nos melhores marcadores: a tabela da
+   época da Wikipédia ainda não os conta. Cada jogo só soma uma vez por
+   jogador, mesmo que a sincronização volte a correr. */
+const GOLOS_TIPOS = ['golo', 'penalti', 'autogolo'];
+async function completarComNoticias(){
+  const r = await fetch('/api/factos');
+  if(!r.ok) return false;
+  const factos = (await r.json()).jogos || [];
+  let mudou = false;
+  for(const j of JOGOS){
+    if((j.marcadoresCasa || []).length || (j.marcadoresFora || []).length) continue;
+    const dia = String(j.data).slice(0, 10);
+    const f = factos.find(x => x.data === dia && chaveNome(x.casa) === chaveNome(j.casa) && chaveNome(x.fora) === chaveNome(j.fora));
+    const golos = (f?.eventos || []).filter(e => GOLOS_TIPOS.includes(e.tipo));
+    if(!golos.length) continue;
+    const conv = e => ({ nome: e.jogador || 'jogador não indicado',
+                         minuto: e.minuto == null ? '' : String(e.minuto) + (e.acrescimo ? '+' + e.acrescimo : ''),
+                         tipo: e.tipo === 'penalti' ? 'gp' : e.tipo === 'autogolo' ? 'ag' : '' });
+    j.marcadoresCasa = golos.filter(e => e.equipa === 'casa').map(conv);
+    j.marcadoresFora = golos.filter(e => e.equipa === 'fora').map(conv);
+    j.fonteMarcadores = [...new Set(golos.flatMap(e => e.fontes.map(x => x.jornal)))].join(', ');
+    mudou = true;
+    if(!j.fonteResultado) continue;
+    const nosso = chaveNome(j.casa) === chaveNome('Sporting CP') ? 'casa' : 'fora';
+    const chaveDoJogo = dia + '|' + chaveNome(j.casa) + '|' + chaveNome(j.fora);
+    const porJogador = new Map();
+    for(const e of golos){
+      if(e.tipo === 'autogolo' || e.equipa !== nosso || !e.jogador) continue;
+      const k = chaveNome(e.jogador);
+      porJogador.set(k, (porJogador.get(k) || 0) + 1);
+    }
+    for(const [k, n] of porJogador){
+      const p = PLANTEL.find(x => chaveNome(x.nome) === k || chaveNome(ALCUNHAS[x.nome] || '') === k);
+      if(!p?.stats) continue;
+      const somados = (p.stats.jogosNoticias ||= []);
+      if(somados.includes(chaveDoJogo)) continue;
+      somados.push(chaveDoJogo);
+      p.stats.golos = (p.stats.golos || 0) + n;
+    }
+  }
+  return mudou;
+}
+
 async function sincronizar(){
   const marca = $('#estado-dados');
   marca.textContent = 'a sincronizar…';
@@ -4542,6 +4588,7 @@ async function sincronizar(){
     }
 
     try{ await completarComBase(); }catch(e){ /* sem a base de dados ficam só os da Wikipédia */ }
+    try{ await completarComNoticias(); }catch(e){ /* sem os factos das notícias fica o que há */ }
 
     pintarProximoJogo(); pintarCalendario(); pintarResultados();
     pintarJogosTodos(); pintarEstatisticas(); seguirJogoEmFoco();

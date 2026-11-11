@@ -330,8 +330,13 @@ const CentroJogo = (() => {
   const NOMES_EVENTO = {
     golo: 'Golo', penalti: 'Golo de penálti', autogolo: 'Autogolo', penalti_falhado: 'Penálti falhado',
     amarelo: 'Cartão amarelo', segundo_amarelo: 'Segundo amarelo', vermelho: 'Cartão vermelho',
-    substituicao: 'Substituição', var: 'VAR'
+    substituicao: 'Substituição', var: 'VAR', ocasiao: 'Ocasião', golo_anulado: 'Golo anulado', lance: 'Lance'
   };
+  /* de que artigo veio cada lance (os factos lidos das notícias trazem-no) */
+  const fontesDe = lista => (lista || []).length
+    ? `<span class="lc__fonte">${lista.map(f => `<a href="${seguro(f.url)}" target="_blank" rel="noopener">${seguro(f.jornal)}</a>`).join(' · ')}</span>` : '';
+  /* um lance sem minuto ("no início da 2.ª parte") ordena-se pelo sítio que a fonte diz */
+  const ordemDe = e => e.minuto ?? e.ordem ?? 0;
 
   function pintarLances(sit){
     const alvo = $('#cj-lances');
@@ -364,7 +369,7 @@ const CentroJogo = (() => {
     if(ev && t === 'terminado')
       marcos.push({ id: 'fim', marco: 'Fim do jogo' + (sit.resultado ? ` · ${sit.resultado.casa}–${sit.resultado.fora}` : ''), minuto: 999 });
 
-    const tudo = [...lista, ...marcos].sort((a, b) => (a.minuto - b.minuto) || ((a.acrescimo || 0) - (b.acrescimo || 0)));
+    const tudo = [...lista, ...marcos].sort((a, b) => (ordemDe(a) - ordemDe(b)) || ((a.acrescimo || 0) - (b.acrescimo || 0)));
     const aoVivo = t === 'direto' || t === 'intervalo';
     if(aoVivo) tudo.reverse();          // em direto, o mais recente em cima
 
@@ -389,8 +394,10 @@ const CentroJogo = (() => {
         }else if(e.tipo === 'var'){
           detalhe = `${seguro(e.detalhe || 'Decisão do VAR')}${e.jogador ? ' — ' + seguro(e.jogador) : ''}`;
         }else{
-          detalhe = `<b>${seguro(e.jogador || 'jogador não indicado')}</b>${e.assistencia ? ` · assistência de ${seguro(e.assistencia)}` : ''}`;
+          detalhe = `<b>${seguro(e.jogador || 'jogador não indicado')}</b>${e.assistencia ? ` · assistência de ${seguro(e.assistencia)}` : ''}${e.detalhe ? ` — ${seguro(e.detalhe)}` : ''}`;
         }
+        if(e.nota) detalhe += ` <i>(${seguro(e.nota)})</i>`;
+        detalhe += fontesDe(e.fontes);
         const nosso = ehSporting(nomeEquipa(e.equipa));
         return `<li class="lc lc--${e.tipo} lc--${e.equipa} ${nosso ? 'lc--nos' : ''}">
           <span class="lc__min">${min}</span>
@@ -412,6 +419,7 @@ const CentroJogo = (() => {
     const st = sit.dados?.disponivel ? sit.dados.estatisticas : null;
     const jg = sit.dados?.disponivel ? sit.dados.jogadores : null;
     let html = '';
+    const notas = st?.disponivel ? st.notas || [] : [];
     if(st?.disponivel && st.linhas.length){
       const fmt = (v, u) => v == null ? '—' : `${String(v).replace('.', ',')}${u}`;
       html += `<p class="cj-origem">Estatísticas da partida · Fonte: ${seguro(st.fonte)}${st.atualizado_em ? ' · ' + hora(new Date(st.atualizado_em)) : ''}</p>
@@ -428,7 +436,12 @@ const CentroJogo = (() => {
             ${pa == null ? '' : `<span class="cj-comp__barra" aria-hidden="true"><i class="${ehSporting(j.casa) ? 'e-nos' : ''}" style="--p:${pa}%"></i><i class="${ehSporting(j.fora) ? 'e-nos' : ''}" style="--p:${100 - pa}%"></i></span>`}
           </li>`;
         }).join('')}</ul>`;
-    }else{
+    }
+    if(notas.length){
+      html += `<p class="cj-origem">${st.linhas.length ? 'Também nas notícias' : 'Estatísticas nas notícias'} · Fonte: ${seguro(st.fonte)}</p>
+        <ul class="cj-notas">${notas.map(n => `<li>${seguro(n.texto)}${fontesDe(n.fontes)}</li>`).join('')}</ul>`;
+    }
+    if(!(st?.disponivel && st.linhas.length) && !notas.length){
       html += vazio('Estatísticas da partida indisponíveis',
         st?.motivo || (sit.dados?.disponivel ? 'A fonte ligada não dá estatísticas deste jogo.'
           : 'Nenhuma fonte de estatísticas está ligada. Não calculamos posse, remates ou cantos a partir do resultado.'));

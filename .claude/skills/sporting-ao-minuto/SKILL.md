@@ -58,7 +58,7 @@ de Portugal, e as mensagens de commit também.
    servem a versão antiga.
 4. **Testes**, todos a passar antes do commit:
    - `python -m unittest discover -s tests` (corre também os de JavaScript);
-   - `node --test tests/` quando mexeste em JS;
+   - `node --test tests/*.test.js` quando mexeste em JS (a forma `node --test tests/` falha neste Node);
    - `node --check js/ficheiro.js` depois de editar JS.
    Lógica nova leva teste novo (`tests/test_*.py` para Python, `tests/*.test.js`
    com `node:test` e `vm` para JS).

@@ -140,6 +140,12 @@ body[data-vista="aovivo"] .faixa-jogo{ display: none !important; }
 .lc__ico .icone{ width: 18px; height: 18px; }
 .lc__txt{ display: grid; gap: 2px; font-size: 14.5px; line-height: 1.4; color: var(--texto-2); min-width: 0; }
 .lc__txt b{ color: var(--texto); }
+/* de que artigo veio o lance (factos lidos das notícias): ligação com alvo de 24 px */
+.lc__fonte{ display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 12.5px; }
+.lc__fonte a, .cj-notas a{ display: inline-flex; align-items: center; min-height: 24px; color: var(--verde-claro); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.cj-notas{ display: grid; gap: 8px; margin: 0 0 16px; padding: 0; list-style: none; font-size: 14.5px; color: var(--texto-2); }
+.cj-notas li{ display: grid; gap: 2px; padding: 10px 12px; border: 1px solid var(--linha); border-radius: 10px; background: var(--cartao-alto); }
+.cj-notas .lc__fonte{ margin-top: 2px; }
 .lc__tipo{ font-size: 12px; font-weight: 800; letter-spacing: .02em; text-transform: uppercase; color: var(--texto-3); }
 .lc--golo .lc__ico, .lc--penalti .lc__ico{ background: rgba(47,217,138,.16); color: var(--verde-claro); }
 .lc--nos.lc--golo .lc__tipo, .lc--nos.lc--penalti .lc__tipo{ color: var(--verde-claro); }

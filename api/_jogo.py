@@ -48,7 +48,7 @@ FD_BASE = "https://api.football-data.org/v4/"
 SPORTING_AF = 228
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-NOME_FONTE = {"af": "API-Football", "ss": "SportScore", "fd": "football-data.org"}
+NOME_FONTE = {"af": "API-Football", "ss": "SportScore", "fd": "football-data.org", "nt": "Notícias"}
 VERSAO = 1
 
 
@@ -778,7 +778,17 @@ def ler_ss(data_local, casa, fora, fonte_id=None, abrir=None, quando=None):
 # ---------------------------------------------------------------------------
 # juntar as fontes
 # ---------------------------------------------------------------------------
-LEITORES = [("af", ler_af), ("ss", ler_ss), ("fd", ler_fd)]
+def ler_nt(data_local, casa, fora, fonte_id=None, abrir=None, quando=None):
+    """Factos tirados das notícias (api/_factos.py). Última prioridade: só
+    preenche o que as fontes acima não dão (lances, notas, estatísticas)."""
+    import _factos
+    j = _factos.procurar(_factos.ler(abrir), data_local, casa, fora, mesma_equipa)
+    if not j:
+        raise ErroFonte("sem_cobertura", "ainda não há factos das notícias para este jogo")
+    return _factos.normalizar(j)
+
+
+LEITORES = [("af", ler_af), ("ss", ler_ss), ("fd", ler_fd), ("nt", ler_nt)]
 
 MOTIVOS = {
     "sem_chave": "sem chave configurada",

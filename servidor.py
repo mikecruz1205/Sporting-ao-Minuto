@@ -31,6 +31,7 @@ import _noticias  # noqa: E402  (notícias agregadas, partilhado com o Vercel)
 import _calendario  # noqa: E402  (calendário .ics, partilhado com o Vercel)
 import _pagina  # noqa: E402  (páginas /jogo/… e /jogador/…, partilhadas com o Vercel)
 import _tempo  # noqa: E402  (previsão do tempo no dia de jogo, partilhada com o Vercel)
+import _factos  # noqa: E402  (factos dos jogos tirados das notícias, partilhados com o Vercel)
 
 PORTA = int(sys.argv[1]) if len(sys.argv) > 1 else 8123
 RAIZ = os.path.dirname(os.path.abspath(__file__))
@@ -119,6 +120,14 @@ class Manipulador(SimpleHTTPRequestHandler):
         elif self.path.startswith("/api/tempo"):
             q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
             codigo, cab, corpo = _tempo.resposta((q.get("estadio") or [""])[0][:120], (q.get("hora") or [""])[0][:40])
+            self.send_response(codigo)
+            for k, v in cab.items():
+                self.send_header(k, v)
+            self.send_header("Content-Length", str(len(corpo)))
+            self.end_headers()
+            self.wfile.write(corpo)
+        elif self.path.startswith("/api/factos"):
+            codigo, cab, corpo = _factos.resposta()
             self.send_response(codigo)
             for k, v in cab.items():
                 self.send_header(k, v)
