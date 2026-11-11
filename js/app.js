@@ -1551,7 +1551,7 @@ let jogosSincronizados = false;
    (antes mostrava-se o retrato guardado no código, de julho, como se fosse atual) */
 let jogosFalharam = false;
 let HORA_JOGOS = null;            // quando chegaram o calendário e os resultados
-const fonteDosJogos = () => `Fonte: Wikipédia${HORA_JOGOS ? ` · atualizada às ${HORA_JOGOS.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}` : ''}`;
+const fonteDosJogos = () => `Fonte: Wikipédia${JOGOS.some(j => j.fonteResultado) ? ' e football-data (resultados que a Wikipédia ainda não pôs)' : ''}${HORA_JOGOS ? ` · atualizada às ${HORA_JOGOS.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}` : ''}`;
 /* jogos e golos de cada jogador vêm do Wikipédia; com o plantel de recurso
    (retrato do zerozero) não os há, e não se mostram zeros no lugar deles */
 let estatisticasPlantel = false;
@@ -4478,6 +4478,32 @@ async function carregarClassificacao(){
   return rl.status === 'fulfilled';
 }
 
+/* A Wikipédia às vezes demora dias a pôr um resultado (o Sporting–Moreirense
+   de 7/11 ainda lá estava por jogar a 11/11). A base de dados tem os da
+   football-data, que a Vercel sincroniza duas vezes por dia: num jogo que já
+   passou e que a Wikipédia ainda não fechou, usa-se esse, e a fonte dos jogos
+   passa a dizê-lo. O Sporting só joga uma vez por dia, por isso o jogo
+   encontra-se pelo dia em Lisboa e por jogar em casa ou fora. */
+const DIA_LISBOA = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Lisbon' });
+async function completarComBase(){
+  const p = typeof Nuvem !== 'undefined' ? Nuvem.PROJETO : null;
+  if(!p) return false;
+  const r = await fetch(`${p.url}/rest/v1/desporto_jogos?select=data,sporting_casa,golos_casa,golos_fora` +
+                        '&estado=eq.terminado&golos_casa=not.is.null', { headers: { apikey: p.chave } });
+  if(!r.ok) return false;
+  const porDia = new Map((await r.json()).map(b => [DIA_LISBOA.format(new Date(b.data)), b]));
+  const agora = Date.now();
+  let mudou = false;
+  for(const j of JOGOS){
+    if(j.golosCasa != null || new Date(j.data) > agora) continue;
+    const b = porDia.get(String(j.data).slice(0, 10));
+    if(!b || b.sporting_casa !== (chaveNome(j.casa) === chaveNome('Sporting CP'))) continue;
+    j.golosCasa = b.golos_casa; j.golosFora = b.golos_fora; j.fonteResultado = 'football-data';
+    mudou = true;
+  }
+  return mudou;
+}
+
 async function sincronizar(){
   const marca = $('#estado-dados');
   marca.textContent = 'a sincronizar…';
@@ -4514,6 +4540,8 @@ async function sincronizar(){
       jogos.forEach(j => mapa.set(chaveJogo(j), {...(mapa.get(chaveJogo(j))||{}), ...j}));
       JOGOS = [...mapa.values()].sort((a,b) => new Date(a.data) - new Date(b.data));
     }
+
+    try{ await completarComBase(); }catch(e){ /* sem a base de dados ficam só os da Wikipédia */ }
 
     pintarProximoJogo(); pintarCalendario(); pintarResultados();
     pintarJogosTodos(); pintarEstatisticas(); seguirJogoEmFoco();
